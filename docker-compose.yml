@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  next-app:
+    build:
+      context: ./client/my-app
+    ports:
+      - "8060:8060"
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    command: npm run dev -- -p 8060
+
+  server:
+    build:
+      context: ./server
+    env_file:
+      - ./.env.local
+    ports:
+      - "8066:8066"
+    environment:
+      - NODE_ENV=development
+    command: npm run dev

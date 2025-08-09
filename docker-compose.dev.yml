@@ -12,18 +12,21 @@ services:
     environment:
       - NODE_ENV=development
       - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    working_dir: /app
     command: npm run dev -- -p 8060
 
   server:
-    build:
-      context: ./server
-    env_file:
-      - ./server/.env
-    volumes:
-      - ./server:/app
-      - /app/node_modules
-    ports:
-      - "8066:8066"
-    environment:
-      - NODE_ENV=development
-    command: npm run dev
+      build:
+        context: ./server
+      volumes:
+        - ./server:/app
+        - /app/node_modules
+      ports:
+        - "8066:8066"
+      env_file:
+        - ./.env.local
+      environment:
+        - NODE_ENV=development
+      working_dir: /app
+      command: npx nodemon --legacy-watch index.js
