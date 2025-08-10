@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 8066
 
 # Default command
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
