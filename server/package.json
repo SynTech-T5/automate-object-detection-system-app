@@ -13,12 +13,18 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "cores": "^0.8.5",
+    "@types/jsonwebtoken": "^8.5.9",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cores": "^0.8.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "jsonwebtoken": "^8.5.1",
     "pg": "^8.16.3"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.9",
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.1",
     "@types/pg": "^8.15.5",
