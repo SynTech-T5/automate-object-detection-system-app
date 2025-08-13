@@ -1,5 +1,16 @@
+import LogoutButton from '../components/LogoutButton';
+
 export default function CamerasPage() {
-    return (
-        <h1>Cameras Page</h1>
-    )
-};
+  return (
+    <main className="p-4">
+      <div className="flex items-center gap-3 mb-4">
+        <h1 className="text-xl font-semibold">Cameras Page</h1>
+        <div className="ml-auto">
+          <LogoutButton />
+        </div>
+      </div>
+
+      {/* เนื้อหา Cameras ใส่ตรงนี้ */}
+    </main>
+  );
+}

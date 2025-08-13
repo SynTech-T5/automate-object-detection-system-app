@@ -8,5 +8,5 @@ export const env = {
     PGPORT: Number(process.env.POSTGRES_PORT),
     PGDATABASE: process.env.POSTGRES_DB,
     PGUSER: process.env.POSTGRES_USER,
-    PGPASSWORD: process.env.POSTGRES_PASSWORD
+    PGPASSWORD: process.env.POSTGRES_PASSWORD,
 };
