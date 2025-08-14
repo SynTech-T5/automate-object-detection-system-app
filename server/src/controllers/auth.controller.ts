@@ -8,8 +8,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     console.log('LOGIN body:', req.body);
 
     try {
-        const { username, password } = req.body;
-        const user = await AuthService.authenticateUser(username, password);
+        const { usernameOrEmail, password } = req.body;
+        const user = await AuthService.authenticateUser(usernameOrEmail, password);
 
         const token = AuthService.createSessionToken({ id: user.usr_id, role: user.usr_role  }); // Generate a token for the user
 
@@ -23,7 +23,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             maxAge: 60 * 60 * 1000 // 1 hour expiration
         });
 
-        return res.json({ message: 'Login successful', user });
+        return res.json({ message: 'Login successful', success: true, user });
     } catch (err) {
         next(err);
     }

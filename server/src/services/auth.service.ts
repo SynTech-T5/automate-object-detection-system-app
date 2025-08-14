@@ -28,10 +28,13 @@ function toUserSafe(user: UserRow): UserSafe {
     };
 }
 
-export async function authenticateUser(username: string, password: string) {
+export async function authenticateUser(usernameOrEmail: string, password: string) {
+    console.log(`Authenticating user: ${usernameOrEmail} with password: ${password}`);
     const { rows } = await pool.query<UserRow>(`
-        SELECT * FROM users JOIN roles ON usr_role_id = rol_id WHERE usr_username = $1 AND usr_is_use = true
-    `, [username]);
+        SELECT * FROM users 
+        JOIN roles ON usr_role_id = rol_id 
+        WHERE (usr_username = $1 OR usr_email = $1) AND usr_is_use = true
+    `, [usernameOrEmail]);
 
     const user = rows[0];
     if (!user) {
@@ -39,7 +42,7 @@ export async function authenticateUser(username: string, password: string) {
     }
 
     // const ok = await bcrypt.compare(password, user.usr_password);
-    const ok = password;
+    const ok = await password == user.usr_password;
     if (!ok) {
         throw new Error('Invalid password');
     }
