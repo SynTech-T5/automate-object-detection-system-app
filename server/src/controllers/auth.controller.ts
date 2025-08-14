@@ -39,4 +39,14 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-export async function register(req: Request, res: Response, next: NextFunction) {}
+export async function register(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { username, email, password, role } = req.body;
+
+        const { user, token } = await AuthService.registerUser(username, email, password, role);
+
+        return res.json({ message: 'Register successful', user, token });
+    } catch (err) {
+        next(err);
+    }
+}
