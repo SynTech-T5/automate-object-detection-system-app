@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 export default function LoginPage() {
 
-    const [username, setUsername] = useState('');
+    const [usernameOrEmail, setUsernameOrEmail] = useState('');
     const [password, setPassword] = useState('');
 
     async function handleSubmit(e: React.FormEvent){
@@ -15,7 +15,7 @@ export default function LoginPage() {
                 'Content-Type': 'application/json',
             },
             credentials: 'include', // Include cookies for session management
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ usernameOrEmail, password })
         });
 
         if (!res.ok) {
@@ -34,7 +34,7 @@ export default function LoginPage() {
         <div>
             <h1>Login Page</h1>
             <form onSubmit={handleSubmit}>
-                <input value={username} onChange={(e)=>setUsername(e.target.value)} type="text" name="username" placeholder="Username" className='p-1 border border-box' required/>
+                <input value={usernameOrEmail} onChange={(e)=>setUsernameOrEmail(e.target.value)} type="text" name="usernameOrEmail" placeholder="Username or Email" className='p-1 border border-box' required/>
                 <br />
                 <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" name="password" placeholder="Password" className='p-1 border border-box' required/>
                 <br />
