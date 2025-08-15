@@ -10,14 +10,38 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '1h';
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
 
+/**
+ * สร้าง JWT session token จาก payload
+ *
+ * @param {{ id: number, role: string }} payload - object ที่ประกอบด้วย user id และ role
+ * @returns {string} JWT token ที่เข้ารหัสแล้ว
+ *
+ * @author Wanasart
+ */
 export function createSessionToken(payload: { id: number, role: string }) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
 }
 
+/**
+ * ตรวจสอบความถูกต้องของ JWT session token
+ *
+ * @param {string} token - JWT token ที่ต้องการตรวจสอบ
+ * @returns {{ id: number, role: string }} payload ที่ decode ออกมา (id และ role ของผู้ใช้)
+ *
+ * @author Wanasart
+ */
 export function verifySessionToken(token: string) {
     return jwt.verify(token, JWT_SECRET) as { id: number, role: string };
 }
 
+/**
+ * แปลงข้อมูลผู้ใช้จากตาราง users ให้อยู่ในรูปแบบ UserSafe
+ *
+ * @param {UserRow} user - แถวข้อมูลผู้ใช้จาก DB (รวม password)
+ * @returns {UserSafe} object ที่ปลอดภัย (ไม่มี password)
+ *
+ * @author Wanasart
+ */
 function toUserSafe(user: UserRow): UserSafe {
     return {
         usr_id: user.usr_id,
@@ -27,6 +51,16 @@ function toUserSafe(user: UserRow): UserSafe {
     };
 }
 
+/**
+ * ตรวจสอบการเข้าสู่ระบบของผู้ใช้
+ *
+ * @param {string} usernameOrEmail - username หรือ email ที่ผู้ใช้กรอก
+ * @param {string} password - password ที่ผู้ใช้กรอก
+ * @throws {Error} ถ้า user ไม่พบ หรือ password ไม่ถูกต้อง
+ * @returns {Promise<UserSafe>} user object ที่ปลอดภัย (ไม่คืน password)
+ *
+ * @author Wanasart
+ */
 export async function authenticateUser(usernameOrEmail: string, password: string) {
     // console.log(`Authenticating user: ${usernameOrEmail} with password: ${password}`);
     const { rows } = await pool.query<UserRow>(`
@@ -49,6 +83,18 @@ export async function authenticateUser(usernameOrEmail: string, password: string
     return toUserSafe(user);
 }
 
+/**
+ * สมัครสมาชิกผู้ใช้ใหม่
+ *
+ * @param {string} username - username ที่ต้องการ
+ * @param {string} email - email ของผู้ใช้
+ * @param {string} password - password ของผู้ใช้ (จะถูก hash ด้วย bcrypt)
+ * @param {string} role - role ของผู้ใช้ เช่น "admin" "security officer" หรือ "staff"
+ * @throws {Error} ถ้า username หรือ email ซ้ำ หรือ role ไม่พบ
+ * @returns {Promise<{ user: UserSafe, token: string }>} user object ที่ปลอดภัย + JWT token
+ *
+ * @author Wanasart
+ */
 export async function registerUser(username: string, email: string, password: string, role: string) {
     const existing = await pool.query<UserRow>(`
         SELECT * FROM users

@@ -6,7 +6,7 @@ import register from './register.routes';
 const router = Router();
 
 // Authentication routes
-router.use('/auth', [login, register]);
+router.use('/auth', login);
 
 // Registration routes
 router.use('/register', register);
