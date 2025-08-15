@@ -4,6 +4,20 @@ import path from 'path';
 import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../../..', '.env.local') });
 
+/**
+ * จัดการการเข้าสู่ระบบของผู้ใช้
+ *
+ * - ตรวจสอบ username/email และ password
+ * - สร้าง session token และเก็บไว้ใน cookie
+ *
+ * @route POST /api/auth/login
+ * @param {Request} req - Express request object (body: { usernameOrEmail, password })
+ * @param {Response} res - Express response object (ส่ง token และข้อมูล user)
+ * @param {NextFunction} next - Express next middleware
+ * @returns {Promise<Response>} JSON response → { message, success, user }
+ *
+ * @author Wanasart
+ */
 export async function login(req: Request, res: Response, next: NextFunction) {
     console.log('LOGIN body:', req.body);
 
@@ -29,6 +43,19 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     }
 }
 
+/**
+ * จัดการการออกจากระบบของผู้ใช้
+ *
+ * - ลบ cookie ที่เก็บ session token
+ *
+ * @route POST /api/auth/logout
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งข้อความยืนยัน logout)
+ * @param {NextFunction} next - Express next middleware
+ * @returns {Promise<Response>} JSON response → { message }
+ *
+ * @author Wanasart
+ */
 export async function logout(req: Request, res: Response, next: NextFunction) {
     try {
         // Clear the session or token here
@@ -39,4 +66,29 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
     }
 }
 
-export async function register(req: Request, res: Response, next: NextFunction) {}
+/**
+ * สมัครสมาชิกผู้ใช้ใหม่
+ *
+ * - ตรวจสอบ username/email ว่าซ้ำหรือไม่
+ * - Hash password และสร้างผู้ใช้ใหม่
+ * - คืน user object + session token
+ *
+ * @route POST /api/register
+ * @param {Request} req - Express request object (body: { username, email, password, role })
+ * @param {Response} res - Express response object (ส่งข้อมูล user + token)
+ * @param {NextFunction} next - Express next middleware
+ * @returns {Promise<Response>} JSON response → { message, user, token }
+ *
+ * @author Wanasart
+ */
+export async function register(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { username, email, password, role } = req.body;
+
+        const { user, token } = await AuthService.registerUser(username, email, password, role);
+
+        return res.json({ message: 'Register successful', user, token });
+    } catch (err) {
+        next(err);
+    }
+}
