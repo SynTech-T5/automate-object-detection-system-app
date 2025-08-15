@@ -9,3 +9,12 @@ export async function list(req: Request, res: Response, next: NextFunction){
         next(err);
     }
 };
+
+export async function total(req: Request, res: Response, next: NextFunction){
+    try {
+        const total = await CameraService.totalCameras();
+        res.json(total);
+    } catch(err) {
+        next(err);
+    }
+}

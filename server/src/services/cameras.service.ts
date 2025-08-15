@@ -6,3 +6,9 @@ export async function listCameras() {
     );
     return result.rows;
 }
+export async function totalCameras() {
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM cameras WHERE cam_is_use = true"
+    );
+    return result.rows;
+}
