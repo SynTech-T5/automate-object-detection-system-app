@@ -6,3 +6,16 @@ export async function listCameras() {
     );
     return result.rows;
 }
+/**
+ * นับจำนวนกล้องทั้งหมดที่ใช้งานอยู่
+ *
+ * @returns {Promise<any[]>} จำนวนกล้องที่ใช้งานอยู่ทั้งหมด
+ * 
+ * @author Premsirigul
+ */
+export async function totalCameras() {
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM cameras WHERE cam_is_use = true"
+    );
+    return result.rows;
+}
