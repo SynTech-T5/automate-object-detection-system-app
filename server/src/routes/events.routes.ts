@@ -21,10 +21,12 @@ import * as ctrl from '../controllers/events.controller';
 const router = Router();
 
 router.get('/', ctrl.list);
+router.get('/', ctrl.list);     
 
 router.post('/', ctrl.create);
 
 router.put('/:evt_id/update', ctrl.update);
+
 router.patch('/:evt_id/delete', ctrl.softDelete);
 
 export default router;

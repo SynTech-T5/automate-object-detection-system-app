@@ -1,6 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import * as CameraService from '../services/cameras.service';
 
+/**
+ * Controller: ดึงรายการ Cameras ทั้งหมดที่ถูกใช้งาน
+ *
+ * @route GET /api/cameras
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการ cameras เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการ cameras
+ *
+ * @author Wanasart
+ */
 export async function list(req: Request, res: Response, next: NextFunction){
     try {
         const cameras = await CameraService.listCameras();
@@ -9,6 +20,26 @@ export async function list(req: Request, res: Response, next: NextFunction){
         next(err);
     }
 };
+
+/**
+ * Controller: นับรายการ Cameras ทั้งหมดที่ถูกใช้งาน
+ *
+ * @route GET /api/cameras/total
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการ จำนวนกล้องทั้งหมด เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการ จำนวนกล้องทั้งหมด
+ *
+ * @author Premsirigul
+ */
+export async function total(req: Request, res: Response, next: NextFunction){
+    try {
+        const total = await CameraService.totalCameras();
+        res.json(total);
+    } catch(err) {
+        next(err);
+    }
+}
 
 /**
  * Controller: ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
@@ -69,14 +100,17 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
  */
 export async function change(req: Request, res: Response, next: NextFunction){
     try {
-        const { id, status } = req.body; // รับ id และ status ใหม่
-        console.log(id , status)
+        const {cam_id} = req.params;
+        const {status} = req.body;
+
+        const id = Number(cam_id);
 
         if (isNaN(id) || isNaN(status)) {
             return res.status(400).json({ message: "id and status are required" });
         }
 
         const updatedCamera = await CameraService.changeStatus(id, status);
+
         res.json(updatedCamera);
     } catch(err) {
         next(err);
