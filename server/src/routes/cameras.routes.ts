@@ -20,9 +20,12 @@ import * as ctrl from '../controllers/cameras.controller'
 
 const router = Router();
 
+// Cameras
 router.get('/', ctrl.list);
-router.get('/total', ctrl.total);
-router.get('/:cam_id', ctrl.maintenance); // ปรับให้ดึงจาก cam_id ได้ด้วย
-router.patch('/:cam_id', ctrl.change); // ปรับให้แก้จาก cam_id ได้ด้วย
+
+
+// Maintenance
+router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
+router.get('/maintenance',ctrl.listMaintenance);
 
 export default router;

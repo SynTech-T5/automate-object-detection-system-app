@@ -12,6 +12,7 @@ import { pool } from '../config/db';
  * @returns {Promise<object>} Event object หลังเพิ่มสำเร็จ
  * @throws {Error} เมื่อเพิ่ม Event ไม่สำเร็จ
  *
+ * 
  * @author Fasai
  */
 export async function createEvent(evt_icon: string, evt_name: string, evt_des: string) {
