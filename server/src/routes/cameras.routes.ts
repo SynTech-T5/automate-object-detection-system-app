@@ -23,7 +23,6 @@ const router = Router();
 // Cameras
 router.get('/', ctrl.list);
 
-
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
