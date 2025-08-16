@@ -55,7 +55,14 @@ export async function getAllMaintenanceHistory() {
 
     return result.rows;
 }
-
+/**
+ * เปลี่ยนสถานะของกล้อง
+ *
+ * @returns {Promise<any[]>} กล้องที่ถูกอัปเดต
+ * 
+ * @author Audomsak
+ * 
+ */
 export async function changeStatus(id: number, status: boolean) {
     const result = await pool.query(
         "UPDATE cameras SET cam_status = $1 WHERE cam_id = $2 RETURNING *",
