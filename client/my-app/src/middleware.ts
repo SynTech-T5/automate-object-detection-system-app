@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const public_paths = ['/login', '/_next', '/api'];
-
-export async function middleware(req: NextRequest){
-    const url = req.nextUrl;
-    if (public_paths.some( p => url.pathname.startsWith(p))){
-        return NextResponse.next();
-    };
-
+export async function middleware(req: NextRequest) {
+    const { pathname } = req.nextUrl;
     const token = req.cookies.get('access_token')?.value;
-    if (!token) {
-        return NextResponse.redirect(new URL('/login', url));
+
+    // กันลูปเมื่ออยู่หน้า /login หรือ /_next หรือ /api
+    if (pathname.startsWith('/login') || pathname.startsWith('/_next') || pathname.startsWith('/api')) {
+        return NextResponse.next();
     }
 
-    try {
-        return NextResponse.next();
-    } catch {
-        return NextResponse.redirect(new URL('/login', url));
+    if (!token) {
+        const url = new URL('/login', req.url);
+        url.searchParams.set('next', pathname);
+        return NextResponse.redirect(url);
     }
+    return NextResponse.next();
 };
 
 export const config = {
