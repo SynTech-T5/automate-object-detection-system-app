@@ -9,6 +9,7 @@ import { pool } from '../config/db';
  * @throws {Error} หาก insert event ไม่สำเร็จ
  * @returns {Promise<any>} แถวข้อมูล event ที่ถูกสร้างใหม่จากฐานข้อมูล
  *
+ * 
  * @author Fasai
  */
 export async function createEvent(evt_icon: string, evt_name: string, evt_des: string) {
