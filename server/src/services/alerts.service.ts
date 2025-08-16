@@ -93,6 +93,13 @@ export async function getAlertTrend(days_back: number){
     return result.rows;
 }
 
+/**
+ * ดึงรายการ Alert ตามประเภท Event ที่ใช้งานอยู่
+ *
+ * @returns {Promise<any[]>} รายการ Alert ที่ถูกจัดกลุ่มตาม evt_name
+ * 
+ * @author Wanasart
+ */
 export async function getAlertByEventType(){
     const result = await pool.query(`
         SELECT evt_name, COUNT(*)
