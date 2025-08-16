@@ -20,7 +20,12 @@ import * as ctrl from '../controllers/cameras.controller'
 
 const router = Router();
 
+// Cameras
 router.get('/', ctrl.list);
-router.get('/:cam_id',ctrl.listMaintenanceByCamId)
+
+
+// Maintenance
+router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
+router.get('/maintenance',ctrl.listMaintenance);
 
 export default router;

@@ -8,6 +8,30 @@ export async function listCameras() {
 }
 
 /**
+ * ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
+ *
+ * @returns {Promise<any[]>} รายการประวัติการซ่อมบำรุงกล้องทั้งหมด
+ * @description ดึงข้อมูลประวัติการซ่อมบำรุงจากฐานข้อมูลโดยเรียงตามวันที่จากใหม่ไปเก่า
+*
+ * @author Jirayu
+ */
+export async function getAllMaintenanceHistory(): Promise<any[]> {
+    const query = `
+        SELECT 
+            mnt_date,
+            mnt_type,
+            mnt_technician,
+            mnt_note
+        FROM maintenance_history 
+        WHERE mnt_is_use = true
+        ORDER BY mnt_date DESC
+    `;
+
+    const { rows } = await pool.query(query);
+    return rows;
+}
+
+/**
  * ดึงรายการประวัติการซ่อมบำรุงตามรหัสกล้อง
  *
  * @param {number} cam_id - รหัสกล้องที่ต้องการดูประวัติการซ่อมบำรุง
@@ -19,22 +43,19 @@ export async function listCameras() {
 export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[]> {
     const query = `
         SELECT 
-            mnt_id,
             mnt_date,
             mnt_type,
             mnt_technician,
-            mnt_note,
-            mnt_is_use,
-            mnt_camera_id
+            mnt_note
         FROM maintenance_history 
         WHERE mnt_camera_id = $1 
         AND mnt_is_use = true
         ORDER BY mnt_date DESC
     `;
-    
 
 
-    const result = await pool.query(query);
+
+    const result = await pool.query(query,[cam_id]);
 
     return result.rows;
 }

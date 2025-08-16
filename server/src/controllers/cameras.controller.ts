@@ -11,9 +11,31 @@ export async function list(req: Request, res: Response, next: NextFunction){
 };
 
 /**
+ * Controller: ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
+ *
+ * @route GET /api/cameras/maintenance
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการประวัติการซ่อมบำรุงเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการประวัติการซ่อมบำรุง
+ *
+ * @author Jirayu
+ * 
+ *
+ */
+export async function listMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const history = await CameraService.getAllMaintenanceHistory();
+        return res.json(history);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
  * Controller: ดึงรายการประวัติการซ่อมบำรุงตามรหัสกล้อง
  *
- * @route GET /api/cameras/:cam_id
+ * @route GET /api/cameras/:cam_id/maintenance
  * @param {Request} req - Express request object (ต้องมี params.cam_id)
  * @param {Response} res - Express response object (ส่งกลับรายการประวัติการซ่อมบำรุงเป็น JSON)
  * @param {NextFunction} next - Express next middleware function
