@@ -22,7 +22,9 @@ const router = Router();
 
 // Cameras
 router.get('/', ctrl.list);
+router.get('/total', ctrl.total);
 
+router.patch('/:cam_id', ctrl.change);
 
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);

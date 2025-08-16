@@ -1,8 +1,29 @@
 import { pool } from '../config/db';
 
+/**
+ * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
+ *
+ * @returns {Promise<any[]>} รายการกล้องทั้งหมด
+ * 
+ * @author Wanasart
+ */
 export async function listCameras() {
     const result = await pool.query(
         "SELECT * FROM cameras"
+    );
+    return result.rows;
+}
+
+/**
+ * นับจำนวนกล้องทั้งหมดที่ใช้งานอยู่
+ *
+ * @returns {Promise<any[]>} จำนวนกล้องที่ใช้งานอยู่ทั้งหมด
+ * 
+ * @author Premsirigul
+ */
+export async function totalCameras() {
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM cameras WHERE cam_is_use = true"
     );
     return result.rows;
 }
