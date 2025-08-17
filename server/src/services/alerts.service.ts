@@ -152,3 +152,38 @@ export async function createAlert(severity: string, camera_id: number, footage_i
 
     return rows[0];
 }
+
+/**
+ * อัปเดตสถานะของ Alert ตามรหัสที่กำหนด
+ *
+ * @param {number} id - รหัสของ Alert ที่ต้องการอัปเดต
+ * @param {string} status - สถานะใหม่ที่ต้องการตั้งให้กับ Alert (เช่น 'Resolved', 'Dismissed')
+ * @returns {Promise<Alert>} Alert object ที่ถูกอัปเดต
+ * @throws {Error} ถ้าไม่พบ Alert หรือไม่สามารถอัปเดตได้
+ * 
+ * @author Wanasart
+ */
+export async function updateAlert(id: number, status: string) {
+    const alertExists = await pool.query(`
+        SELECT alr_id FROM alerts 
+        WHERE alr_id = $1
+        AND alr_is_use = true
+        AND alr_status = 'Active'
+    `, [id]);
+
+    if (alertExists.rows.length === 0) {
+        throw new Error('Alert not found or already resolved/dismissed');
+    }
+    const { rows } = await pool.query(`
+        UPDATE alerts
+        SET alr_status = $2
+        WHERE alr_id = $1
+        RETURNING *
+    `, [id, status]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to update alert');
+    }
+
+    return rows[0];
+}

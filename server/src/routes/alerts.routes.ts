@@ -9,6 +9,7 @@
  *  - GET /api/alerts/:days_back/trend  → ดึงแนวโน้มของ alerts ในช่วงวันที่กำหนด
  *  - GET /api/alerts/distribution      → ดึงการกระจายของ alerts ตามประเภทต่างๆ
  *  - POST /api/alerts                  → สร้าง alert ใหม่
+ *  - PATCH /api/alerts/:alr_id/update  → อัปเดตข้อมูล alert ตาม alr_id
  *
  * @module routes/alerts
  * @requires express
@@ -31,5 +32,7 @@ router.get("/:days_back/trend", ctrl.trend);
 router.get("/distribution", ctrl.distribution);
 
 router.post("/", ctrl.create);
+
+router.patch("/:alr_id/update", ctrl.update);
 
 export default router;
