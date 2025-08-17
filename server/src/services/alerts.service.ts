@@ -187,3 +187,37 @@ export async function updateAlert(id: number, status: string) {
 
     return rows[0];
 }
+
+/**
+ * ลบ Alert ตามรหัสที่กำหนดโดยการอัปเดตสถานะเป็น false
+ *
+ * @param {number} id - รหัสของ Alert ที่ต้องการลบ
+ * @returns {Promise<Alert>} Alert object ที่ถูกลบ
+ * @throws {Error} ถ้าไม่พบ Alert หรือไม่สามารถลบได้
+ * 
+ * @author Wanasart
+ */
+export async function deleteAlert(id: number){
+    const alertExists = await pool.query(`
+        SELECT alr_id FROM alerts 
+        WHERE alr_id = $1
+        AND alr_is_use = true
+    `, [id]);
+
+    if (alertExists.rows.length === 0) {
+        throw new Error('Alert not found');
+    }
+
+    const { rows } = await pool.query(`
+        UPDATE alerts
+        SET alr_is_use = false
+        WHERE alr_id = $1
+        RETURNING *
+    `, [id]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to delete alert');
+    }
+
+    return rows[0];
+}
