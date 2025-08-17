@@ -1,5 +1,5 @@
 import { pool } from '../config/db';
-import { Alert, mapToAlert } from '../models/alerts.model';
+import { Alert, mapToAlert, InsertAlert } from '../models/alerts.model';
 
 /**
  * ดึงรายการ Alert ที่ถูกใช้งานอยู่ทั้งหมดจากฐานข้อมูล
@@ -113,4 +113,42 @@ export async function getAlertByEventType(){
     `);
     
     return result.rows;
+}
+
+/**
+ * สร้าง Alert ใหม่ในฐานข้อมูล
+ *
+ * @param {string} severity - ความรุนแรงของ Alert (เช่น 'High', 'Medium', 'Low')
+ * @param {number} camera_id - รหัสกล้องที่เกี่ยวข้องกับ Alert
+ * @param {number} footage_id - รหัส Footage ที่เกี่ยวข้องกับ Alert
+ * @param {number} event_id - รหัส Event ที่เกี่ยวข้องกับ Alert
+ * @param {string} description - คำอธิบายของ Alert
+ * @returns {Promise<Alert>} Alert object ที่ถูกสร้างขึ้นใหม่
+ * @throws {Error} ถ้ากล้องไม่ออนไลน์หรือไม่ใช้งาน, หรือถ้าไม่สามารถสร้าง Alert ได้
+ * 
+ * @author Wanasart
+ */
+export async function createAlert(severity: string, camera_id: number, footage_id: number, event_id: number, description: string) {
+    const cameraExists = await pool.query(`
+        SELECT cam_id FROM cameras 
+        WHERE cam_id = $1 
+        AND cam_is_use = true
+        AND cam_status = true
+    `, [camera_id]);
+
+    if (cameraExists.rows.length === 0) {
+        throw new Error('Camera offline or not in use');
+    }
+    const { rows } = await pool.query(`
+        INSERT INTO alerts(
+	    alr_severity, alr_camera_id, alr_footage_id, alr_event_id, alr_description)
+	    VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+    `, [severity, camera_id, footage_id, event_id, description]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to create alert');
+    }
+
+    return rows[0];
 }

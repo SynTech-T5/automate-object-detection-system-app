@@ -8,6 +8,7 @@
  *  - GET /api/alerts/:alr_id/notes     → ดึง notes ของ alert ตาม alr_id
  *  - GET /api/alerts/:days_back/trend  → ดึงแนวโน้มของ alerts ในช่วงวันที่กำหนด
  *  - GET /api/alerts/distribution      → ดึงการกระจายของ alerts ตามประเภทต่างๆ
+ *  - POST /api/alerts                  → สร้าง alert ใหม่
  *
  * @module routes/alerts
  * @requires express
@@ -28,5 +29,7 @@ router.get("/:evt_id/related", ctrl.related);
 router.get("/:alr_id/notes", ctrl.notes);
 router.get("/:days_back/trend", ctrl.trend);
 router.get("/distribution", ctrl.distribution);
+
+router.post("/", ctrl.create);
 
 export default router;

@@ -129,11 +129,36 @@ export async function trend(req: Request, res: Response, next: NextFunction) {
  *
  * @author Wanasart
  */
-export async function distribution(req: Request, res: Response, next: NextFunction){
+export async function distribution(req: Request, res: Response, next: NextFunction) {
     try {
         const distributionData = await AlertService.getAlertByEventType();
         return res.json(distributionData);
-    } catch (err){
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: สร้าง Alert ใหม่
+ *
+ * @route POST /api/alerts
+ * @param {Request} req - Express request object (body: { severity, camera_id, footage_id, event_id, description })
+ * @param {Response} res - Express response object (ส่งกลับ Alert ที่สร้างใหม่เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Alert ที่สร้างใหม่
+ *
+ * @author Wanasart
+ */
+export async function create(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { severity, camera_id, footage_id, event_id, description } = req.body;
+        if (!severity || !camera_id || !footage_id || !event_id || !description) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const newAlert = await AlertService.createAlert(severity, camera_id, footage_id, event_id, description);
+        res.status(201).json(newAlert);
+    } catch (err) {
         next(err);
     }
 }

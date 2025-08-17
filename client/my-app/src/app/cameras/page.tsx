@@ -1,5 +1,9 @@
+"use client";
+
 import LogoutButton from '../components/LogoutButton';
 import BottomCameracard from '../components/bottomCameraCard';
+import CameraCard from '../components/CameraCard';
+
 export default function CamerasPage() {
   return (
     <main className="p-4">
@@ -10,8 +14,7 @@ export default function CamerasPage() {
         </div>
       </div>
       <BottomCameracard/>
-
-
+      <CameraCard/>
       {/* เนื้อหา Cameras ใส่ตรงนี้ */}
     </main>
   );
