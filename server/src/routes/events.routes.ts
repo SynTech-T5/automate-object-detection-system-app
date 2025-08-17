@@ -17,6 +17,7 @@
  */
 import { Router } from "express";
 import * as ctrl from '../controllers/events.controller';
+import { updateEvent } from "../services/events.service";
 
 const router = Router();
 
