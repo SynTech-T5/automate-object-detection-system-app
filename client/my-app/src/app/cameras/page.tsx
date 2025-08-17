@@ -1,4 +1,7 @@
+"use client";
+
 import LogoutButton from '../components/LogoutButton';
+import CameraCard from '../components/CameraCard';
 
 export default function CamerasPage() {
   return (
@@ -9,7 +12,7 @@ export default function CamerasPage() {
           <LogoutButton />
         </div>
       </div>
-
+      <CameraCard/>
       {/* เนื้อหา Cameras ใส่ตรงนี้ */}
     </main>
   );
