@@ -1,5 +1,5 @@
 import { pool } from '../config/db';
-import { Alert, mapToAlert } from '../models/alerts.model';
+import { Alert, mapToAlert, InsertAlert } from '../models/alerts.model';
 
 /**
  * ดึงรายการ Alert ที่ถูกใช้งานอยู่ทั้งหมดจากฐานข้อมูล
@@ -113,4 +113,111 @@ export async function getAlertByEventType(){
     `);
     
     return result.rows;
+}
+
+/**
+ * สร้าง Alert ใหม่ในฐานข้อมูล
+ *
+ * @param {string} severity - ความรุนแรงของ Alert (เช่น 'High', 'Medium', 'Low')
+ * @param {number} camera_id - รหัสกล้องที่เกี่ยวข้องกับ Alert
+ * @param {number} footage_id - รหัส Footage ที่เกี่ยวข้องกับ Alert
+ * @param {number} event_id - รหัส Event ที่เกี่ยวข้องกับ Alert
+ * @param {string} description - คำอธิบายของ Alert
+ * @returns {Promise<Alert>} Alert object ที่ถูกสร้างขึ้นใหม่
+ * @throws {Error} ถ้ากล้องไม่ออนไลน์หรือไม่ใช้งาน, หรือถ้าไม่สามารถสร้าง Alert ได้
+ * 
+ * @author Wanasart
+ */
+export async function createAlert(severity: string, camera_id: number, footage_id: number, event_id: number, description: string) {
+    const cameraExists = await pool.query(`
+        SELECT cam_id FROM cameras 
+        WHERE cam_id = $1 
+        AND cam_is_use = true
+        AND cam_status = true
+    `, [camera_id]);
+
+    if (cameraExists.rows.length === 0) {
+        throw new Error('Camera offline or not in use');
+    }
+    const { rows } = await pool.query(`
+        INSERT INTO alerts(
+	    alr_severity, alr_camera_id, alr_footage_id, alr_event_id, alr_description)
+	    VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+    `, [severity, camera_id, footage_id, event_id, description]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to create alert');
+    }
+
+    return rows[0];
+}
+
+/**
+ * อัปเดตสถานะของ Alert ตามรหัสที่กำหนด
+ *
+ * @param {number} id - รหัสของ Alert ที่ต้องการอัปเดต
+ * @param {string} status - สถานะใหม่ที่ต้องการตั้งให้กับ Alert (เช่น 'Resolved', 'Dismissed')
+ * @returns {Promise<Alert>} Alert object ที่ถูกอัปเดต
+ * @throws {Error} ถ้าไม่พบ Alert หรือไม่สามารถอัปเดตได้
+ * 
+ * @author Wanasart
+ */
+export async function updateAlert(id: number, status: string) {
+    const alertExists = await pool.query(`
+        SELECT alr_id FROM alerts 
+        WHERE alr_id = $1
+        AND alr_is_use = true
+        AND alr_status = 'Active'
+    `, [id]);
+
+    if (alertExists.rows.length === 0) {
+        throw new Error('Alert not found or already resolved/dismissed');
+    }
+    const { rows } = await pool.query(`
+        UPDATE alerts
+        SET alr_status = $2
+        WHERE alr_id = $1
+        RETURNING *
+    `, [id, status]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to update alert');
+    }
+
+    return rows[0];
+}
+
+/**
+ * ลบ Alert ตามรหัสที่กำหนดโดยการอัปเดตสถานะเป็น false
+ *
+ * @param {number} id - รหัสของ Alert ที่ต้องการลบ
+ * @returns {Promise<Alert>} Alert object ที่ถูกลบ
+ * @throws {Error} ถ้าไม่พบ Alert หรือไม่สามารถลบได้
+ * 
+ * @author Wanasart
+ */
+export async function deleteAlert(id: number){
+    const alertExists = await pool.query(`
+        SELECT alr_id FROM alerts 
+        WHERE alr_id = $1
+        AND alr_is_use = true
+    `, [id]);
+
+    if (alertExists.rows.length === 0) {
+        throw new Error('Alert not found');
+    }
+
+    const { rows } = await pool.query(`
+        UPDATE alerts
+        SET alr_is_use = false
+        WHERE alr_id = $1
+        RETURNING *
+    `, [id]);
+
+    if (rows.length === 0) {
+        throw new Error('Failed to delete alert');
+    }
+
+    return rows[0];
 }

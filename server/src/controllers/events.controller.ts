@@ -81,7 +81,6 @@ export async function update(req: Request, res: Response, next: NextFunction){
  *
  * @author Fasai
  */
-
 export async function softDelete(req: Request, res: Response, next: NextFunction) {
     try{
         const evt_id = Number(req.params.evt_id);

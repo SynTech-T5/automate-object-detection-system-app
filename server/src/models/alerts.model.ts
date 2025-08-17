@@ -35,6 +35,16 @@ export interface Alert {
     };
 }
 
+export interface InsertAlert {
+    alr_severity: string;
+    alr_create_date: Date;
+    alr_status: string;
+    alr_description: string;
+    alr_camera_id: number;
+    alr_footage_id: number;
+    alr_event_id: number;
+} 
+
 export function mapToAlert(row: any): Alert {
     return {
         alr_id: row.alr_id,

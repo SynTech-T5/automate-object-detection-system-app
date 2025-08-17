@@ -13,7 +13,7 @@
  *
  * @author Wanasart
  * @created 2025-08-16
- * @lastModified 2025-08-16
+ * @lastModified 2025-08-17
  */
 import { Router } from 'express';
 import * as ctrl from '../controllers/cameras.controller'
@@ -26,6 +26,10 @@ router.get('/total', ctrl.total);
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
+
+router.get('/event-detection', ctrl.listEventDetection);
+
+router.put("/event-detection/:cds_id/update", ctrl.updateEventDetection);
 
 router.patch('/:cam_id/change', ctrl.change);
 
