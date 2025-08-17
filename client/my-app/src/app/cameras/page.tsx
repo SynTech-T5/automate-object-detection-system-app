@@ -1,5 +1,5 @@
 import LogoutButton from '../components/LogoutButton';
-
+import BottomCameracard from '../components/bottomCameraCard';
 export default function CamerasPage() {
   return (
     <main className="p-4">
@@ -9,6 +9,8 @@ export default function CamerasPage() {
           <LogoutButton />
         </div>
       </div>
+      <BottomCameracard/>
+
 
       {/* เนื้อหา Cameras ใส่ตรงนี้ */}
     </main>
