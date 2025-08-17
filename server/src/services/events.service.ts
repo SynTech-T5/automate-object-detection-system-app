@@ -101,7 +101,6 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
  *
  * @author Fasai
  */
-
 export async function deleteEvent(evt_id: number, evt_is_use: boolean) {
     const { rows } = await pool.query(`
         UPDATE events
