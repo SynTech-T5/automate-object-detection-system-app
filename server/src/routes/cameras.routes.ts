@@ -27,6 +27,8 @@ router.get('/total', ctrl.total);
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
 
+router.get('/event-detection', ctrl.listEventDetection);
+
 router.patch('/:cam_id/change', ctrl.change);
 
 export default router;
