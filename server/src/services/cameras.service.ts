@@ -7,6 +7,14 @@ export async function listCameras() {
     return result.rows;
 }
 
+/**
+ * ดึงรายการ Camera Cards พร้อมข้อมูล Location
+ *
+ * @returns {Promise<any[]>} รายการกล้อง
+ * (id, status, name, type, health, location)
+ * 
+ * @author Wongsakon
+ */
 export async function cameraCards() {
     const result = await pool.query(
         "SELECT cam_id, cam_status, cam_name, cam_type, cam_health, loc_name FROM cameras INNER JOIN locations ON cam_location_id = loc_id"
