@@ -1,5 +1,5 @@
 import { pool } from '../config/db';
-
+import type { CamerasRow, CreateCameraInput } from '../models/cameras.model';
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
  *
@@ -27,6 +27,45 @@ export async function totalCameras() {
     );
     return result.rows;
 }
+
+/**
+ * สร้างกล้องใหม่โดยการเพิ่มข้อมูลตาม CreateCameraInput
+ * @param {input: CreateCameraInput} สร้างกล้องตามฟิลด์ข้อมูลของ CreateCameraInput 
+ * @returns {CamerasRow} รายการของ Camera ที่สร้าง
+ * @author Chokchai
+ */
+
+export async function createCameras(input: CreateCameraInput): Promise<CamerasRow>{ //สร้างกล้องตัวใหม่
+
+    const values = [
+    input.cam_name ?? null,
+    input.cam_address ?? null,
+    input.cam_type ?? null,
+    input.cam_resolution ?? null,
+    input.cam_description ?? null,
+    input.cam_installation_date ?? null,
+    input.cam_health ?? null,
+    input.cam_video_quality ?? null,
+    input.cam_network_latency ?? null,
+    input.cam_location_id ?? null,
+  ];
+
+  const sql = `
+    INSERT INTO public.cameras
+      (cam_name, cam_address, cam_type, cam_resolution, cam_description,
+       cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+        cam_location_id)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    RETURNING
+      cam_id, cam_name, cam_address, cam_type, cam_resolution, cam_description,
+      cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+      cam_is_use, cam_location_id
+  `;
+    const r = await pool.query(sql, values);
+    return r.rows[0] as CamerasRow;
+}
+
 
 /**
  * ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
@@ -80,6 +119,7 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
 
     return result.rows;
 }
+
 /**
  * เปลี่ยนสถานะของกล้อง
  *
@@ -96,4 +136,113 @@ export async function changeStatus(cam_id: number, cam_status: boolean) {
         [cam_status, cam_id]
     );
     return result.rows[0]; // คืนค่ากล้องที่ถูกอัพเดต
+}
+
+/**
+ * ดึงรายการ Event Detection จากฐานข้อมูล
+ *
+ * @returns {Promise<any[]>} รายการ Event Detection
+ * (icon, name, sensitivity, priority, status)
+ * @description
+ * ฟังก์ชันนี้จะ query join ข้อมูลระหว่าง events กับ camera_detection_settings
+ * โดยใช้ evt_id = cds_event_id เพื่อดึงรายละเอียดที่จำเป็นสำหรับการแสดงผล
+ * 
+ * @author Wongsakon
+ */
+export async function eventDetection() {
+    const result = await pool.query(
+        "SELECT evt_id, evt_icon, evt_name, cds_sensitivity, cds_priority, cds_status FROM events INNER JOIN camera_detection_settings ON evt_id = cds_event_id"
+    );
+    return result.rows;
+}
+
+
+/**
+ * อัปเดตข้อมูล Event Detection 
+ * 
+ * @param {number} cds_id - รหัสของ camera_detection_settings
+ * @param {string} cds_sensitivity - ค่า sensitivity ใหม่ (High, Medium, Low)
+ * @param {string} cds_priority - ค่า priority ใหม่ (High, Medium, Low)
+ * @param {boolean} cds_status - สถานะใหม่ (true/false)
+ * @returns {Promise<object>} Event Detection หลังอัปเดต
+ * 
+ * @author Wongsakon
+ */
+export async function updateEventDetection(cds_id: number, cds_sensitivity: string, cds_priority: string, cds_status: boolean) {
+    const { rows } = await pool.query(
+      `
+      UPDATE camera_detection_settings
+      SET cds_sensitivity = $1,
+          cds_priority = $2,
+          cds_status = $3
+      WHERE cds_id = $4 
+      RETURNING *;
+      `,
+      [cds_sensitivity, cds_priority, cds_status, cds_id]);
+  
+    const detection = rows[0];
+  
+    if (!detection) {
+      throw new Error("Failed to update detection or not found");
+    }
+  
+    return detection;
+}
+
+/**
+ * เพิ่มข้อมูลของ EventDetection
+ *
+ * @param {number} cds_event_id - รหัสของ Event 
+ * @param {number} cds_camera_id - รหัสของ Camera
+ * @param {string} cds_sensitivity - ความไวในการตรวจจับ
+ * @param {string} cds_priority - ความสำคัญของ Eventdetection
+ * @param {string} cds_status - สถานะของ Eventdetection
+ * @returns {Promise<object>} EventDetection object หลังสร้างเสร็จ
+ *
+ * @author Audomsak
+ */
+export async function createEventDetection( cds_event_id: number,
+    cds_camera_id: number,
+    cds_sensitivity: string = "Medium",
+    cds_priority: string = "Medium",
+    cds_status: boolean = true
+) {
+    const { rows } = await pool.query(`
+        INSERT INTO camera_detection_settings (cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+    `, [cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status]);
+
+    const eventDetection = rows[0];
+
+    if (!eventDetection) {
+        throw new Error('Failed to insert Event Detection');
+    }
+
+    return eventDetection;
+}
+
+/**
+ * ดึงรายการ Event Detection ทั้งหมด
+ *
+ * @returns {Promise<EventDetection[]>} รายการ Event Detection ที่ถูกใช้งานอยู่ทั้งหมด
+ * @description ดึงข้อมูล Event Detection จากฐานข้อมูลโดยเรียงตาม cds_id จากมากไปน้อย และแสดงเฉพาะ Event Detection ที่ยังใช้งานอยู่
+ *
+ * @author Audomsak
+ */
+export async function deleteEventDetection(cds_id: number, cds_is_use: boolean) {
+    const { rows } = await pool.query(`
+        UPDATE camera_detection_settings
+        set cds_is_use = $1
+        WHERE cds_id = $2
+        RETURNING *;
+        `, [cds_is_use, cds_id]);
+
+    const events = rows[0];
+
+    if (!events) {
+        throw new Error('Failed to delete EventDetection or EventDetection not found');
+    }
+
+    return events
 }

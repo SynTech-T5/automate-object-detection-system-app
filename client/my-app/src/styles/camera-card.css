@@ -1,0 +1,62 @@
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css');
+.camera-card {
+  border-radius: 1rem;
+  border: 1px solid #3b82f6;
+  padding: 1rem;
+  background-color: rgb(194, 222, 253);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-width: 20rem;
+  width: 300px;  /* ความกว้างของกล่อง */
+  height: 225px; /* ความสูงของกล่อง */
+  position: relative; /* ให้เป็น relative เพื่อให้ camera-card1 ซ้อนทับได้ */
+}
+
+.camera-card1 {
+  border-radius: 1rem;
+  border: 1px solid #3b82f6;
+  padding: 1rem;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  width: 298px;  /* ความกว้างของกล่องเล็กกว่าเพื่อให้เห็นกรอบข้างหลัง */
+  height: 200px; /* ความสูงของกล่องเล็กกว่าเพื่อให้เห็นกรอบข้างหลัง */
+  position: absolute; /* จัดตำแหน่งแบบ absolute */
+  top: 22.5px; /* (225px - 180px) / 2 = 22.5px เพื่อให้อยู่ตรงกลางแนวตั้ง */
+  left: 0px; /* (300px - 280px) / 2 = 10px เพื่อให้อยู่ตรงกลางแนวนอน */
+  z-index: 5; /* ให้อยู่ด้านบน */
+}
+.camera-card-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1.5px solid #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute; /* จัดตำแหน่งแบบ absolute */
+  top: 0.5rem; /* อยู่บนสุด */
+  left: 50%; /* อยู่ตรงกลางแนวนอน */
+  transform: translateX(-50%); /* จัดให้อยู่ตรงกลาง */
+  z-index: 10; /* ให้อยู่ด้านบนสุด */
+  background-color: white; /* พื้นหลังสีขาว */
+  overflow: hidden; /* ซ่อนส่วนที่เกินขอบเขต */
+}
+.camera-card-icon i {
+  font-size: 1.2rem; /* ปรับขนาดได้ตามชอบ */
+  line-height: 1;
+  color: #3b82f6; /* เปลี่ยนสีไอคอน */
+  position: relative;
+  top: 2px; /* ปรับตำแหน่งไอคอนให้อยู่ตรงกลาง */
+}
+.camera-card1 h2 {
+  color: #2563eb; /* น้ำเงิน */
+  font-size: 1rem; /* ขนาดตัวอักษร */
+  fort-weight: bold; /* หนักตัวอักษร */
+  position: relative;
+  top: 100px;
+}
+.camera-card1 p {
+  color: #2563eb; 
+  font-size: 0.8rem; /* ขนาดตัวอักษร */
+  position: relative;
+  top: 10px;
+}

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { verifySessionToken, getUserSafeById } from '../services/auth.service';
 import * as AuthService from '../services/auth.service';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -33,7 +34,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             secure: isProd, // Use secure cookies in production
             sameSite: 'lax', // Helps prevent CSRF attacks
             path: '/', // Cookie is accessible on all routes
-            // domain: 'dekdee2.informatics.buu.ac.th', // ใส่เมื่อโปรดักชันถ้าจำเป็น
+            domain: 'dekdee2.informatics.buu.ac.th', // ใส่เมื่อโปรดักชันถ้าจำเป็น
             maxAge: 60 * 60 * 1000 // 1 hour expiration
         });
 
@@ -91,4 +92,39 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     } catch (err) {
         next(err);
     }
+}
+
+/**
+ * ตรวจสอบสถานะการเข้าสู่ระบบของผู้ใช้
+ *
+ * - ใช้ session token ที่เก็บใน cookie เพื่อตรวจสอบตัวตน
+ * - คืนข้อมูลผู้ใช้ที่ปลอดภัย (ไม่มี password)
+ *
+ * @route GET /api/auth/me
+ * @param {Request} req - Express request object (cookie: access_token)
+ * @param {Response} res - Express response object (ส่งข้อมูลผู้ใช้)
+ * @param {NextFunction} next - Express next middleware
+ * @returns {Promise<Response>} JSON response → { usr_id, usr_username, usr_email, usr_role }
+ *
+ * @author Wanasart
+ */
+export async function me(req: Request, res: Response, next: NextFunction) {
+  try {
+    const token = req.cookies?.access_token;
+    if (!token) return res.status(401).json({ error: 'Unauthenticated' });
+
+    const payload = verifySessionToken(token); // { id, role }
+    const user = await getUserSafeById(payload.id);
+    if (!user) return res.status(401).json({ error: 'User not found' });
+
+    // ส่งเฉพาะ field ที่ใช้แสดงผล
+    return res.json({
+      usr_id: user.usr_id,
+      usr_username: user.usr_username,
+      usr_email: user.usr_email,
+      usr_role: user.usr_role,
+    });
+  } catch (err) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
 }
