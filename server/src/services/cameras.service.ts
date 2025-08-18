@@ -1,5 +1,6 @@
 import { pool } from '../config/db';
 import type { CamerasRow, CreateCameraInput } from '../models/cameras.model';
+
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
  *
@@ -29,12 +30,51 @@ export async function totalCameras() {
 }
 
 /**
+ * ค้นหากล้องโดยจะรับข้อมูลเป็น id ชื่อกล้อง ชื่อสถานที่ 
+ * @param {id?:number; name?: string; location?:string} เลือกกรอกกรอกข้อมูล ชื่อกล้อง id กล้อง สถานที่ของกล้อง 
+ * @returns cam_id คืนเลข id ของกล้องที่เจอ
+ * @author Chokchai
+ */
+export async function findCameras({id,name,location} : {id?:number; name?: string; location?:string}) {
+  const conds:string[] = []; // เก็บเงื่อนไข WHERE
+  const params:any[] = []; // เก็บค่าพารามิเตอร์สำหรับ
+  let i = 1;
+  if(id){                      // ถ้ามี id ให้ค้น
+    conds.push(`c.cam_id = $${i++}`);
+    params.push(id);
+  }
+  if(name){
+    conds.push(`c.cam_name ILIKE $${i++}`);
+    params.push(`%${name}%`);
+  }
+  if (location){ 
+    conds.push(`l.loc_name ILIKE $${i++}`);   
+    params.push(`%${location}%`); 
+  }
+  if (conds.length === 0) {
+    throw new Error('id or name or location required');
+  }
+  
+  const sql = `
+    SELECT c.*, l.loc_name AS location_name
+    FROM public.cameras c
+    LEFT JOIN public.locations l ON l.loc_id = c.cam_location_id   
+    WHERE (${conds.join(' OR ')}) 
+      AND c.cam_is_use IS TRUE
+    ORDER BY c.cam_id ASC
+    `;
+  
+  const r = await pool.query(sql, params);
+  return r.rows.map((row: any) => row.cam_id);;
+}
+}
+
+/**
  * สร้างกล้องใหม่โดยการเพิ่มข้อมูลตาม CreateCameraInput
  * @param {input: CreateCameraInput} สร้างกล้องตามฟิลด์ข้อมูลของ CreateCameraInput 
  * @returns {CamerasRow} รายการของ Camera ที่สร้าง
  * @author Chokchai
  */
-
 export async function createCameras(input: CreateCameraInput): Promise<CamerasRow>{ //สร้างกล้องตัวใหม่
 
     const values = [
@@ -65,7 +105,6 @@ export async function createCameras(input: CreateCameraInput): Promise<CamerasRo
     const r = await pool.query(sql, values);
     return r.rows[0] as CamerasRow;
 }
-
 
 /**
  * ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
