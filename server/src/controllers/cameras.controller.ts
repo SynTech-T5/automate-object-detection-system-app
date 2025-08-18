@@ -42,6 +42,26 @@ export async function total(req: Request, res: Response, next: NextFunction){
 }
 
 /**
+ * Controller: เพิ่มกล้องใหม่
+ * @route POST /api/cameras/create
+ * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
+ * @param res ส่งข้อมูลของกล้องกลับ
+ * @param next ส่งต่อ error
+ * @returns -JSON response ส่งข้อมูลของกล้องที่สร้างกลับพร้อมแสดงสถานะ 201
+ * @author Chokchai
+ */
+
+export async function create(req: Request, res: Response, next: NextFunction) { //create camera
+  try {
+    const created = await CameraService.createCameras(req.body);
+    return res.status(201).json(created);
+  } catch (err) {
+    next(err);
+  }
+}
+
+
+/**
  * Controller: ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
  *
  * @route GET /api/cameras/maintenance
@@ -208,3 +228,5 @@ export async function softDeleteEventDetect(req: Request, res: Response, next: N
         next(err);
     }
 }
+
+
