@@ -34,7 +34,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
             secure: isProd, // Use secure cookies in production
             sameSite: 'lax', // Helps prevent CSRF attacks
             path: '/', // Cookie is accessible on all routes
-            domain: 'dekdee2.informatics.buu.ac.th', // ใส่เมื่อโปรดักชันถ้าจำเป็น
+            // domain: 'dekdee2.informatics.buu.ac.th', // ใส่เมื่อโปรดักชันถ้าจำเป็น
             maxAge: 60 * 60 * 1000 // 1 hour expiration
         });
 
