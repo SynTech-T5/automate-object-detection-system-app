@@ -4,7 +4,7 @@ import React from 'react';
 
 // โครงสร้าง props
 interface StatusCardProps {
-    id: number;
+    id: number; 
     title: string;
     value: string;
     totalValue?: string; // เพิ่ม prop ใหม่สำหรับค่าตัวเลขรวม
@@ -22,18 +22,20 @@ const StatusCard: React.FC<StatusCardProps> = (props) => {
 
     if (isCardInAlertsMenu) {
         return (
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-100 w-[400px] h-[120px] flex flex-col justify-between">
-                <div className='px-[30px] pt-[14px] pb-[15px]'>
+            // ลบคลาส w-[400px] ออกเพื่อให้รองรับ responsive
+            <div className="bg-white rounded-[10px] shadow-md border border-gray-100 w-full h-[120px] flex flex-col justify-between">
+                {/* ปรับขนาด padding ให้เหมาะสมกับทุกหน้าจอ */}
+                <div className='px-4 pt-[14px] pb-[15px] md:px-[30px]'>
                     {/* ส่วน Title */}
                     <div>
-                        <h4 className="text-base font-medium text-[#000000]">{title}</h4>
+                       <h4 className="text-sm md:text-base font-medium text-[#000000]">{title}</h4>
                     </div>
                     {/* ส่วน ไอคอน และ จำนวน */}
                     <div className="flex items-center gap-x-[10px] mt-1">
                         <div className={`w-[30px] h-[30px] flex items-center justify-center ${textColorClass}`}>
                             {IconComponent}
                         </div>
-                        <div className={`text-[24px] font-medium pb-1 ${textColorClass}`}>{value}</div>
+                        <div className={`text-2xl md:text-[24px] font-medium pb-1 ${textColorClass}`}>{value}</div>
                     </div>
                     {/* ส่วน คำอธิบาย */}
                     <div>
@@ -45,24 +47,27 @@ const StatusCard: React.FC<StatusCardProps> = (props) => {
     } else {
         // สำหรับการ์ดที่มี ID 2, 4, 6, 8 ซึ่งอยู่ในหน้าเมนู Cameras
         return (
-            <div className="bg-white rounded-[10px] shadow-md border border-gray-100 w-[400px] h-[120px] flex flex-col justify-between">
-                <div className='px-[30px] py-[25px]'>
-                    <h4 className="text-base font-medium text-[#000000]">{title}</h4>
+            // ลบคลาส w-[400px] ออกเพื่อให้รองรับ responsive
+            <div className="bg-white rounded-[10px] shadow-md border border-gray-100 w-full h-[120px] flex flex-col justify-between">
+                {/* ปรับขนาด padding ให้เหมาะสมกับทุกหน้าจอ */}
+                <div className='px-4 py-[25px] md:px-[30px]'>
+                    <h4 className="text-sm md:text-base font-medium text-[#000000]">{title}</h4>
                     <div className="flex items-center gap-x-[10px] mt-2">
                         <div className={`w-[30px] h-[30px] flex items-center justify-center ${textColorClass}`}>
                             {IconComponent}
                         </div>
 
                         <div className="flex items-baseline gap-x-1">
-                            <span className={`text-[24px] font-medium pb-1 ${textColorClass}`}>{value}</span>
+                            {/* ปรับขนาด font ให้เหมาะสมกับทุกหน้าจอ */}
+                            <span className={`text-2xl md:text-[24px] font-medium pb-1 ${textColorClass}`}>{value}</span>
 
                             {totalValue && ( // ถ้ามีค่า totalValue ถึงจะแสดง ถ้าไม่มี ก็ไม่โชว์อะไรเลย
                                 <>
                                     {/* แสดงเครื่องหมาย / ไว้คั่นระหว่าง value กับ totalValue */}
-                                    <span className="text-[16px] text-[#8C8686] font-medium pb-1">/</span>
+                                    <span className="text-base md:text-[16px] text-[#8C8686] font-medium pb-1">/</span>
 
                                     {/* แสดงค่ารวมทั้งหมด (totalValue) ต่อท้ายหลังจาก / */}
-                                    <span className="text-[12px] text-[#8C8686] font-medium pb-1">{totalValue}</span>
+                                    <span className="text-sm md:text-[12px] text-[#8C8686] font-medium pb-1">{totalValue}</span>
                                 </>
                             )}
                         </div>
