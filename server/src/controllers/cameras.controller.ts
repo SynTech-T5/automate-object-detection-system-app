@@ -98,7 +98,7 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
  *
  * @author Napat
  */
-export async function create(req: Request, res: Response, next: NextFunction) {
+export async function createMaintenance(req: Request, res: Response, next: NextFunction) {
     try {
         const { date, type, technician, note } = req.body;
         const camId = Number(req.params.cam_id);

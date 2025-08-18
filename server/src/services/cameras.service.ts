@@ -87,11 +87,11 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
  * ฟังก์ชันนี้จะเพิ่มวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
  * หากเพิ่มไม่สำเร็จ จะโยน Error
  *
+ * @param {number} camId - ID ของกล้องที่ซ่อม
  * @param {Date} date - วันที่ที่เพิ่มข้อมูล
- * @param {MaintenanceType} type - ประเภทของการซ่อม
+ * @param {string} type - ประเภทของการซ่อม
  * @param {string} technician - ชื่อของช่างที่ซ่อม
  * @param {string} note - คำอธิบายของ Maintenance History
- * @param {number} camId - ID ของกล้องที่ซ่อม
  * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
  * @throws {Error} เมื่อเพิ่ม Maintenance History ไม่สำเร็จ
  *
