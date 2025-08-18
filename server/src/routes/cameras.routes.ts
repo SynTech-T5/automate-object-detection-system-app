@@ -36,29 +36,11 @@ router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
 
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
-// router.get('/maintenance',ctrl.listMaintenance);
+router.get('/maintenance',ctrl.listMaintenance);
 
 router.get('/:cam_id/access-control',ctrl.getAccessControlById);
 router.get('/access-control',ctrl.getAccessControl);
 
-router.get('/find/:term', ctrl.find);
-
-router.delete('/delete/:id', ctrl.remove); 
-
-router.post('/create', ctrl.create);
-
-// Maintenance
-router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
-router.get('/maintenance',ctrl.listMaintenance);
-router.post('/:cam_id/maintenance/create', ctrl.createMaintenance);
-
-
-router.get('/event-detection', ctrl.listEventDetection);
-router.post('/createDetect',ctrl.createEventDetection);
-router.put("/event-detection/:cds_id/update", ctrl.updateEventDetection);
-router.patch('/:cds_id/deleteDetect', ctrl.softDeleteEventDetect);
-
-router.patch('/:cam_id/change', ctrl.change);
 
 
 export default router;

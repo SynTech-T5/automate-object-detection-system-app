@@ -88,97 +88,42 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
 }
 
 /**
- * Controller: เปลี่ยนสถานะของกล้อง
+ * Controller: ดึงข้อมูลการควบคุมสิทธิ์การเข้าถึงของกล้องตาม cam_id
  *
- * @route POST /api/cameras/change
- * @param {Request} req - Express request object (ต้องมี body ที่ประกอบด้วย id และ status)
- * @param {Response} res - Express response object (ส่งกลับกล้องที่ถูกเปลี่ยนสถานะเป็น JSON)
+ * @route GET /api/cameras/:cam_id/access-control
+ * @param {Request} req - Express request object (ต้องมี params: cam_id)
+ * @param {Response} res - Express response object (ส่งกลับข้อมูล access control ของกล้องที่เลือกเป็น JSON)
  * @param {NextFunction} next - Express next middleware function
- * @returns {Promise<void>} JSON response ของกล้องที่ถูกเปลี่ยนสถานะ
+ * @returns {Promise<void>} JSON response ของการควบคุมสิทธิ์กล้อง (access control)
  *
- * @author Audomsak
+ * @author Jirayu
  */
-export async function change(req: Request, res: Response, next: NextFunction){
-    try {
-        const {cam_id} = req.params;
-        const {status} = req.body;
-
-        const id = Number(cam_id);
-
-        if (isNaN(id) || isNaN(status)) {
-            return res.status(400).json({ message: "id and status are required" });
-        }
-
-        const updatedCamera = await CameraService.changeStatus(id, status);
-
-        res.json(updatedCamera);
-    } catch(err) {
-        next(err);
-    }
-};
-
-/**
- * Controller: ดึงรายการ Event Detection 
- *
- * @route GET /api/:cam_id/event-detection
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object (ส่งกลับ event detections เป็น JSON)
- * @param {NextFunction} next - Express next middleware function
- * @returns {Promise<void>} JSON response ของ event detections
- *
- * @author Wongsakon
- */
-export async function listEventDetection(req: Request, res: Response, next: NextFunction){
-    try {
-        const eventDetection = await CameraService.eventDetection();
-        res.json(eventDetection);
-    } catch(err) {
-        next(err);
-    }
-}
-
-
-/**
- * อัปเดต Event Detection
- *
- * @route PUT /api/events/:cds_id/update/event-detection
- * @param req - Request ของ Express (params: cds_id, body: cds_sensitivity, cds_priority, cds_status)
- * @param res - Response ของ Express
- * @param next - ส่งต่อ error ไปยัง error handler
- * @returns {Promise<Response>} JSON response ของ Event Detection ที่อัปเดตแล้ว
- *
- * @throws Error หากเกิดข้อผิดพลาดระหว่างการอัปเดต
- * 
- * @author Wongsakon
- */
-export async function updateEventDetection(req: Request, res: Response, next: NextFunction) {
-    try {
-      const cds_id = Number(req.params.cds_id);
-      const { cds_sensitivity, cds_priority, cds_status } = req.body;
-      const updated = await CameraService.updateEventDetection(cds_id, cds_sensitivity, cds_priority, cds_status);
-      return res.json(updated);
-    } catch (err) {
-      next(err);
-    }
-  }
-
 export async function getAccessControlById(req: Request, res: Response, next: NextFunction) {
-    try {
-        const cam_id = Number(req.params.cam_id); 
- 
-        const cameraAccess = await CameraService.showCameraAccessControlById(cam_id);
-        return res.json(cameraAccess);
-    } catch (error) {
-        next(error);
-    }
+    try {
+        const cam_id = Number(req.params.cam_id); 
+        const cameraAccess = await CameraService.showCameraAccessControlById(cam_id);
+        return res.json(cameraAccess);
+    } catch (error) {
+        next(error);
+    }
 }
+
+/**
+ * Controller: ดึงข้อมูลการควบคุมสิทธิ์การเข้าถึงของกล้องทั้งหมด
+ *
+ * @route GET /api/cameras/access-control
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับข้อมูล access control ของกล้องทั้งหมดเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของการควบคุมสิทธิ์กล้องทั้งหมด
+ *
+ * @author Jirayu
+ */
 export async function getAccessControl(req: Request, res: Response, next: NextFunction) {
-    try {
-        
- 
-        const cameraAccess = await CameraService.showCameraAccessControl();
-        return res.json(cameraAccess);
-    } catch (error) {
-        next(error);
-    }
+    try {
+        const cameraAccess = await CameraService.showCameraAccessControl();
+        return res.json(cameraAccess);
+    } catch (error) {
+        next(error);
+    }
 }

@@ -253,55 +253,6 @@ export async function eventDetection() {
 
 
 /**
- * อัปเดตข้อมูล Event Detection 
- * 
- * @param {number} cds_id - รหัสของ camera_detection_settings
- * @param {string} cds_sensitivity - ค่า sensitivity ใหม่ (High, Medium, Low)
- * @param {string} cds_priority - ค่า priority ใหม่ (High, Medium, Low)
- * @param {boolean} cds_status - สถานะใหม่ (true/false)
- * @returns {Promise<object>} Event Detection หลังอัปเดต
- * 
- * @author Wongsakon
- */
-export async function updateEventDetection(cds_id: number, cds_sensitivity: string, cds_priority: string, cds_status: boolean) {
-    const { rows } = await pool.query(
-        `
-      UPDATE camera_detection_settings
-      SET cds_sensitivity = $1,
-          cds_priority = $2,
-          cds_status = $3
-      WHERE cds_id = $4 
-      RETURNING *;
-      `,
-        [cds_sensitivity, cds_priority, cds_status, cds_id]);
-
-    const detection = rows[0];
-
-    if (!detection) {
-        throw new Error("Failed to update detection or not found");
-    }
-
-    return detection;
-}
-
-export async function showCameraAccessControlById(caa_camera_id: number) {
-    const query = `SELECT 
-                    caa_require_auth,
-                    caa_restrict,
-                    caa_log 
-                    FROM cameras_access
-                    WHERE caa_camera_id = $1`;
-    const result = await pool.query(query, [caa_camera_id]);
-    return result.rows;
-
-}
-export async function showCameraAccessControl() {
-    const query = `SELECT *
-	FROM cameras_access`;
-    const result = await pool.query(query);
-    return result.rows;
-
-/**
  * เพิ่มข้อมูลของ EventDetection
  *
  * @param {number} cds_event_id - รหัสของ Event 
@@ -357,4 +308,39 @@ export async function deleteEventDetection(cds_id: number, cds_is_use: boolean) 
     }
 
     return events
+}
+
+
+/**
+ * ดึงข้อมูล Access Control ของกล้องตาม cam_id
+ *
+ * @param {number} caa_camera_id - รหัสกล้องที่ต้องการดึงข้อมูล access control
+ * @returns {Promise<object[]>} รายการ access control ของกล้องที่เลือก
+ *
+ * @author Jirayu
+ */
+export async function showCameraAccessControlById(caa_camera_id: number) {
+    const query = `SELECT 
+                    caa_require_auth,
+                    caa_restrict,
+                    caa_log,
+                    caa_camera_id 
+                  FROM cameras_access
+                  WHERE caa_camera_id = $1`;
+    const result = await pool.query(query, [caa_camera_id]);
+    return result.rows;
+}
+
+/**
+ * ดึงข้อมูล Access Control ของกล้องทั้งหมด
+ *
+ * @returns {Promise<object[]>} รายการ access control ของกล้องทั้งหมด
+ *
+ * @author Jirayu
+ */
+export async function showCameraAccessControl() {
+    const query = `SELECT *
+                   FROM cameras_access`;
+    const result = await pool.query(query);
+    return result.rows;
 }
