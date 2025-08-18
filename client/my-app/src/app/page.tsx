@@ -1,38 +1,9 @@
 import Image from "next/image";
-import { 
-    ActiveAlertsCard, 
-    TotalCamerasCard,
-    TotalAlertsCard,
-    ActiveCamerasCard,
-    ResolvedAlertsCard,
-    InactiveCamerasCard,
-    CriticalAlertsCard,
-    AvgCameraHealthCard
-} from "./components/statusCard";
 
 export default function Home() {
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        {/*
-          New section for displaying all the status cards.
-          Using a flexbox layout to arrange cards in a single horizontal row with wrapping.
-          'flex-row flex-wrap' class provides horizontal alignment and allows cards to wrap to the next line on smaller screens.
-          The 'gap-4' class has been added to provide spacing between the cards.
-        */}
-        <div className="flex flex-wrap gap-4 w-full justify-center">
-            {/* All Cards in a single row */}
-            <TotalAlertsCard />
-            <ActiveAlertsCard />
-            <ResolvedAlertsCard />
-            <CriticalAlertsCard />
-            <TotalCamerasCard />
-            <ActiveCamerasCard />
-            <InactiveCamerasCard />
-            <AvgCameraHealthCard />
-        </div>
-
-        {/* The rest of the original content */}
         <Image
           className="dark:invert"
           src="/next.svg"
