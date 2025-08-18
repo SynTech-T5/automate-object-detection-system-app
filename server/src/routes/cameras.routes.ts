@@ -6,6 +6,8 @@
  *  - GET /api/cameras/total                            → ดึงจำนวนกล้องทั้งหมด
  *  - GET /api/cameras/:cam_id/maintenance              → ดึงข้อมูลการบำรุงรักษาของกล้องตาม cam_id
  *  - GET /api/cameras/maintenance                      → ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
+ *  - POST /api/maintenance_history/:cam_id/create      → สร้าง Maintenance History ใหม่
+ *  - POST /api/maintenance_history/:cam_id/delete      → ลบ Maintenance History
  *  - GET /api/cameras/event-detection                  → ดึงรายการ EventDetection ทั้งหมด
  *  - POST /api/events/createDetect                     → สร้าง EventDetect 
  *  - PUT /api/cameras/event-detection/:cds_id/update   → แก้ไข EventDetection ที่เลือก
@@ -31,6 +33,8 @@ router.get('/total', ctrl.total);
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
+router.post('/:cam_id/maintenance/create', ctrl.create);
+router.post('/:cam_id/maintenance/delete', ctrl.softDelete);
 
 router.get('/event-detection', ctrl.listEventDetection);
 router.post('/createDetect',ctrl.createEventDetection);
