@@ -4,7 +4,7 @@ import "@/styles/bottomcameara.css";
 export default function BottomCameraCard() {
   return (
     <div className="flex mt-4">
-      {/* View */}
+      // View 
       <button
         type="button"
         aria-label="View"

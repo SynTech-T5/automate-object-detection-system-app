@@ -3,6 +3,9 @@
 import LogoutButton from '../components/LogoutButton';
 import BottomCameracard from '../components/bottomCameraCard';
 import CameraCard from '../components/cameraCard';
+import InputBox from '../components/InputBox';
+
+
 
 export default function CamerasPage() {
   return (
