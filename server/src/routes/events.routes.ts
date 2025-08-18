@@ -2,10 +2,10 @@
  * Events Router
  *
  * กำหนดเส้นทาง (routes) สำหรับจัดการ Events:
- *  - GET  /api/events   → ดึงรายการ events ทั้งหมด
- *  - POST /api/events   → เพิ่ม Event ใหม่
- *  - PUT /api/events/:evt_id/update → แก้ไข Event ที่ทำการเลือก
- *  - PATCH /api/events/:evt_id/delete → ลบ Event ที่ทำการเลือกโดยการเปลี่ยนสถานะแทนการลบจริง
+ *  - GET  /api/events                  → ดึงรายการ events ทั้งหมด
+ *  - POST /api/events                  → เพิ่ม Event ใหม่
+ *  - PUT /api/events/:evt_id/update    → แก้ไข Event ที่ทำการเลือก
+ *  - PATCH /api/events/:evt_id/delete  → ลบ Event ที่ทำการเลือกโดยการเปลี่ยนสถานะแทนการลบจริง
  * 
  * @module routes/events
  * @requires express

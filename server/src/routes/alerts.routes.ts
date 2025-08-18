@@ -9,6 +9,8 @@
  *  - GET /api/alerts/:days_back/trend  → ดึงแนวโน้มของ alerts ในช่วงวันที่กำหนด
  *  - GET /api/alerts/distribution      → ดึงการกระจายของ alerts ตามประเภทต่างๆ
  *  - POST /api/alerts                  → สร้าง alert ใหม่
+ *  - PATCH /api/alerts/:alr_id/update  → แก้ไขข้อมูล alert ตาม alr_id
+ *  - PATCH /api/alerts/:alr_id/delete  → ลบ alert ตาม alr_id โดยการเปลี่ยนสถานะเป็นไม่ใช้งาน
  *
  * @module routes/alerts
  * @requires express
@@ -16,7 +18,7 @@
  *
  * @author Wanasart
  * @created 2025-08-15
- * @lastModified 2025-08-15
+ * @lastModified 2025-08-17
  */
 import { Router } from "express";
 import * as ctrl from "../controllers/alerts.controller";
@@ -31,5 +33,8 @@ router.get("/:days_back/trend", ctrl.trend);
 router.get("/distribution", ctrl.distribution);
 
 router.post("/", ctrl.create);
+
+router.patch("/:alr_id/update", ctrl.update);
+router.patch("/:alr_id/delete", ctrl.softDelete);
 
 export default router;

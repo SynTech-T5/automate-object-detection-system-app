@@ -162,3 +162,59 @@ export async function create(req: Request, res: Response, next: NextFunction) {
         next(err);
     }
 }
+
+/**
+ * Controller: อัปเดตสถานะของ Alert
+ *
+ * @route POST /api/alerts/:alr_id/update
+ * @param {Request} req - Express request object (params: { alr_id }, body: { status })
+ * @param {Response} res - Express response object (ส่งกลับ Alert ที่อัปเดตเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Alert ที่อัปเดต
+ *
+ * @author Wanasart
+ */
+export async function update(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { alr_id } = req.params;
+        const { status } = req.body;
+
+        if (!alr_id || isNaN(Number(alr_id))) {
+            return res.status(400).json({ error: "Invalid alert ID" });
+        }
+
+        if (!status || !['Resolved', 'Dismissed'].includes(status)) {
+            return res.status(400).json({ error: "Invalid status. Must be 'Resolved' or 'Dismissed'" });
+        }
+
+        const updatedAlert = await AlertService.updateAlert(Number(alr_id), status);
+        res.json(updatedAlert);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: ลบ Alert โดยการอัปเดตสถานะเป็น false
+ *
+ * @route DELETE /api/alerts/:alr_id
+ * @param {Request} req - Express request object (params: { alr_id })
+ * @param {Response} res - Express response object (ส่งกลับ Alert ที่ถูกลบเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Alert ที่ถูกลบ
+ *
+ * @author Wanasart
+ */
+export async function softDelete(req: Request, res: Response, next: NextFunction){
+    try {
+        const { alr_id } = req.params;
+        if (!alr_id || isNaN(Number(alr_id))) {
+            return res.status(400).json({ error: "Invalid alert ID" });
+        }
+
+        const deletedAlert = await AlertService.deleteAlert(Number(alr_id));
+        res.json(deletedAlert);
+    } catch (err) {
+        next(err);
+    }
+}

@@ -25,7 +25,7 @@ import cameras from './cameras.routes'
 import login from './login.routes';
 import register from './register.routes';
 import alerts from './alerts.routes';
-import events from './events.routes';
+import events from './events.routes'
 
 const router = Router();
 
