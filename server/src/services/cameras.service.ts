@@ -29,6 +29,20 @@ export async function totalCameras() {
 }
 
 /**
+ * นับจำนวนกล้องทั้งหมดที่ไม่ได้ใช้งาน
+ *
+ * @returns {Promise<any[]>} จำนวนกล้องที่ไม่ได้ใช้งาน
+ * 
+ * @author Napat
+ */
+export async function totalInactiveCameras() {
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM cameras WHERE cam_status = false"
+    );
+    return result.rows;
+}
+
+/**
  * ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
  *
  * @returns {Promise<any[]>} รายการประวัติการซ่อมบำรุงกล้องทั้งหมด

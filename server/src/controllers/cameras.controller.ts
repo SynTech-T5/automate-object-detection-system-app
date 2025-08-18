@@ -42,6 +42,26 @@ export async function total(req: Request, res: Response, next: NextFunction){
 }
 
 /**
+ * Controller: นับรายการ Cameras ทั้งหมดที่ไม่ได้ใช้งาน
+ *
+ * @route GET /api/cameras/totalInactive
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการ จำนวนกล้องที่ไม่ได้ใช้งานทั้งหมด เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการจำนวนกล้องที่ไม่ได้ใช้งานทั้งหมด
+ *
+ * @author Napat
+ */
+export async function totalInactive(req: Request, res: Response, next: NextFunction){
+    try {
+        const total = await CameraService.totalInactiveCameras();
+        res.json(total);
+    } catch(err) {
+        next(err);
+    }
+}
+
+/**
  * Controller: ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
  *
  * @route GET /api/cameras/maintenance
