@@ -26,7 +26,6 @@ import login from './login.routes';
 import register from './register.routes';
 import alerts from './alerts.routes';
 import events from './events.routes'
-import maintenance_history from './maintenance_history.routes';
 
 const router = Router();
 
@@ -44,8 +43,5 @@ router.use('/alerts', alerts);
 
 // Events routes
 router.use('/events', events);
-
-// Maintenance History routes
-router.use('/maintenance_history', maintenance_history)
 
 export default router;

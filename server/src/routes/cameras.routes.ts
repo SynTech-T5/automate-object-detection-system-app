@@ -31,6 +31,7 @@ router.get('/total', ctrl.total);
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
+router.post('/:cam_id/maintenance/create', ctrl.create);
 
 router.get('/event-detection', ctrl.listEventDetection);
 router.post('/createDetect',ctrl.createEventDetection);
