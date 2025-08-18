@@ -87,11 +87,11 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
  * ฟังก์ชันนี้จะเพิ่มวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
  * หากเพิ่มไม่สำเร็จ จะโยน Error
  *
+ * @param {number} camId - ID ของกล้องที่ซ่อม
  * @param {Date} date - วันที่ที่เพิ่มข้อมูล
  * @param {MaintenanceType} type - ประเภทของการซ่อม
  * @param {string} technician - ชื่อของช่างที่ซ่อม
  * @param {string} note - คำอธิบายของ Maintenance History
- * @param {number} camId - ID ของกล้องที่ซ่อม
  * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
  * @throws {Error} เมื่อเพิ่ม Maintenance History ไม่สำเร็จ
  *
@@ -140,6 +140,43 @@ export async function softDeleteMaintenanceHistory(mnt_id: number, isUse: boolea
 
     if (!maintenanceHistory) {
         throw new Error('Failed to delete maintenance history or maintenance history not found');
+    }
+
+    return maintenanceHistory
+}
+
+/**
+ * อัพเดทข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะอัพเดทวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากอัพเดทไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} mnt_id - ID ของ Maintenance History
+ * @param {Date} date - วันที่ที่อัพเดทข้อมูล
+ * @param {MaintenanceType} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังอัพเดทสำเร็จ
+ * @throws {Error} เมื่ออัพเดท Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function updateMaintenanceHistory(mnt_id: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        UPDATE maintenance_history
+        SET mnt_date = $2,
+            mnt_type = $3,
+            mnt_technician = $4,
+            mnt_note = $5
+        WHERE mnt_id = $1
+        RETURNING *;
+        `, [mnt_id, date, type, technician, note]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to update maintenance history or maintenance history not found');
     }
 
     return maintenanceHistory

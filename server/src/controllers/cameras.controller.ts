@@ -90,7 +90,7 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
 /**
  * Controller: สร้าง Maintenance History ใหม่
  *
- * @route POST /api/maintenance_history/:cam_id/create
+ * @route POST /api/cameras/:cam_id/maintenance/create
  * @param {Request} req - Express request object (body: { date, type, technician, note })
  * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่สร้างใหม่เป็น JSON)
  * @param {NextFunction} next - Express next middleware function
@@ -98,7 +98,7 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
  *
  * @author Napat
  */
-export async function create(req: Request, res: Response, next: NextFunction) {
+export async function createMaintenance(req: Request, res: Response, next: NextFunction) {
     try {
         const { date, type, technician, note } = req.body;
         const camId = Number(req.params.cam_id);
@@ -112,7 +112,7 @@ export async function create(req: Request, res: Response, next: NextFunction) {
 /**
  * Controller: ลบ Maintenance History
  *
- * @route POST /api/maintenance_history/:cam_id/delete
+ * @route POST /api/cameras/:cam_id/maintenance/delete
  * @param {Request} req - Express request object (body: { mnt_id, isUse })
  * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่ลบเป็น JSON)
  * @param {NextFunction} next - Express next middleware function
@@ -120,11 +120,32 @@ export async function create(req: Request, res: Response, next: NextFunction) {
  *
  * @author Napat
  */
-export async function softDelete(req: Request, res: Response, next: NextFunction) {
+export async function softDeleteMaintenance(req: Request, res: Response, next: NextFunction) {
     try {
         const { mnt_id, isUse } = req.body;
         const softDeleteHistory = await CameraService.softDeleteMaintenanceHistory(mnt_id, isUse);
         res.json(softDeleteHistory);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: อัพเดท Maintenance History
+ *
+ * @route POST /api/cameras/:cam_id/maintenance/update
+ * @param {Request} req - Express request object (body: { mnt_id, date, type, technician, note })
+ * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่อัพเดทเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Maintenance History  ที่อัพเดท
+ *
+ * @author Napat
+ */
+export async function updateMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { mnt_id, date, type, technician, note } = req.body;
+        const createHistory = await CameraService.updateMaintenanceHistory(mnt_id, date, type, technician, note);
+        res.json(createHistory);
     } catch (err) {
         next(err);
     }
