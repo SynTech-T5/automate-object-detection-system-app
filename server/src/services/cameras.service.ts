@@ -47,7 +47,6 @@ export async function createCameras(input: CreateCameraInput): Promise<CamerasRo
     input.cam_health ?? null,
     input.cam_video_quality ?? null,
     input.cam_network_latency ?? null,
-    input.cam_is_use ?? true,        // default เป็น true หากไม่ได้ส่งมา
     input.cam_location_id ?? null,
   ];
 
@@ -55,9 +54,9 @@ export async function createCameras(input: CreateCameraInput): Promise<CamerasRo
     INSERT INTO public.cameras
       (cam_name, cam_address, cam_type, cam_resolution, cam_description,
        cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
-       cam_is_use, cam_location_id)
+        cam_location_id)
     VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     RETURNING
       cam_id, cam_name, cam_address, cam_type, cam_resolution, cam_description,
       cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
