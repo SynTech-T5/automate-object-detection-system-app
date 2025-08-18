@@ -25,8 +25,12 @@ router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
 
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
-router.get('/maintenance',ctrl.listMaintenance);
+// router.get('/maintenance',ctrl.listMaintenance);
+
 router.get('/:cam_id/access-control',ctrl.getAccessControlById);
+router.get('/access-control',ctrl.getAccessControl);
+
+
 
 router.get('/event-detection', ctrl.listEventDetection);
 

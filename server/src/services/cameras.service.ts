@@ -162,3 +162,10 @@ export async function showCameraAccessControlById(caa_camera_id: number) {
     return result.rows;
 
 }
+export async function showCameraAccessControl() {
+    const query = `SELECT *
+	FROM cameras_access`;
+    const result = await pool.query(query);
+    return result.rows;
+
+}
