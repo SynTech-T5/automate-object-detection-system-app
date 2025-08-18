@@ -1,0 +1,130 @@
+/* การ์ดหลัก */
+.event-card {
+  width: 320px;
+  background: #fff;
+  border: 1px solid #cce4ff; /* ขอบสีฟ้าอ่อน */
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1); /* เงาเบาๆ */
+  transition: box-shadow 0.2s ease; /* effect เวลา hover */
+}
+
+/* hover แล้วเพิ่มเงา */
+.event-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* ส่วนหัว: icon + title */
+.event-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* ระยะห่างระหว่าง icon และ title */
+  margin-bottom: 8px;
+}
+
+/* พื้นหลังวงกลมของ icon */
+.event-card-icon {
+  width: 40px;
+  height: 40px;
+  background: #e6f2ff;
+  color: #1976d2; /* น้ำเงิน */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+/* ชื่อ Event */
+.event-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1976d2;
+}
+
+/* คำอธิบาย Event */
+.event-card-description {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 12px;
+}
+
+/* แถวสำหรับ Toggle */
+.event-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* ข้อความ label */
+.label {
+  font-size: 14px;
+  color: #333;
+}
+
+/* ================== */
+/* Toggle Switch Style */
+/* ================== */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 22px;
+}
+
+.toggle input {
+  opacity: 0; /* ซ่อน checkbox จริง */
+  width: 0;
+  height: 0;
+}
+
+/* พื้นหลัง toggle */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #ccc;
+  border-radius: 22px;
+  transition: 0.3s;
+}
+
+/* จุดกลมใน toggle */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+/* ถ้าเปิด toggle */
+.toggle input:checked + .slider {
+  background-color: #1976d2;
+}
+
+.toggle input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* ================== */
+/* Dropdown Select Style */
+/* ================== */
+.event-card-select select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+/* focus แล้ว border เปลี่ยนสี */
+.event-card-select select:focus {
+  border-color: #1976d2;
+}
