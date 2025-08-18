@@ -1,0 +1,139 @@
+/* LayoutDashboard.css */
+
+/* โครงสร้างหลัก */
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  font-family: sans-serif;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 60px;
+  background: #2c2f33;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+}
+.sidebar .logo {
+  margin-bottom: 2rem;
+}
+.sidebar nav button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  margin: 1rem 0;
+  cursor: pointer;
+}
+
+/* Main Content */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f6f8;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #ddd;
+}
+.system-title {
+  font-weight: bold;
+  color: #007bff;
+}
+.topbar-right {
+  display: flex;
+  gap: 1rem;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Content */
+.content {
+  padding: 1.5rem;
+  background: #f9fbfd;
+  flex: 1;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.btn-primary {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Summary Cards */
+.summary-cards {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.summary-cards .card {
+  flex: 1;
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.summary-cards .number {
+  font-size: 20px;
+  font-weight: bold;
+}
+.green { color: green; }
+.red { color: red; }
+.yellow { color: orange; }
+
+/* Camera Management Section */
+.camera-section {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+}
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.toolbar input, 
+.toolbar select, 
+.toolbar button {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+.toolbar button {
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+}
+
+/* Camera List */
+.camera-list {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.camera-card {
+  background: #f0f3f7;
+  padding: 1rem;
+  border-radius: 8px;
+  flex: 1 1 200px;
+  text-align: center;
+}
