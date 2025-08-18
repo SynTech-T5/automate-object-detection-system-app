@@ -1,4 +1,6 @@
 import { pool } from '../config/db';
+import type { CamerasRow, CreateCameraInput } from '../models/cameras.model';
+export type UpdateCameraInput = Partial<CreateCameraInput>; // แปลงค่าให้เป็น optional เพื่อจะได้ทำอัพเดตหากไม่ส่งค่านั้นมาก็ไม่เป็นไร
 
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
@@ -26,6 +28,42 @@ export async function totalCameras() {
         "SELECT COUNT(*) FROM cameras WHERE cam_is_use = true"
     );
     return result.rows;
+}
+
+
+/**
+ * แก้ไขไขข้อมูลของกล้องจาก id ที่ส่งมา และจะแก้ไขข้อมูลตามฟิลด์ที่ส่งมาหากไม่ได้ส่งมาข้อมูลก็จะไม่ถูกแก้ไข
+ * @param {camId: number , patch: UpdateCameraInput} รหัสของ cameras cam_id และ ฟิลด์ของ allowed
+ * @returns {CamerasRow} รายการของ Camera ที่แก้ไข
+ * @author Chokchai
+ */
+
+export async function updateCamera(camId: number , patch: UpdateCameraInput): Promise<CamerasRow | null>{ //แก้ไขข้อมูลกล้อง
+  
+  const allowed = new Set([
+    'cam_name',
+    'cam_location_id',
+    'cam_type',
+    'cam_address',
+    'cam_resolution'
+  ]);
+  const entries = Object.entries(patch).filter(([key, value]) =>  allowed.has(key) && value !== undefined); //แปลงข้อมูลให้เป็น Array คู่ จากนั้นทำการ filter
+  
+  if (!entries.length) return null;
+  const set  = entries.map(([k], i) => `${k} = $${i + 1}`).join(', '); //วนลูปเพื่อดึงค่าของ Key => ให้ค่าตัวแรกเริ่มนับที่ 1 จากนั้น join ด้วย , 
+  // [k] หยิบตัวแรก => ["cam_name = $1"]
+  const val = entries.map(([, v]) => v);
+
+  const sql = `
+    UPDATE public.cameras
+    SET ${set}
+    WHERE cam_id = $${entries.length + 1} AND cam_is_use = true
+    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_resolution
+  `;
+
+  const r = await pool.query<CamerasRow>(sql, [...val, camId]);
+  return r.rows[0] ?? null;
+
 }
 
 /**

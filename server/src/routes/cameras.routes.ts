@@ -4,6 +4,7 @@
  * กำหนดเส้นทาง (routes) สำหรับการจัดการกล้อง (Cameras):
  *  - GET /api/cameras                                  → ดึงรายการกล้องทั้งหมด
  *  - GET /api/cameras/total                            → ดึงจำนวนกล้องทั้งหมด
+ *  - GET /api/cameras/update/:cam_id                   → แก้ไขข้อมูลกล้องผ่าน cam_id
  *  - GET /api/cameras/:cam_id/maintenance              → ดึงข้อมูลการบำรุงรักษาของกล้องตาม cam_id
  *  - GET /api/cameras/maintenance                      → ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
  *  - GET /api/cameras/event-detection                  → ดึงรายการ EventDetection ทั้งหมด
@@ -17,6 +18,7 @@
  * @requires controllers/cameras.controller
  *
  * @author Wanasart
+ * @author Chokchai
  * @created 2025-08-16
  * @lastModified 2025-08-17
  */
@@ -28,6 +30,8 @@ const router = Router();
 // Cameras
 router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
+router.patch('/update/:id', ctrl.update);
+
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
