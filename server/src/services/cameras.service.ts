@@ -1,4 +1,5 @@
 import { pool } from '../config/db';
+import type { CamerasRow, CreateCameraInput } from '../models/cameras.model';
 
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
@@ -26,6 +27,105 @@ export async function totalCameras() {
         "SELECT COUNT(*) FROM cameras WHERE cam_is_use = true"
     );
     return result.rows;
+}
+
+/**
+ * ลบข้อมูลกล้องแบบ Softdelete
+ * @param {camId: number} รหัสของ cameras cam_id 
+ * @returns {Promise<boolean>} คืนค่าเป็น boolean 
+ * @author Chokchai
+ */
+export async function deleteCamera(camId: number): Promise<boolean> { //ลบข้อมูลกล้องแบบ soft delete
+  try {
+    const sql = `
+    UPDATE public.cameras 
+    SET cam_is_use = false
+    WHERE cam_id = $1 
+      AND cam_is_use IS DISTINCT FROM FALSE   
+    RETURNING cam_id`;
+    const r = await pool.query<{ cam_id: number }>(sql, [camId]);
+    return r.rows.length > 0;
+  } catch (err) {
+    // log แล้วค่อยตัดสินใจว่าจะโยนออก/คืน false
+    console.error('deleteCamera error:', err);
+    return false;
+  }
+}
+
+/**
+ * ค้นหากล้องโดยจะรับข้อมูลเป็น id ชื่อกล้อง ชื่อสถานที่ 
+ * @param {id?:number; name?: string; location?:string} เลือกกรอกกรอกข้อมูล ชื่อกล้อง id กล้อง สถานที่ของกล้อง 
+ * @returns cam_id คืนเลข id ของกล้องที่เจอ
+ * @author Chokchai
+ */
+export async function findCameras({id,name,location} : {id?:number; name?: string; location?:string}) {
+  const conds:string[] = []; // เก็บเงื่อนไข WHERE
+  const params:any[] = []; // เก็บค่าพารามิเตอร์สำหรับ
+  let i = 1;
+  if(id){                      // ถ้ามี id ให้ค้น
+    conds.push(`c.cam_id = $${i++}`);
+    params.push(id);
+  }
+  if(name){
+    conds.push(`c.cam_name ILIKE $${i++}`);
+    params.push(`%${name}%`);
+  }
+  if (location){ 
+    conds.push(`l.loc_name ILIKE $${i++}`);   
+    params.push(`%${location}%`); 
+  }
+  if (conds.length === 0) {
+    throw new Error('id or name or location required');
+  }
+  
+  const sql = `
+    SELECT c.*, l.loc_name AS location_name
+    FROM public.cameras c
+    LEFT JOIN public.locations l ON l.loc_id = c.cam_location_id   
+    WHERE (${conds.join(' OR ')}) 
+      AND c.cam_is_use IS TRUE
+    ORDER BY c.cam_id ASC
+    `;
+  
+  const r = await pool.query(sql, params);
+  return r.rows.map((row: any) => row.cam_id);;
+}
+
+/**
+ * สร้างกล้องใหม่โดยการเพิ่มข้อมูลตาม CreateCameraInput
+ * @param {input: CreateCameraInput} สร้างกล้องตามฟิลด์ข้อมูลของ CreateCameraInput 
+ * @returns {CamerasRow} รายการของ Camera ที่สร้าง
+ * @author Chokchai
+ */
+export async function createCameras(input: CreateCameraInput): Promise<CamerasRow>{ //สร้างกล้องตัวใหม่
+
+    const values = [
+    input.cam_name ?? null,
+    input.cam_address ?? null,
+    input.cam_type ?? null,
+    input.cam_resolution ?? null,
+    input.cam_description ?? null,
+    input.cam_installation_date ?? null,
+    input.cam_health ?? null,
+    input.cam_video_quality ?? null,
+    input.cam_network_latency ?? null,
+    input.cam_location_id ?? null,
+  ];
+
+  const sql = `
+    INSERT INTO public.cameras
+      (cam_name, cam_address, cam_type, cam_resolution, cam_description,
+       cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+        cam_location_id)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    RETURNING
+      cam_id, cam_name, cam_address, cam_type, cam_resolution, cam_description,
+      cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+      cam_is_use, cam_location_id
+  `;
+    const r = await pool.query(sql, values);
+    return r.rows[0] as CamerasRow;
 }
 
 /**
@@ -79,6 +179,39 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
     const result = await pool.query(query,[cam_id]);
 
     return result.rows;
+}
+
+/**
+ * เพิ่มข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะเพิ่มวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากเพิ่มไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} camId - ID ของกล้องที่ซ่อม
+ * @param {Date} date - วันที่ที่เพิ่มข้อมูล
+ * @param {string} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
+ * @throws {Error} เมื่อเพิ่ม Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function createMaintenanceHistory(camId: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        INSERT INTO maintenance_history(mnt_date, mnt_type, mnt_technician, mnt_note, mnt_camera_id)
+	    VALUES ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `, [date, type, technician, note, camId]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to insert Maintenance History');
+    }
+
+    return maintenanceHistory;
 }
 
 /**

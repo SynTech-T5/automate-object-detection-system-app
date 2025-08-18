@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import "@/styles/camera-card.css";
-
+import BottomCameraCard from "../components/bottomCameraCard";
 interface Camera {
   cam_id: number;
   cam_name: string;
@@ -37,13 +37,15 @@ export default function CameraCards() {
           </div>
         
           <div className="camera-card1">
-            <p className="cam-type">{cam.cam_type}</p>
+            <div className ="camera-card2">
+            <div className="cam-type">{cam.cam_type} </div>
+            <div className="cam-live gap-2"><i className="fi fi-ss-circle text-[8px] gap-2 "></i>live</div>
             <h2 className="cam-name">{cam.cam_name}</h2>
-            <p className="cam-location">Location</p>
-            <p className="cam-address"><address></address></p>
-            <p className="cam-live">live</p>
-            <p className="cam-health">{cam.cam_health}</p>
-
+            {/* <p className="cam-address">{cam.cam_address}</p> */}
+            {/* <p className="cam-location">{cam.cam_location}</p>
+            <p className="cam-health">{cam.cam_health}</p> */}
+            </div>
+            <BottomCameraCard/>
           </div>
 
         </div>
