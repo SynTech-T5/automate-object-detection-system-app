@@ -5,6 +5,8 @@
  *  - GET /api/cameras                                  → ดึงรายการกล้องทั้งหมด
  *  - GET /api/cameras/total                            → ดึงจำนวนกล้องทั้งหมด
  *  - GET /api/cameras/update/:cam_id                   → แก้ไขข้อมูลกล้องผ่าน cam_id
+ *  - GET /api/cameras/find/:term                       → ค้นหากล้องทั้งหมดผ่าน id ชื่อกล้อง สถานที่กล้อง
+ *  - POST /api/cameras/create                          → เพิ่มกล้องใหม่
  *  - GET /api/cameras/:cam_id/maintenance              → ดึงข้อมูลการบำรุงรักษาของกล้องตาม cam_id
  *  - GET /api/cameras/maintenance                      → ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
  *  - GET /api/cameras/event-detection                  → ดึงรายการ EventDetection ทั้งหมด
@@ -22,6 +24,7 @@
  * @created 2025-08-16
  * @lastModified 2025-08-17
  */
+
 import { Router } from 'express';
 import * as ctrl from '../controllers/cameras.controller'
 
@@ -30,11 +33,16 @@ const router = Router();
 // Cameras
 router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
+router.get('/find/:term', ctrl.find);
+
 router.patch('/update/:id', ctrl.update);
+
+router.post('/create', ctrl.create);
 
 // Maintenance
 router.get('/:cam_id/maintenance',ctrl.listMaintenanceByCamId);
 router.get('/maintenance',ctrl.listMaintenance);
+
 
 router.get('/event-detection', ctrl.listEventDetection);
 router.post('/createDetect',ctrl.createEventDetection);

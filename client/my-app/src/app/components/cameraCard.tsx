@@ -40,7 +40,7 @@ export default function CameraCards() {
             <p className="cam-type">{cam.cam_type}</p>
             <h2 className="cam-name">{cam.cam_name}</h2>
             <p className="cam-location">Location</p>
-            <p className="cam-address"><address></address></p>
+            <p className="cam-address"></p>
             <p className="cam-live">live</p>
             <p className="cam-health">{cam.cam_health}</p>
 
