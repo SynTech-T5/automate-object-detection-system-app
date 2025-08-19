@@ -2,15 +2,21 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
 type Props = { className?: string };
 
-/**
- * ปุ่มสำหรับออกจากระบบ
- * @param {Object} props - พร็อพที่ส่งมาให้คอมโพเนนต์
- * @param {string} [props.className] - คลาสสำหรับสไตล์ปุ่ม
- * @returns {JSX.Element} ปุ่มออกจากระบบ
- */
 export default function LogoutButton({ className = '' }: Props) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -19,29 +25,52 @@ export default function LogoutButton({ className = '' }: Props) {
     if (loading) return;
     setLoading(true);
     try {
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (_) {
-      // เงียบ ๆ ก็ได้
-    } finally {
-      // เคลียร์ state แล้วพาไป login
-      setLoading(false);
-      // router.replace('/login');
-      // router.refresh();
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      // router.replace('/login'); router.refresh();
       window.location.href = '/login';
+    } catch (_) {
+      // handle error if needed
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <button
-      onClick={onLogout}
-      disabled={loading}
-      className={`px-3 py-2 rounded-2xl border shadow-sm hover:bg-gray-50 disabled:opacity-60 ${className}`}
-      title="ออกจากระบบ"
-    >
-      {loading ? 'กำลังออก...' : 'Logout'}
-    </button>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={loading}
+          title="Log out"
+          className={`h-auto px-5 py-2 border shadow-sm hover:bg-gray-50 disabled:opacity-60 ${className}`}
+        >
+          {loading ? 'Logging out…' : 'Logout'}
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+          <AlertDialogDescription>
+            You will be signed out and redirected to the login page.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-end gap-2">
+          <AlertDialogCancel
+            disabled={loading}
+            className="h-auto px-5 py-2 border border-gray-300 bg-white hover:bg-gray-50"
+          >
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onLogout}
+            disabled={loading}
+            className="h-auto px-5 py-2 bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]"
+          >
+            {loading ? 'Logging out…' : 'Confirm'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
