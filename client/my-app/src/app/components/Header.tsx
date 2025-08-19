@@ -60,10 +60,17 @@ export default function Header({ userName = "Admin" }: { userName?: string }) {
                         {/* ไอคอน (ตัวอย่าง) */}
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-primary-bg)]">
                             {/* ถ้ามีโลโก้จริงใช้ <Image src="/logo.svg" .../> */}
-                            <svg viewBox="0 0 24 24" width="18" height="18">
+                            <Image
+                                src="/automate-object-detection-system-2.png"
+                                alt="Automate Logo"
+                                width={36}
+                                height={36}
+                                className="object-contain"
+                            />
+                            {/* <svg viewBox="0 0 24 24" width="18" height="18">
                                 <rect x="3" y="6" width="18" height="12" rx="2" fill="none" stroke="var(--color-primary)" />
                                 <circle cx="12" cy="12" r="3" fill="var(--color-primary)" />
-                            </svg>
+                            </svg> */}
                         </div>
 
                         {/* ชื่อแบบสองโทนสี */}
