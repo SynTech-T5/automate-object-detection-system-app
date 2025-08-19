@@ -4,6 +4,7 @@
  * กำหนดเส้นทาง (routes) สำหรับการจัดการกล้อง (Cameras):
  *  - GET /api/cameras                                  → ดึงรายการกล้องทั้งหมด
  *  - GET /api/cameras/total                            → ดึงจำนวนกล้องทั้งหมด
+ *  - GET /api/cameras/total-inactive                   → ดึงจำนวนกล้องที่ไม่ได้ใช้งานทั้งหมด
  *  - GET /api/cameras/update/:cam_id                   → แก้ไขข้อมูลกล้องผ่าน cam_id
  *  - DELETE /api/cameras/delete/:cam_id                → ลบกล้องผ่าน cam_id
  *  - GET /api/cameras/find/:term                       → ค้นหากล้องทั้งหมดผ่าน id ชื่อกล้อง สถานที่กล้อง
@@ -37,6 +38,7 @@ const router = Router();
 // Cameras
 router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
+router.get('/total-inactive', ctrl.totalInactive);
 router.get('/find/:term', ctrl.find);
 
 router.patch('/update/:id', ctrl.update);
