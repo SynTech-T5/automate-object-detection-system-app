@@ -184,7 +184,6 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
  * Controller: สร้าง Maintenance History ใหม่
  *
  * @route POST /api/cameras/:cam_id/maintenance/create
- * @route POST /api/maintenance_history/:cam_id/create
  * @param {Request} req - Express request object (body: { date, type, technician, note })
  * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่สร้างใหม่เป็น JSON)
  * @param {NextFunction} next - Express next middleware function
