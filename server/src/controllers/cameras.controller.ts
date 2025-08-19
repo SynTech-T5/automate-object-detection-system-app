@@ -60,6 +60,24 @@ export async function update(req: Request, res: Response, next: NextFunction) { 
 }
 
 /**
+ * Controller: ลบข้อมูลกล้องแบบ softdelete
+ * @route POST /api/cameras/create
+ * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
+ * @param res ส่งข้อมูลของกล้องกลับ
+ * @returns -JSON response แสดงสถานะ 202
+ * @author Chokchai
+ */
+export async function remove(req: Request, res: Response, next: NextFunction) { //soft delete
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) {
+    return res.status(400).json({ message: 'id must be a number' });
+  }
+  const deleteid = await CameraService.deleteCamera(id);
+  if (!deleteid) return res.status(404).json({ message: 'camera not found' });
+  return res.status(202).send();
+}
+ 
+/**
  * Controller: ค้นหากล้อง
  * @route POST /api/cameras/find/:term
  * @param req -กรอกข้อมูลของกล้องมี id ชื่อกล้อง สถานที่กล้อง 
@@ -157,6 +175,28 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
         }
         const history = await CameraService.getMaintenanceHistoryByCamId(cam_id);
         return res.json(history);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: สร้าง Maintenance History ใหม่
+ *
+ * @route POST /api/maintenance_history/:cam_id/create
+ * @param {Request} req - Express request object (body: { date, type, technician, note })
+ * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่สร้างใหม่เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Maintenance History  ที่สร้างใหม่
+ *
+ * @author Napat
+ */
+export async function createMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { date, type, technician, note } = req.body;
+        const camId = Number(req.params.cam_id);
+        const createHistory = await CameraService.createMaintenanceHistory(camId, date, type, technician, note);
+        res.json(createHistory);
     } catch (err) {
         next(err);
     }

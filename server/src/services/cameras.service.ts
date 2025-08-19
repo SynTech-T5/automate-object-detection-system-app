@@ -67,6 +67,29 @@ export async function updateCamera(camId: number , patch: UpdateCameraInput): Pr
 }
 
 /**
+ * ลบข้อมูลกล้องแบบ Softdelete
+ * @param {camId: number} รหัสของ cameras cam_id 
+ * @returns {Promise<boolean>} คืนค่าเป็น boolean 
+ * @author Chokchai
+ */
+export async function deleteCamera(camId: number): Promise<boolean> { //ลบข้อมูลกล้องแบบ soft delete
+  try {
+    const sql = `
+    UPDATE public.cameras 
+    SET cam_is_use = false
+    WHERE cam_id = $1 
+      AND cam_is_use IS DISTINCT FROM FALSE   
+    RETURNING cam_id`;
+    const r = await pool.query<{ cam_id: number }>(sql, [camId]);
+    return r.rows.length > 0;
+  } catch (err) {
+    // log แล้วค่อยตัดสินใจว่าจะโยนออก/คืน false
+    console.error('deleteCamera error:', err);
+    return false;
+  }
+}
+
+/**
  * ค้นหากล้องโดยจะรับข้อมูลเป็น id ชื่อกล้อง ชื่อสถานที่ 
  * @param {id?:number; name?: string; location?:string} เลือกกรอกกรอกข้อมูล ชื่อกล้อง id กล้อง สถานที่ของกล้อง 
  * @returns cam_id คืนเลข id ของกล้องที่เจอ
@@ -103,7 +126,6 @@ export async function findCameras({id,name,location} : {id?:number; name?: strin
   
   const r = await pool.query(sql, params);
   return r.rows.map((row: any) => row.cam_id);;
-}
 }
 
 /**
@@ -194,6 +216,39 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
     const result = await pool.query(query,[cam_id]);
 
     return result.rows;
+}
+
+/**
+ * เพิ่มข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะเพิ่มวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากเพิ่มไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} camId - ID ของกล้องที่ซ่อม
+ * @param {Date} date - วันที่ที่เพิ่มข้อมูล
+ * @param {string} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
+ * @throws {Error} เมื่อเพิ่ม Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function createMaintenanceHistory(camId: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        INSERT INTO maintenance_history(mnt_date, mnt_type, mnt_technician, mnt_note, mnt_camera_id)
+	    VALUES ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `, [date, type, technician, note, camId]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to insert Maintenance History');
+    }
+
+    return maintenanceHistory;
 }
 
 /**

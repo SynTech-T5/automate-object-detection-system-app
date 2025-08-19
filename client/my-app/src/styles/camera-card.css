@@ -1,4 +1,9 @@
+/*camera*/
 @import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-rounded/css/uicons-solid-rounded.css');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-regular-rounded/css/uicons-regular-rounded.css');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-rounded/css/uicons-thin-rounded.css');
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-solid-straight/css/uicons-solid-straight.css');
+
 .camera-card {
   border-radius: 1rem;
   border: 1px solid #3b82f6;
@@ -7,7 +12,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   max-width: 20rem;
   width: 300px;  /* ความกว้างของกล่อง */
-  height: 225px; /* ความสูงของกล่อง */
+  height: 260px; /* ความสูงของกล่อง */
   position: relative; /* ให้เป็น relative เพื่อให้ camera-card1 ซ้อนทับได้ */
 }
 
@@ -18,11 +23,19 @@
   background-color: rgb(255, 255, 255);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   width: 298px;  /* ความกว้างของกล่องเล็กกว่าเพื่อให้เห็นกรอบข้างหลัง */
-  height: 200px; /* ความสูงของกล่องเล็กกว่าเพื่อให้เห็นกรอบข้างหลัง */
+  height: 235px; /* ความสูงของกล่องเล็กกว่าเพื่อให้เห็นกรอบข้างหลัง */
   position: absolute; /* จัดตำแหน่งแบบ absolute */
   top: 22.5px; /* (225px - 180px) / 2 = 22.5px เพื่อให้อยู่ตรงกลางแนวตั้ง */
   left: 0px; /* (300px - 280px) / 2 = 10px เพื่อให้อยู่ตรงกลางแนวนอน */
   z-index: 5; /* ให้อยู่ด้านบน */
+}
+.camera-card2 {
+   
+   border-radius: 1rem;
+    width: 263px;  /* ความกว้างของกล่อง */
+    height: 120px; /* ความสูงของกล่อง */
+    background-color: rgb(129, 129, 129);
+  
 }
 .camera-card-icon {
   width: 2rem;
@@ -54,9 +67,37 @@
   position: relative;
   top: 100px;
 }
-.camera-card1 p {
-  color: #2563eb; 
-  font-size: 0.8rem; /* ขนาดตัวอักษร */
-  position: relative;
-  top: 10px;
+
+.cam-type {
+  border: 1px solid #3b82f6;
+  border-radius: 0.8rem;
+  width: 2.7rem;
+  height: 1.2rem;
+  text-align:center ;
+  font-size: 0.7rem;  
+  background-color:#f6f9ff ; 
+   display: inline-block;
+   color: #4542f8;
 }
+.cam-live{
+  background-color:#ff0505 ; 
+  color: rgb(255, 255, 255);
+  text-align:center ;
+  width: 2.7rem;
+  height: 1rem;
+  font-size: 0.7rem;
+  border-radius: 0.8rem;
+  gap: 5 rem;
+  display: inline-block;
+  margin-left: 10rem;
+}
+.cam-live i {
+  margin-right: 0.3rem; /* เว้นระยะห่างระหว่างไอคอนกับข้อความ */
+  font-size: 0.4rem;    /* ขนาดไอคอน */
+   position: relative;
+  top: -1px;  /* ขยับขึ้น */
+}
+
+
+
+
