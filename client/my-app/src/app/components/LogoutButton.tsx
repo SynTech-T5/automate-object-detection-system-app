@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation';
 
 type Props = { className?: string };
 
+/**
+ * ปุ่มสำหรับออกจากระบบ
+ * @param {Object} props - พร็อพที่ส่งมาให้คอมโพเนนต์
+ * @param {string} [props.className] - คลาสสำหรับสไตล์ปุ่ม
+ * @returns {JSX.Element} ปุ่มออกจากระบบ
+ */
 export default function LogoutButton({ className = '' }: Props) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -22,8 +28,9 @@ export default function LogoutButton({ className = '' }: Props) {
     } finally {
       // เคลียร์ state แล้วพาไป login
       setLoading(false);
-      router.replace('/login');
-      router.refresh();
+      // router.replace('/login');
+      // router.refresh();
+      window.location.href = '/login';
     }
   };
 

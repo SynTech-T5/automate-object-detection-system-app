@@ -132,3 +132,24 @@ export async function registerUser(username: string, email: string, password: st
 
     return { user: safeUser, token };
 }
+
+/**
+ * ดึงข้อมูลผู้ใช้ตาม ID โดยไม่รวม password
+ *
+ * @param {number} id - รหัสผู้ใช้ที่ต้องการดึงข้อมูล
+ * @returns {Promise<UserSafe | null>} user object ที่ปลอดภัย (ไม่มี password) หรือ null ถ้าไม่พบ
+ *
+ * @author Wanasart
+ */
+export async function getUserSafeById(id: number): Promise<UserSafe | null> {
+    const { rows } = await pool.query<UserRow>(`
+      SELECT usr_id, usr_username, usr_email, 
+             (SELECT rol_name FROM roles WHERE rol_id = usr_role_id) AS usr_role
+      FROM users
+      WHERE usr_id = $1 AND usr_is_use = true
+      LIMIT 1
+    `, [id]);
+  
+    const user = rows[0];
+    return user ? toUserSafe(user) : null;
+}  
