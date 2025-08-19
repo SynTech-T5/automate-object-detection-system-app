@@ -42,6 +42,24 @@ export async function total(req: Request, res: Response, next: NextFunction){
 }
 
 /**
+ * Controller: แก้ไขข้อมูลกล้อง
+ * @route POST /api/cameras/update/:id
+ * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
+ * @param res ส่งข้อมูลของกล้องกลับ
+ * @returns -JSON response ส่งข้อมูลของกล้องที่แก้ไขกลับพร้อมแสดงสถานะ 200
+ * @author Chokchai
+ */
+export async function update(req: Request, res: Response, next: NextFunction) { //update camera
+  const id = Number(req.params.id);
+  const updated = await CameraService.updateCamera(id, req.body);
+  if (!updated) {
+    // ไม่พบ id หรือไม่มีฟิลด์ให้อัปเดต
+    return res.status(404).json({ message: 'camera not found or no fields to update' });
+  }
+  return res.status(200).json(updated);
+}
+
+/**
  * Controller: ลบข้อมูลกล้องแบบ softdelete
  * @route POST /api/cameras/create
  * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์

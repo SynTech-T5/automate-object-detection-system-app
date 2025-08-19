@@ -4,6 +4,7 @@
  * กำหนดเส้นทาง (routes) สำหรับการจัดการกล้อง (Cameras):
  *  - GET /api/cameras                                  → ดึงรายการกล้องทั้งหมด
  *  - GET /api/cameras/total                            → ดึงจำนวนกล้องทั้งหมด
+ *  - GET /api/cameras/update/:cam_id                   → แก้ไขข้อมูลกล้องผ่าน cam_id
  *  - DELETE /api/cameras/delete/:cam_id                → ลบกล้องผ่าน cam_id
  *  - GET /api/cameras/find/:term                       → ค้นหากล้องทั้งหมดผ่าน id ชื่อกล้อง สถานที่กล้อง
  *  - POST /api/cameras/create                          → เพิ่มกล้องใหม่
@@ -25,7 +26,6 @@
  * @created 2025-08-16
  * @lastModified 2025-08-17
  */
-
 import { Router } from 'express';
 import * as ctrl from '../controllers/cameras.controller'
 
@@ -36,6 +36,7 @@ router.get('/', ctrl.list);
 router.get('/total', ctrl.total);
 router.get('/find/:term', ctrl.find);
 
+router.patch('/update/:id', ctrl.update);
 router.delete('/delete/:id', ctrl.remove); 
 
 router.post('/create', ctrl.create);
