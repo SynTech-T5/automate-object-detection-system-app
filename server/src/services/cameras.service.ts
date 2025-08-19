@@ -226,7 +226,7 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
  *
  * @param {number} camId - ID ของกล้องที่ซ่อม
  * @param {Date} date - วันที่ที่เพิ่มข้อมูล
- * @param {string} type - ประเภทของการซ่อม
+ * @param {MaintenanceType} type - ประเภทของการซ่อม
  * @param {string} technician - ชื่อของช่างที่ซ่อม
  * @param {string} note - คำอธิบายของ Maintenance History
  * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
@@ -238,7 +238,7 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
 export async function createMaintenanceHistory(camId: number, date: Date, type: string, technician: string, note: string) {
     const { rows } = await pool.query(`
         INSERT INTO maintenance_history(mnt_date, mnt_type, mnt_technician, mnt_note, mnt_camera_id)
-	    VALUES ($1, $2, $3, $4, $5)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *;
     `, [date, type, technician, note, camId]);
 
@@ -249,6 +249,74 @@ export async function createMaintenanceHistory(camId: number, date: Date, type: 
     }
 
     return maintenanceHistory;
+}
+
+/**
+ * ลบข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะลบ maintenance history ตาม ID ในฐานข้อมูล
+ * หากลบไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} mnt_id - ID ของประวัติการซ่อมบำรุง
+ * @param {boolean} isUse - สถานะของประวัติการซ่อมบำรุง
+ * @returns {Promise<object>} Maintenance History object หลังลบสำเร็จ
+ * @throws {Error} เมื่อลบ Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function softDeleteMaintenanceHistory(mnt_id: number, isUse: boolean) {
+    const { rows } = await pool.query(`
+        UPDATE maintenance_history
+        set mnt_is_use = $1
+        WHERE mnt_id = $2
+        RETURNING *;
+        `, [isUse, mnt_id]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to delete maintenance history or maintenance history not found');
+    }
+
+    return maintenanceHistory
+}
+
+/**
+ * อัพเดทข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะอัพเดทวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากอัพเดทไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} mnt_id - ID ของ Maintenance History
+ * @param {Date} date - วันที่ที่อัพเดทข้อมูล
+ * @param {MaintenanceType} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังอัพเดทสำเร็จ
+ * @throws {Error} เมื่ออัพเดท Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function updateMaintenanceHistory(mnt_id: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        UPDATE maintenance_history
+        SET mnt_date = $2,
+            mnt_type = $3,
+            mnt_technician = $4,
+            mnt_note = $5
+        WHERE mnt_id = $1
+        RETURNING *;
+        `, [mnt_id, date, type, technician, note]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to update maintenance history or maintenance history not found');
+    }
+
+    return maintenanceHistory
 }
 
 /**
@@ -376,4 +444,33 @@ export async function deleteEventDetection(cds_id: number, cds_is_use: boolean) 
     }
 
     return events
+}
+
+/**
+ * อัพเดทข้อมูลของ Access Control
+ *
+ * @param {number} camId - รหัสของกล้อง
+ * @param {string} selectedAccess - Access ที่ต้องการอัพเดท
+ * @param {boolean} status - สถานะของ Acess
+ * @returns {Promise<object>} Access Control object หลังอัพเดทเสร็จ
+ *
+ * @author Napat
+ */
+export async function updateAccessControl(camId: number, selectedAccess: string, status: boolean) {
+    const { rows } = await pool.query(
+      `
+      UPDATE cameras_access
+      SET ${selectedAccess} = $1
+      WHERE caa_camera_id = $2
+      RETURNING *;
+      `,
+      [status, camId]);
+  
+    const accessControl = rows[0];
+  
+    if (!accessControl) {
+      throw new Error("Failed to update access control or not found");
+    }
+  
+    return accessControl;
 }

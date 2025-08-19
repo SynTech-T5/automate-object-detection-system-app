@@ -183,6 +183,7 @@ export async function listMaintenanceByCamId(req: Request, res: Response, next: 
 /**
  * Controller: สร้าง Maintenance History ใหม่
  *
+ * @route POST /api/cameras/:cam_id/maintenance/create
  * @route POST /api/maintenance_history/:cam_id/create
  * @param {Request} req - Express request object (body: { date, type, technician, note })
  * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่สร้างใหม่เป็น JSON)
@@ -196,6 +197,48 @@ export async function createMaintenance(req: Request, res: Response, next: NextF
         const { date, type, technician, note } = req.body;
         const camId = Number(req.params.cam_id);
         const createHistory = await CameraService.createMaintenanceHistory(camId, date, type, technician, note);
+        res.json(createHistory);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: ลบ Maintenance History
+ *
+ * @route POST /api/cameras/:cam_id/maintenance/delete
+ * @param {Request} req - Express request object (body: { mnt_id, isUse })
+ * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่ลบเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Maintenance History  ที่ลบ
+ *
+ * @author Napat
+ */
+export async function softDeleteMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { mnt_id, isUse } = req.body;
+        const softDeleteHistory = await CameraService.softDeleteMaintenanceHistory(mnt_id, isUse);
+        res.json(softDeleteHistory);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
+ * Controller: อัพเดท Maintenance History
+ *
+ * @route POST /api/cameras/:cam_id/maintenance/update
+ * @param {Request} req - Express request object (body: { mnt_id, date, type, technician, note })
+ * @param {Response} res - Express response object (ส่งกลับ Maintenance History ที่อัพเดทเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของ Maintenance History  ที่อัพเดท
+ *
+ * @author Napat
+ */
+export async function updateMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { mnt_id, date, type, technician, note } = req.body;
+        const createHistory = await CameraService.updateMaintenanceHistory(mnt_id, date, type, technician, note);
         res.json(createHistory);
     } catch (err) {
         next(err);
@@ -324,4 +367,27 @@ export async function softDeleteEventDetect(req: Request, res: Response, next: N
     }
 }
 
+/**
+ * อัพเดท Access Control ตามข้อมูลใน req.body
+ * ส่ง Access Control ที่อัพเดทแล้วกลับเป็น JSON
+ *
+ * @param req - Request ของ Express (body: selectedAccess, status)
+ * @param res - Response ของ Express
+ * @param next - ส่งต่อ error
+ * @returns {Promise<Response>} JSON response ของ Access Control ที่อัพเดทแล้ว
+ *
+ * @throws Error หากเกิดข้อผิดพลาดระหว่างการอัพเดท
+ *
+ * @author Napat
+ */
+export async function updateAccess(req: Request, res: Response, next: NextFunction) {
+    try{
+        const camId = Number(req.params.cam_id);
 
+        const { selectedAccess, status } = req.body
+        const update = await CameraService.updateAccessControl(camId, selectedAccess, status);
+        return res.json(update);
+    }catch(err){
+        next(err);
+    }
+}
