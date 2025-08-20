@@ -1,5 +1,6 @@
 import { pool } from '../config/db';
-import { Alert, Log, Related, Note, Trend, mapToAlert, mapRowToLogItem, mapRowToAlertItem, mapRowToNoteItem, mapRowToTrendItem, TrendAlertItem } from '../models/alerts.model';
+import * as Model from '../models/alerts.model'
+import * as Mapping from '../models/Mapping/alerts.map'
 
 /**
  * ดึงรายการ Alert ทั้งหมดที่ใช้งานอยู่
@@ -10,7 +11,7 @@ import { Alert, Log, Related, Note, Trend, mapToAlert, mapRowToLogItem, mapRowTo
  * @author Wanasart
  */
 export async function getAlertList() {
-    const result = await pool.query<Alert>(`
+    const result = await pool.query<Model.Alert>(`
         SELECT * FROM alerts
         JOIN cameras ON cam_id = alr_camera_id
         JOIN footages ON fgt_id = alr_footage_id
@@ -18,7 +19,8 @@ export async function getAlertList() {
         WHERE alr_is_use = true
     `);
 
-    return result.rows.map(mapToAlert);
+    // return result.rows.map(mapToAlert);
+    return result.rows.map(Mapping.mapToAlert);
 }
 
 /**
@@ -29,7 +31,7 @@ export async function getAlertList() {
  * 
  * @author Wanasart
  */
-export async function getAlertLogs(alr_id: number): Promise<Log> {
+export async function getAlertLogs(alr_id: number): Promise<Model.Log> {
     const { rows } = await pool.query(
         `SELECT loa_id, loa_event_name, loa_create_date, loa_user_id
        FROM log_alerts
@@ -38,7 +40,7 @@ export async function getAlertLogs(alr_id: number): Promise<Log> {
         [alr_id]
     );
 
-    return { alert_id: alr_id, log: rows.map(mapRowToLogItem) };
+    return { alert_id: alr_id, log: rows.map(Mapping.mapRowToLogItem) };
 }
 
 /**
@@ -49,7 +51,7 @@ export async function getAlertLogs(alr_id: number): Promise<Log> {
  * 
  * @author Wanasart
  */
-export async function getAlertRelated(evt_id: number): Promise<Related> {
+export async function getAlertRelated(evt_id: number): Promise<Model.Related> {
     const { rows } = await pool.query(`
         SELECT * FROM alerts
         WHERE alr_event_id = $1 
@@ -57,7 +59,7 @@ export async function getAlertRelated(evt_id: number): Promise<Related> {
         AND alr_status != 'Active'
     `, [evt_id]);
 
-    return { event_id: evt_id, alert: rows.map(mapRowToAlertItem) };
+    return { event_id: evt_id, alert: rows.map(Mapping.mapRowToAlertItem) };
 }
 
 /**
@@ -68,14 +70,14 @@ export async function getAlertRelated(evt_id: number): Promise<Related> {
  * 
  * @author Wanasart
  */
-export async function getAlertNotes(alr_id: number): Promise<Note> {
+export async function getAlertNotes(alr_id: number): Promise<Model.Note> {
     const { rows } = await pool.query(`
         SELECT * FROM alert_note_history
         WHERE anh_alert_id = $1
         AND anh_is_use = true
     `, [alr_id]);
 
-    return { alert_id: alr_id, notes: rows.map(mapRowToNoteItem) };
+    return { alert_id: alr_id, notes: rows.map(Mapping.mapRowToNoteItem) };
 }
 
 /**
@@ -86,7 +88,7 @@ export async function getAlertNotes(alr_id: number): Promise<Note> {
  * 
  * @author Wanasart
  */
-export async function getAlertTrend(daysBack = 7): Promise<Trend[]> {
+export async function getAlertTrend(daysBack = 7): Promise<Model.Trend[]> {
     const { rows } = await pool.query<{
         alert_date: string | Date;
         alr_severity: string;
@@ -117,7 +119,7 @@ export async function getAlertTrend(daysBack = 7): Promise<Trend[]> {
     // );
 
     // group by date (string 'YYYY-MM-DD')
-    const grouped = new Map<string, TrendAlertItem[]>();
+    const grouped = new Map<string, Model.TrendAlertItem[]>();
 
     for (const row of rows) {
         const dateOnly =
@@ -126,7 +128,7 @@ export async function getAlertTrend(daysBack = 7): Promise<Trend[]> {
                 : String(row.alert_date);
 
         if (!grouped.has(dateOnly)) grouped.set(dateOnly, []);
-        grouped.get(dateOnly)!.push(mapRowToTrendItem(row));
+        grouped.get(dateOnly)!.push(Mapping.mapRowToTrendItem(row));
     }
 
     return Array.from(grouped.entries())
@@ -235,7 +237,7 @@ export async function updateAlert(id: number, status: string) {
  * 
  * @author Wanasart
  */
-export async function deleteAlert(id: number) {
+export async function deleteAlert(id: number): Promise<Model.AlertSafeDelete> {
     const alertExists = await pool.query(`
         SELECT alr_id FROM alerts 
         WHERE alr_id = $1
@@ -257,5 +259,5 @@ export async function deleteAlert(id: number) {
         throw new Error('Failed to delete alert');
     }
 
-    return rows[0];
+    return Mapping.mapRowToAlertItemDelete(rows[0]);
 }
