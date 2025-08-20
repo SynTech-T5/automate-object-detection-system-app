@@ -1,7 +1,8 @@
-import { promises } from 'dns';
 import { pool } from '../../config/db';
-import type { CamerasRow, CreateCameraInput } from '../../models/cameras.model';
-export type UpdateCameraInput = Partial<CreateCameraInput>; // แปลงค่าให้เป็น optional เพื่อจะได้ทำอัพเดตหากไม่ส่งค่านั้นมาก็ไม่เป็นไร
+import * as Model from '../../models/cameras.model';
+import * as Mapping from '../../models/Mapping/cameras.map';
+
+export type UpdateCameraInput = Partial<Model.CreateCameraInput>; // แปลงค่าให้เป็น optional เพื่อจะได้ทำอัพเดตหากไม่ส่งค่านั้นมาก็ไม่เป็นไร
 
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
@@ -10,11 +11,14 @@ export type UpdateCameraInput = Partial<CreateCameraInput>; // แปลงค�
  * 
  * @author Wanasart
  */
-export async function listCameras() {
-    const result = await pool.query(
-        "SELECT * FROM cameras"
-    );
-    return result.rows;
+export async function listCameras(): Promise<Model.Camera[]> {
+    const { rows } = await pool.query(`
+      SELECT * FROM cameras
+      JOIN locations ON cam_location_id = loc_id
+      WHERE cam_is_use = true
+      `);
+
+    return rows.map(Mapping.mapToCamera);
 }
 
 /**
@@ -25,9 +29,11 @@ export async function listCameras() {
  * @author Wongsakon
  */
 export async function getCardsSummary() {
-  const result = await pool.query(
-      "SELECT cam_id, cam_status, cam_name, cam_type, cam_health, loc_name FROM cameras INNER JOIN locations ON cam_location_id = loc_id"
-  );
+  const result = await pool.query(`
+      SELECT cam_id, cam_status, cam_name, cam_type, cam_health, loc_name 
+      FROM cameras 
+      INNER JOIN locations ON cam_location_id = loc_id"
+  `);
   return result.rows;
 }
 
@@ -39,9 +45,11 @@ export async function getCardsSummary() {
  * @author Premsirigul
  */
 export async function countCameras() {
-    const result = await pool.query(
-        "SELECT COUNT(*)::int FROM cameras WHERE cam_is_use = true"
-    );
+    const result = await pool.query(`
+        SELECT COUNT(*)::int 
+        FROM cameras 
+        WHERE cam_is_use = true
+    `);
     return result.rows;
 }
 
@@ -52,9 +60,9 @@ export async function countCameras() {
  * @returns {CamerasRow} รายการของ Camera ที่สร้าง
  * @author Chokchai
  */
-export async function createCamera(input: CreateCameraInput): Promise<CamerasRow>{ //สร้างกล้องตัวใหม่
+export async function createCamera(input: Model.CreateCameraInput): Promise<Model.Camera>{ //สร้างกล้องตัวใหม่
 
-  const existing = await pool.query<CamerasRow>(`
+  const existing = await pool.query<Model.Camera>(`
       SELECT * FROM cameras
            WHERE cam_name = $1 AND cam_is_use = TRUE
       `, [input.cam_name]);
@@ -97,7 +105,7 @@ export async function createCamera(input: CreateCameraInput): Promise<CamerasRow
       cam_is_use, cam_location_id
   `;
     const r = await pool.query(sql, values);
-    return r.rows[0] as CamerasRow;
+    return r.rows[0] as Model.Camera;
 }
 
 /**
@@ -106,7 +114,7 @@ export async function createCamera(input: CreateCameraInput): Promise<CamerasRow
  * @returns {CamerasRow} รายการของ Camera ที่แก้ไข
  * @author Chokchai
  */
-export async function updateCamera(camId: number , patch: UpdateCameraInput): Promise<CamerasRow | null>{ //แก้ไขข้อมูลกล้อง
+export async function updateCamera(camId: number , patch: UpdateCameraInput): Promise<Model.Camera | null>{ //แก้ไขข้อมูลกล้อง
   
   const allowed = new Set([
     'cam_name',
@@ -129,7 +137,7 @@ export async function updateCamera(camId: number , patch: UpdateCameraInput): Pr
     RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_resolution
   `;
 
-  const r = await pool.query<CamerasRow>(sql, [...val, camId]);
+  const r = await pool.query<Model.Camera>(sql, [...val, camId]);
   return r.rows[0] ?? null;
 
 }
@@ -204,9 +212,11 @@ export async function searchCameras({id,name,location} : {id?:number; name?: str
  * @author Napat
  */
 export async function countInactiveCameras() {
-    const result = await pool.query(
-        "SELECT COUNT(*) FROM cameras WHERE cam_status = false"
-    );
+    const result = await pool.query(`
+        SELECT COUNT(*)::int
+        FROM cameras 
+        WHERE cam_status = false"
+    `);
     return result.rows;
 }
 
@@ -221,9 +231,45 @@ export async function countInactiveCameras() {
  * 
  */
 export async function updateCameraStatus(cam_id: number, cam_status: boolean) {
-    const result = await pool.query(
-        "UPDATE cameras SET cam_status = $1 WHERE cam_id = $2 RETURNING *",
-        [cam_status, cam_id]
-    );
+    const result = await pool.query(`
+        UPDATE cameras 
+        SET cam_status = $1 
+        WHERE cam_id = $2 
+        RETURNING *
+    `, [cam_status, cam_id]);
     return result.rows[0]; // คืนค่ากล้องที่ถูกอัพเดต
+}
+
+export async function countStatusCameras(): Promise<Model.CameraStatus> {
+  const total = await pool.query(`
+    SELECT COUNT(*)::int
+    FROM cameras 
+    WHERE cam_is_use = true
+  `)
+
+  const active = await pool.query(`
+    SELECT COUNT(*)::int
+    FROM cameras 
+    WHERE cam_is_use = true 
+    AND cam_status = true
+  `)
+
+  const inactive = await pool.query(`
+    SELECT COUNT(*)::int
+    FROM cameras 
+    WHERE cam_is_use = true 
+    AND cam_status = false
+  `)
+  const avgHealth = await pool.query(`
+    SELECT AVG(cam_health)::numeric(5,2)::float
+    FROM cameras 
+    WHERE cam_is_use = true
+  `)
+
+  return {
+    total: total.rows[0].count,
+    active: active.rows[0].count,
+    inactive: inactive.rows[0].count,
+    avg_health: avgHealth.rows[0].avg
+  }
 }

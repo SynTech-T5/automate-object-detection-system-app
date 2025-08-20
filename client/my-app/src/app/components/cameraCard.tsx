@@ -4,13 +4,16 @@ import { MapPin, Video, Anchor } from "lucide-react";
 import BottomCameraCard from "./bottomCameraCard";
 
 export type Camera = {
-  cam_id: number;
-  cam_name: string;
-  cam_status: boolean;
-  cam_type: string;
-  cam_address: string;
-  cam_location_id: number;
-  cam_health: string;
+  id: number;
+  name: string;
+  address: string;
+  type: string;
+  status: boolean;
+  health: number;
+  location: {
+    id: number;
+    name: string;
+  }
 };
 
 export default function CameraCard({ cam }: { cam: Camera }) {
@@ -23,7 +26,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
   const imageSrc = rawImg || "/library-room.jpg";
   const videoSrc = rawVideo || "/footage-library-room.mp4"; // ใส่ไฟล์ไว้ใน /public หรือเปลี่ยนเป็น URL ภายนอก
 
-  const camCode = `CAM${String(cam.cam_id).padStart(3, "0")}`;
+  const camCode = `CAM${String(cam.id).padStart(3, "0")}`;
 
   return (
     <div className="rounded-xl border-1 border-[var(--color-primary)] bg-[var(--color-white)] shadow-sm p-4">
@@ -50,7 +53,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
           ) : (
             <Image
               src={imageSrc}
-              alt={cam.cam_name}
+              alt={cam.name}
               fill
               className="object-cover"
               sizes="(min-width: 1024px) 400px, 100vw"
@@ -66,38 +69,38 @@ export default function CameraCard({ cam }: { cam: Camera }) {
         {/* Status (ใช้แบบเก่า Active/Inactive) — top-right */}
         <span
           className={`absolute right-3 top-3 rounded-full px-3 py-0.5 text-[11px] font-semibold shadow-sm border
-            ${cam.cam_status
+            ${cam.status
               ? "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger)]"
               : "bg-[var(--color-softGray)] text-[var(--color-black)] border-[var(--color-hardGray)]"
             }`}
         >
-          {cam.cam_status ? "Active" : "Inactive"}
+          {cam.status ? "Active" : "Inactive"}
         </span>
 
         {/* Location — bottom-left */}
         <span className="absolute left-3 bottom-3 inline-flex max-w-[75%] items-center gap-2 truncate rounded-full border bg-white/90 px-3 py-1 text-sm text-gray-700 shadow">
           <MapPin className="h-4 w-4 text-gray-500" />
-          <span className="truncate">{cam.cam_location_id}</span>
+          <span className="truncate">{cam.location.name}</span>
         </span>
       </div>
 
       {/* Info under image */}
       <div className="mt-4">
-        <h3 className="text-base font-semibold text-[var(--color-primary)]">{cam.cam_name}</h3>
+        <h3 className="text-base font-semibold text-[var(--color-primary)]">{cam.name}</h3>
 
         <div className="mt-3 flex items-center justify-between">
           <span className="inline-flex items-center gap-1 rounded-full border border-green-300 bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
             <Anchor className="h-4 w-4" />
-            {cam.cam_type || "Fixed"}
+            {cam.type || "Fixed"}
           </span>
 
           <span className="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
             <Video className="h-4 w-4" />
-            Health: {cam.cam_health}
+            Health: {cam.health}
           </span>
         </div>
 
-        <BottomCameraCard camId={cam.cam_id} iconSet="lucide" className="mt-4" />
+        <BottomCameraCard camId={cam.id} iconSet="lucide" className="mt-4" />
 
       </div>
     </div>

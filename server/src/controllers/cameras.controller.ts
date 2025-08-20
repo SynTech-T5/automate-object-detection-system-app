@@ -64,6 +64,26 @@ export async function count(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
+ * Controller: นับรายการ Cameras ทั้งหมดที่มีสถานะ
+ *
+ * @route GET /api/cameras/status
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการ จำนวนกล้องที่มีสถานะ เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการ จำนวนกล้องที่มีสถานะ
+ *
+ * @author Premsirigul
+ */
+export async function status(req: Request, res: Response, next: NextFunction) {
+    try {
+        const cameras = await CameraService.countStatusCameras();
+        res.json(cameras);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
  * Controller: นับรายการ Cameras ทั้งหมดที่ไม่ได้ใช้งาน
  *
  * @route GET /api/cameras/totalInactive

@@ -14,6 +14,7 @@
  * Utilities
  *  - GET    /cards             → ข้อมูลสรุปแบบการ์ด (UI use-case)
  *  - GET    /total             → จำนวนกล้องทั้งหมด
+ *  - GET    /status            → สถานะกล้อง (active/inactive) และค่าเฉลี่ยสุขภาพ
  *  - GET    /total-inactive    → จำนวนกล้องที่ไม่ใช้งาน
  *  - GET    /search/:term      → ค้นหากล้อง (id/ชื่อ/สถานที่) *รองรับ path param*
  *    *หมายเหตุ: ถ้าจะใช้ query string ก็ใช้ /search?q=... และให้ ctrl รองรับเองได้*
@@ -52,6 +53,7 @@ const router = Router();
 /* ---------- Utilities ---------- */
 router.get('/cards', ctrl.cardsSummary);
 router.get('/total', ctrl.count);
+router.get('/status', ctrl.status);
 router.get('/total-inactive', ctrl.countInactive);
 router.get('/search/:term', ctrl.search);
 // router.get('/stats', ctrl.stats);                          // optional (รวมสถิติ)

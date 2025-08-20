@@ -1,16 +1,21 @@
-export interface CamerasRow{
-    cam_id: number;
-    cam_name: string;
-    cam_address: string;
-    cam_type: string;
-    cam_resolution: string;
-    cam_description: string;
-    cam_installation_date: Date;
-    cam_health: number;
-    cam_video_quality: number;
-    cam_network_latency: number;
-    cam_is_use: boolean;
-    cam_location_id: number;
+export interface Camera {
+    id: number;
+    name: string;
+    address: string;
+    type: string;
+    resolution: string;
+    description: string;
+    status: boolean;
+    installation_date: string;
+    installation_time: string;
+    health: number;
+    video_quality: number;
+    network_latency: number;
+    is_use: boolean;
+    location: {
+        id: number;
+        name: string;
+    }
 }
 
 export type CreateCameraInput = {
@@ -26,3 +31,10 @@ export type CreateCameraInput = {
   cam_is_use: boolean | null;      
   cam_location_id: number | null;
 };
+
+export interface CameraStatus {
+  total: number;
+  active: number;
+  inactive: number;
+  avg_health: number;
+}

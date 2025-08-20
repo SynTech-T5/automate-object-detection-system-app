@@ -1,5 +1,5 @@
 import CameraCard, { type Camera } from "../components/CameraCard";
-import { TotalCamerasCard, ActiveCamerasCard, InactiveCamerasCard, AvgCameraHealthCard } from "../components/StatusCard";
+import * as StatusCard from "../components/StatusCard";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
 
@@ -14,16 +14,11 @@ export default async function CamerasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
-        <TotalCamerasCard />
-        <ActiveCamerasCard />
-        <InactiveCamerasCard />
-        <AvgCameraHealthCard />
-      </div>
+      <StatusCard.DashboardSummaryCameraSection></StatusCard.DashboardSummaryCameraSection>
 
       <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
         {cameras.map((cam) => (
-          <CameraCard key={cam.cam_id} cam={cam} />
+          <CameraCard key={cam.id} cam={cam} />
         ))}
       </div>
     </div>
