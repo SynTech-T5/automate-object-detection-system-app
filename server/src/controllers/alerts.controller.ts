@@ -106,12 +106,12 @@ export async function indexNotes(req: Request, res: Response, next: NextFunction
  */
 export async function trendAnalytics(req: Request, res: Response, next: NextFunction) {
     try {
-        const days_back = Number(req.params.days_back);
-        if (isNaN(days_back)) {
-            return res.status(400).json({ error: "Missing days_back query parameter" });
-        }
+        // const days_back = Number(req.params.days_back);
+        // if (isNaN(days_back)) {
+        //     return res.status(400).json({ error: "Missing days_back query parameter" });
+        // }
 
-        const trendData = await AlertService.getAlertTrend(days_back);
+        const trendData = await AlertService.getAlertTrend();
         res.json(trendData);
     } catch (err) {
         next(err);
