@@ -1,5 +1,8 @@
+import { promises } from 'dns';
 import { pool } from '../config/db';
 import type { CamerasRow, CreateCameraInput } from '../models/cameras.model';
+export type UpdateCameraInput = Partial<CreateCameraInput>; // แปลงค่าให้เป็น optional เพื่อจะได้ทำอัพเดตหากไม่ส่งค่านั้นมาก็ไม่เป็นไร
+
 /**
  * ดึงรายการกล้องทั้งหมดจากฐานข้อมูล
  *
@@ -12,6 +15,20 @@ export async function listCameras() {
         "SELECT * FROM cameras"
     );
     return result.rows;
+}
+
+/**
+ * ดึงรายการ Camera Cards พร้อมข้อมูล Location*
+ * @returns {Promise<any[]>} รายการกล้อง
+ * (id, status, name, type, health, location)
+ * 
+ * @author Wongsakon
+ */
+export async function cameraCards() {
+  const result = await pool.query(
+      "SELECT cam_id, cam_status, cam_name, cam_type, cam_health, loc_name FROM cameras INNER JOIN locations ON cam_location_id = loc_id"
+  );
+  return result.rows;
 }
 
 /**
@@ -28,27 +45,141 @@ export async function totalCameras() {
     return result.rows;
 }
 
+
+/**
+ * แก้ไขไขข้อมูลของกล้องจาก id ที่ส่งมา และจะแก้ไขข้อมูลตามฟิลด์ที่ส่งมาหากไม่ได้ส่งมาข้อมูลก็จะไม่ถูกแก้ไข
+ * @param {camId: number , patch: UpdateCameraInput} รหัสของ cameras cam_id และ ฟิลด์ของ allowed
+ * @returns {CamerasRow} รายการของ Camera ที่แก้ไข
+ * @author Chokchai
+ */
+
+export async function updateCamera(camId: number , patch: UpdateCameraInput): Promise<CamerasRow | null>{ //แก้ไขข้อมูลกล้อง
+  
+  const allowed = new Set([
+    'cam_name',
+    'cam_location_id',
+    'cam_type',
+    'cam_address',
+    'cam_resolution'
+  ]);
+  const entries = Object.entries(patch).filter(([key, value]) =>  allowed.has(key) && value !== undefined); //แปลงข้อมูลให้เป็น Array คู่ จากนั้นทำการ filter
+  
+  if (!entries.length) return null;
+  const set  = entries.map(([k], i) => `${k} = $${i + 1}`).join(', '); //วนลูปเพื่อดึงค่าของ Key => ให้ค่าตัวแรกเริ่มนับที่ 1 จากนั้น join ด้วย , 
+  // [k] หยิบตัวแรก => ["cam_name = $1"]
+  const val = entries.map(([, v]) => v);
+
+  const sql = `
+    UPDATE public.cameras
+    SET ${set}
+    WHERE cam_id = $${entries.length + 1} AND cam_is_use = true
+    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_resolution
+  `;
+
+  const r = await pool.query<CamerasRow>(sql, [...val, camId]);
+  return r.rows[0] ?? null;
+
+}
+
+/**
+ * ลบข้อมูลกล้องแบบ Softdelete
+ * @param {camId: number} รหัสของ cameras cam_id 
+ * @returns {Promise<boolean>} คืนค่าเป็น boolean 
+ * @author Chokchai
+ */
+export async function deleteCamera(camId: number): Promise<boolean> { //ลบข้อมูลกล้องแบบ soft delete
+  try {
+    const sql = `
+    UPDATE public.cameras 
+    SET cam_is_use = false
+    WHERE cam_id = $1 
+      AND cam_is_use IS DISTINCT FROM FALSE   
+    RETURNING cam_id`;
+    const r = await pool.query<{ cam_id: number }>(sql, [camId]);
+    return r.rows.length > 0;
+  } catch (err) {
+    // log แล้วค่อยตัดสินใจว่าจะโยนออก/คืน false
+    console.error('deleteCamera error:', err);
+    return false;
+  }
+}
+
+/**
+ * ค้นหากล้องโดยจะรับข้อมูลเป็น id ชื่อกล้อง ชื่อสถานที่ 
+ * @param {id?:number; name?: string; location?:string} เลือกกรอกกรอกข้อมูล ชื่อกล้อง id กล้อง สถานที่ของกล้อง 
+ * @returns cam_id คืนเลข id ของกล้องที่เจอ
+ * @author Chokchai
+ */
+export async function findCameras({id,name,location} : {id?:number; name?: string; location?:string}) {
+  const conds:string[] = []; // เก็บเงื่อนไข WHERE
+  const params:any[] = []; // เก็บค่าพารามิเตอร์สำหรับ
+  let i = 1;
+  if(id){                      // ถ้ามี id ให้ค้น
+    conds.push(`c.cam_id = $${i++}`);
+    params.push(id);
+  }
+  if(name){
+    conds.push(`c.cam_name ILIKE $${i++}`);
+    params.push(`%${name}%`);
+  }
+  if (location){ 
+    conds.push(`l.loc_name ILIKE $${i++}`);   
+    params.push(`%${location}%`); 
+  }
+  if (conds.length === 0) {
+    throw new Error('id or name or location required');
+  }
+  
+  const sql = `
+    SELECT c.*, l.loc_name AS location_name
+    FROM public.cameras c
+    LEFT JOIN public.locations l ON l.loc_id = c.cam_location_id   
+    WHERE (${conds.join(' OR ')}) 
+      AND c.cam_is_use IS TRUE
+    ORDER BY c.cam_id ASC
+    `;
+  
+  const r = await pool.query(sql, params);
+  return r.rows.map((row: any) => row.cam_id);;
+}
+
 /**
  * สร้างกล้องใหม่โดยการเพิ่มข้อมูลตาม CreateCameraInput
  * @param {input: CreateCameraInput} สร้างกล้องตามฟิลด์ข้อมูลของ CreateCameraInput 
  * @returns {CamerasRow} รายการของ Camera ที่สร้าง
  * @author Chokchai
  */
-
 export async function createCameras(input: CreateCameraInput): Promise<CamerasRow>{ //สร้างกล้องตัวใหม่
 
-    const values = [
-    input.cam_name ?? null,
-    input.cam_address ?? null,
-    input.cam_type ?? null,
-    input.cam_resolution ?? null,
-    input.cam_description ?? null,
-    input.cam_installation_date ?? null,
-    input.cam_health ?? null,
-    input.cam_video_quality ?? null,
-    input.cam_network_latency ?? null,
-    input.cam_location_id ?? null,
+  const existing = await pool.query<CamerasRow>(`
+      SELECT * FROM cameras
+           WHERE cam_name = $1 AND cam_is_use = TRUE
+      `, [input.cam_name]);
+  if(existing.rows.length > 0){
+     throw new Error('cameras name already exists');
+  }    
+
+  const values = [
+  input.cam_name ?? null,
+  input.cam_address ?? null,
+  input.cam_type ?? null,
+  input.cam_resolution ?? null,
+  input.cam_description ?? null,
+  input.cam_installation_date ?? null,
+  input.cam_health ?? null,
+  input.cam_video_quality ?? null,
+  input.cam_network_latency ?? null,
+  input.cam_location_id ?? null,
   ];
+  
+
+  // const existing = await pool.query<UserRow>(`
+  //         SELECT * FROM users
+  //         WHERE usr_username = $1 OR usr_email = $2
+  //     `, [username, email]);
+  //     if (existing.rows.length > 0){
+  //         throw new Error('Username or email already exists');
+  //     }
 
   const sql = `
     INSERT INTO public.cameras
@@ -66,6 +197,19 @@ export async function createCameras(input: CreateCameraInput): Promise<CamerasRo
     return r.rows[0] as CamerasRow;
 }
 
+/**
+ * นับจำนวนกล้องทั้งหมดที่ไม่ได้ใช้งาน
+ *
+ * @returns {Promise<any[]>} จำนวนกล้องที่ไม่ได้ใช้งาน
+ * 
+ * @author Napat
+ */
+export async function totalInactiveCameras() {
+    const result = await pool.query(
+        "SELECT COUNT(*) FROM cameras WHERE cam_status = false"
+    );
+    return result.rows;
+}
 
 /**
  * ดึงรายการประวัติการซ่อมบำรุงกล้องทั้งหมด
@@ -115,9 +259,110 @@ export async function getMaintenanceHistoryByCamId(cam_id: number): Promise<any[
 
 
 
-    const result = await pool.query(query,[cam_id]);
+    const result = await pool.query(query, [cam_id]);
 
     return result.rows;
+}
+
+/**
+ * เพิ่มข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะเพิ่มวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากเพิ่มไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} camId - ID ของกล้องที่ซ่อม
+ * @param {Date} date - วันที่ที่เพิ่มข้อมูล
+ * @param {MaintenanceType} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังเพิ่มสำเร็จ
+ * @throws {Error} เมื่อเพิ่ม Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function createMaintenanceHistory(camId: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        INSERT INTO maintenance_history(mnt_date, mnt_type, mnt_technician, mnt_note, mnt_camera_id)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `, [date, type, technician, note, camId]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to insert Maintenance History');
+    }
+
+    return maintenanceHistory;
+}
+
+/**
+ * ลบข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะลบ maintenance history ตาม ID ในฐานข้อมูล
+ * หากลบไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} mnt_id - ID ของประวัติการซ่อมบำรุง
+ * @param {boolean} isUse - สถานะของประวัติการซ่อมบำรุง
+ * @returns {Promise<object>} Maintenance History object หลังลบสำเร็จ
+ * @throws {Error} เมื่อลบ Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function softDeleteMaintenanceHistory(mnt_id: number, isUse: boolean) {
+    const { rows } = await pool.query(`
+        UPDATE maintenance_history
+        set mnt_is_use = $1
+        WHERE mnt_id = $2
+        RETURNING *;
+        `, [isUse, mnt_id]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to delete maintenance history or maintenance history not found');
+    }
+
+    return maintenanceHistory
+}
+
+/**
+ * อัพเดทข้อมูลของ Maintenance History
+ *
+ * ฟังก์ชันนี้จะอัพเดทวันที่, ประเภท, ชื่อของช่างซ่อม และคำอธิบายของ Maintenance History ในฐานข้อมูล
+ * หากอัพเดทไม่สำเร็จ จะโยน Error
+ *
+ * @param {number} mnt_id - ID ของ Maintenance History
+ * @param {Date} date - วันที่ที่อัพเดทข้อมูล
+ * @param {MaintenanceType} type - ประเภทของการซ่อม
+ * @param {string} technician - ชื่อของช่างที่ซ่อม
+ * @param {string} note - คำอธิบายของ Maintenance History
+ * @returns {Promise<object>} Maintenance History object หลังอัพเดทสำเร็จ
+ * @throws {Error} เมื่ออัพเดท Maintenance History ไม่สำเร็จ
+ *
+ * 
+ * @author Napat
+ */
+export async function updateMaintenanceHistory(mnt_id: number, date: Date, type: string, technician: string, note: string) {
+    const { rows } = await pool.query(`
+        UPDATE maintenance_history
+        SET mnt_date = $2,
+            mnt_type = $3,
+            mnt_technician = $4,
+            mnt_note = $5
+        WHERE mnt_id = $1
+        RETURNING *;
+        `, [mnt_id, date, type, technician, note]);
+
+    const maintenanceHistory = rows[0];
+
+    if (!maintenanceHistory) {
+        throw new Error('Failed to update maintenance history or maintenance history not found');
+    }
+
+    return maintenanceHistory
 }
 
 /**
@@ -156,38 +401,6 @@ export async function eventDetection() {
     return result.rows;
 }
 
-
-/**
- * อัปเดตข้อมูล Event Detection 
- * 
- * @param {number} cds_id - รหัสของ camera_detection_settings
- * @param {string} cds_sensitivity - ค่า sensitivity ใหม่ (High, Medium, Low)
- * @param {string} cds_priority - ค่า priority ใหม่ (High, Medium, Low)
- * @param {boolean} cds_status - สถานะใหม่ (true/false)
- * @returns {Promise<object>} Event Detection หลังอัปเดต
- * 
- * @author Wongsakon
- */
-export async function updateEventDetection(cds_id: number, cds_sensitivity: string, cds_priority: string, cds_status: boolean) {
-    const { rows } = await pool.query(
-      `
-      UPDATE camera_detection_settings
-      SET cds_sensitivity = $1,
-          cds_priority = $2,
-          cds_status = $3
-      WHERE cds_id = $4 
-      RETURNING *;
-      `,
-      [cds_sensitivity, cds_priority, cds_status, cds_id]);
-  
-    const detection = rows[0];
-  
-    if (!detection) {
-      throw new Error("Failed to update detection or not found");
-    }
-  
-    return detection;
-}
 
 /**
  * เพิ่มข้อมูลของ EventDetection
@@ -245,4 +458,67 @@ export async function deleteEventDetection(cds_id: number, cds_is_use: boolean) 
     }
 
     return events
+}
+
+/**
+ * ดึงข้อมูล Access Control ของกล้องตาม cam_id
+ *
+ * @param {number} caa_camera_id - รหัสกล้องที่ต้องการดึงข้อมูล access control
+ * @returns {Promise<object[]>} รายการ access control ของกล้องที่เลือก
+ *
+ * @author Jirayu
+ */
+export async function showCameraAccessControlById(caa_camera_id: number) {
+    const query = `SELECT 
+                    caa_require_auth,
+                    caa_restrict,
+                    caa_log,
+                    caa_camera_id 
+                  FROM cameras_access
+                  WHERE caa_camera_id = $1`;
+    const result = await pool.query(query, [caa_camera_id]);
+    return result.rows;
+}
+
+/**
+ * ดึงข้อมูล Access Control ของกล้องทั้งหมด
+ *
+ * @returns {Promise<object[]>} รายการ access control ของกล้องทั้งหมด
+ *
+ * @author Jirayu
+ */
+export async function showCameraAccessControl() {
+    const query = `SELECT *
+                   FROM cameras_access`;
+    const result = await pool.query(query);
+    return result.rows;
+}
+
+/**
+ * อัพเดทข้อมูลของ Access Control
+ *
+ * @param {number} camId - รหัสของกล้อง
+ * @param {string} selectedAccess - Access ที่ต้องการอัพเดท
+ * @param {boolean} status - สถานะของ Acess
+ * @returns {Promise<object>} Access Control object หลังอัพเดทเสร็จ
+ *
+ * @author Napat
+ */
+export async function updateAccessControl(camId: number, selectedAccess: string, status: boolean) {
+    const { rows } = await pool.query(
+      `
+      UPDATE cameras_access
+      SET ${selectedAccess} = $1
+      WHERE caa_camera_id = $2
+      RETURNING *;
+      `,
+      [status, camId]);
+  
+    const accessControl = rows[0];
+  
+    if (!accessControl) {
+      throw new Error("Failed to update access control or not found");
+    }
+  
+    return accessControl;
 }

@@ -1,0 +1,145 @@
+@import url('https://cdn-uicons.flaticon.com/3.0.0/uicons-thin-rounded/css/uicons-thin-rounded.css');
+/* container */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  text-align: left;
+}
+
+/* ปุ่ม */
+.dropdown-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #2269f7; /* gray-100 */
+  padding: 0.2rem 2rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: #ffffff;
+  min-width: 160px;          /* กำหนดความกว้างขั้นต่ำให้ปุ่มเท่ากัน */
+  justify-content: center;  
+}
+
+
+
+/* ลูกศร */
+.dropdown-button .arrow {
+  margin-left: 0.25rem; /* เว้นระยะด้านซ้าย */
+  color: #ffffff; /* สีปกติ (gray-900) */
+  transition: color 0.2s ease-in-out; /* ทำให้การเปลี่ยนสีลื่น */
+  margin-top: 4px;
+}
+
+
+
+/* เมนู */
+.dropdown-menu {
+  position: absolute;
+  left: 0;
+  margin-top: 0.5rem;
+  width: 11rem;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.dropdown-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem 0;
+}
+
+.dropdown-menu li a {
+  display: block;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #111827; /* gray-900 */
+  text-decoration: none;
+}
+
+.dropdown-menu li a:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+
+.dropdown1 {
+    color: #111827;
+    position: relative;
+    display: inline-block;
+    text-align: left;
+}
+
+
+
+.dropdown1 .dropdown-button {
+  background-color: #ffffff; /* ฟ้า */
+  color: rgb(139, 139, 139);              /* ตัวหนังสือสีขาว */
+    border: 1px solid #3b82f6; /* กรอบสีน้ำเงิน */
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  
+}
+
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 320px;   /* ปรับความกว้างได้ */
+}
+.field-label {
+  font-size: 1rem;
+  color: #374151;     /* เทาเข้ม */
+  font-weight: 600;
+}
+.select { position: relative; }
+.select-trigger {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;         /* ขอบเทาอ่อน */
+  border-radius: 0.75rem;            /* มุมโค้ง */
+  padding: 0.6rem 0.6rem;
+  cursor: pointer;
+  
+}
+.select-trigger:hover { border-color: #d1d5db; background: #fcfcfc; }
+.select-trigger:focus { outline: none; box-shadow: 0 0 0 3px rgba(59,130,246,.18); }
+
+/* ข้อความในปุ่ม */
+.value { font-size: 0.9rem; color: #111827; }
+.value.placeholder { color: #9ca3af; }       /* สี placeholder */
+
+/* ไอคอนลูกศรขวา */
+.chevron { font-size: 0.95rem; color: #9ca3af; transition: transform .15s ease; }
+.select.open .chevron { transform: rotate(180deg); }
+
+/* ===== Dropdown Menu ===== */
+.select-menu {
+  position: absolute; inset-inline: 0; top: calc(100% + 6px);
+  background: #ffffff;
+  border: 1px solid #e5e7eb; border-radius: 0.75rem;
+  box-shadow: 0 10px 28px rgba(0,0,0,.08);
+  padding: 0.35rem;
+  z-index: 50;
+  max-height: 260px; overflow: auto;         /* เลื่อนเมื่อรายการยาว */
+  scrollbar-width: thin;
+}
+.select-option {
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  background: transparent; border: 0;
+  cursor: pointer;
+  font-size: 0.95rem; color: #111827;
+
+}
+.select-option:hover { background: #f3f4f6; }
+.select-option[aria-selected="true"] { background: #eff6ff; } /* แสดงที่เลือก */
+ize-lg .select-trigger { padding: 0.8rem 1rem;  border-radius: 0.9rem; }
+
