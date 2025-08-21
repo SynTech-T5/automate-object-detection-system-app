@@ -20,7 +20,10 @@ export interface Alert {
         video_quality: number;
         network_latency: number;
         is_use: boolean;
-        location_id: number;
+        location: {
+            id: number;
+            name: string;
+        }
     };
     footage: {
         id: number;

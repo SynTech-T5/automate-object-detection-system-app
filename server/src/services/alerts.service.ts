@@ -14,9 +14,11 @@ export async function getAlertList() {
     const result = await pool.query<Model.Alert>(`
         SELECT * FROM alerts
         JOIN cameras ON cam_id = alr_camera_id
+        JOIN locations ON loc_id = cam_location_id
         JOIN footages ON fgt_id = alr_footage_id
         JOIN events ON evt_id = alr_event_id
         WHERE alr_is_use = true
+        ORDER BY alr_create_date DESC
     `);
 
     // return result.rows.map(mapToAlert);

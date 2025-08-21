@@ -31,7 +31,10 @@ export function mapToAlert(row: any): Alert {
             video_quality: Number(row.cam_video_quality),
             network_latency: row.cam_network_latency,
             is_use: row.cam_is_use,
-            location_id: row.cam_location_id,
+            location: {
+                id: row.loc_id,
+                name: row.loc_name,
+            }
         },
 
         footage: {

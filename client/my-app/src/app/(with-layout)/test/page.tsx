@@ -1,13 +1,11 @@
-// Page ใช้สำหรับดึง component มาแสดงผลเพื่อทดสอบ
-'use client';
-
-import RegisterForm from "../../components/RegisterForm";
-
-export default function Page() {
+import AlertTable from "../../components/AlertTable"
+export default async function Page() {
 
   return (
-    <div className="flex flex-col gap-4">
-        <RegisterForm></RegisterForm>
+    <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+        <AlertTable />
+      </div>
     </div>
   );
 }
