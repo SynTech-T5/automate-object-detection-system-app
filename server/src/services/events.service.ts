@@ -1,3 +1,4 @@
+import { error } from 'console';
 import { pool } from '../config/db';
 
 /**
@@ -93,9 +94,9 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
 
     const eventExists = await pool.query(`
         SELECT evt_id FROM events
-        WHERE evt_id = $1 
-        AND evt_is_use = TRUE`,
-        [evt_id]
+        WHERE evt_id = $1
+        AND evt_is_use = true`
+        ,[evt_id]
     )
 
     if (eventExists.rows.length === 0) {
@@ -135,6 +136,18 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
  * @author Fasai
  */
 export async function deleteEvent(evt_id: number, evt_is_use: boolean) {
+
+    const existsEvent = await pool.query(`
+        SELECT evt_id FROM events
+        WHERE evt_id = $1
+        AND evt_is_use = true`
+        , [evt_id]
+    )
+
+    if(existsEvent.rows.length === 0){
+        throw new Error ('Event not Found');
+    }
+
     const { rows } = await pool.query(`
         UPDATE events
         set evt_is_use = $1
