@@ -27,20 +27,38 @@ export async function eventDetection() {
  * @param {string} cds_priority - ความสำคัญของ Eventdetection
  * @param {string} cds_status - สถานะของ Eventdetection
  * @returns {Promise<object>} EventDetection object หลังสร้างเสร็จ
- *
+ * @throws {Error} ถ้าไม่พบ camera,event หรือไม่สามารถอัปเดตได้
+ * 
  * @author Audomsak
  */
 export async function createEventDetection( cds_event_id: number,
-    cds_camera_id: number,
-    cds_sensitivity: string = "Medium",
-    cds_priority: string = "Medium",
-    cds_status: boolean = true
+    cds_camera_id: number
 ) {
+    const cameraExists = await pool.query(`
+        SELECT cam_id FROM cameras 
+        WHERE cam_id = $1
+        AND cam_is_use = true
+    `, [cds_camera_id]);
+
+    if (cameraExists.rows.length === 0) {
+        throw new Error('Camera not found or Camera not in use');
+    }
+
+    const EventExists = await pool.query(`
+        SELECT evt_id FROM events 
+        WHERE evt_id = $1
+        AND evt_is_use = true
+    `, [cds_event_id]);
+
+    if (EventExists.rows.length === 0) {
+        throw new Error('Event not found or Event not in use');
+    }
+
     const { rows } = await pool.query(`
-        INSERT INTO camera_detection_settings (cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING *
-    `, [cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status]);
+        INSERT INTO camera_detection_settings (cds_event_id, cds_camera_id)
+        VALUES ($1, $2)
+        RETURNING *;
+    `, [cds_event_id, cds_camera_id]);
 
     const eventDetection = rows[0];
 
@@ -54,14 +72,25 @@ export async function createEventDetection( cds_event_id: number,
 export async function updateEventDetection(cds_camera_id: number) {}
 
 /**
- * ดึงรายการ Event Detection ทั้งหมด
+ * ลบ EventDetection ที่เลือก
  *
  * @returns {Promise<EventDetection[]>} รายการ Event Detection ที่ถูกใช้งานอยู่ทั้งหมด
  * @description ดึงข้อมูล Event Detection จากฐานข้อมูลโดยเรียงตาม cds_id จากมากไปน้อย และแสดงเฉพาะ Event Detection ที่ยังใช้งานอยู่
- *
+ * @throws {Error} ถ้าไม่พบ Event Detection หรือไม่สามารถอัปเดตได้
+ * 
  * @author Audomsak
  */
 export async function softDeleteEventDetection(cds_id: number, cds_is_use: boolean) {
+const cameraExists = await pool.query(`
+        SELECT cds_id FROM camera_detection_settings
+        WHERE cds_id = $1
+        AND cds_is_use = true
+    `, [cds_id]);
+
+    if (cameraExists.rows.length === 0) {
+        throw new Error('EventDetection not found or EventDetection is delete');
+    }
+
     const { rows } = await pool.query(`
         UPDATE camera_detection_settings
         set cds_is_use = $1

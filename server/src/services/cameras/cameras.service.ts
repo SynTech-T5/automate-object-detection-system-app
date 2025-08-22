@@ -226,11 +226,22 @@ export async function countInactiveCameras() {
  * @param {string} cam_id - ไอดีของ cam ที่จะเปลี่ยนสถานะ
  * @param {string} cam_status - สถานะที่จะเปลี่ยน
  * @returns {Promise<any[]>} กล้องที่ถูกอัปเดต
+ * @throws {Error} ถ้าไม่พบ camera หรือไม่สามารถอัปเดตได้
  * 
  * @author Audomsak
  * 
  */
 export async function updateCameraStatus(cam_id: number, cam_status: boolean) {
+  const cameraExists = await pool.query(`
+        SELECT cam_id FROM cameras 
+        WHERE cam_id = $1
+        AND cam_is_use = true
+    `, [cam_id]);
+
+    if (cameraExists.rows.length === 0) {
+        throw new Error('Camera not found or Camera not in use');
+    }
+
     const result = await pool.query(`
         UPDATE cameras 
         SET cam_status = $1 
