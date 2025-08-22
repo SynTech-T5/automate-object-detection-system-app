@@ -336,7 +336,7 @@ export async function indexEventDetections(req: Request, res: Response, next: Ne
 export async function storeEventDetection(req: Request, res: Response, next: NextFunction) {
     try {
         const { cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status } = req.body;
-        const createEventDetection = await EventDetectionService.createEventDetection(cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status);
+        const createEventDetection = await EventDetectionService.createEventDetection(cds_event_id, cds_camera_id);
         return res.json(createEventDetection);
     } catch (err) {
         next(err);

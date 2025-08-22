@@ -16,7 +16,7 @@ export async function getAllEvents(): Promise<Event[]> {
         WHERE evt_is_use = true
         ORDER BY evt_id DESC
     `;
-    
+
     const { rows } = await pool.query<Event>(query);
     return rows;
 }
@@ -37,6 +37,23 @@ export async function getAllEvents(): Promise<Event[]> {
  * @author Fasai
  */
 export async function createEvent(evt_icon: string, evt_name: string, evt_des: string) {
+
+
+    if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
+        throw new Error("Event fields cannot be empty");
+    }
+
+    const eventExists = await pool.query(`
+        SELECT evt_id FROM events
+        WHERE evt_name = $1 
+        AND evt_is_use = true`,
+        [evt_name]
+    )
+
+    if (eventExists.rows.length > 0) {
+        throw new Error('Event already exists');
+    }
+
     const { rows } = await pool.query(`
         INSERT INTO events(evt_icon, evt_name, evt_description) 
         VALUES($1, $2, $3)
@@ -69,6 +86,22 @@ export async function createEvent(evt_icon: string, evt_name: string, evt_des: s
  * @author Fasai
  */
 export async function updateEvent(evt_id: number, evt_icon: string, evt_name: string, evt_des: string) {
+
+    if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
+        throw new Error("Event fields cannot be empty");
+    }
+
+    const eventExists = await pool.query(`
+        SELECT evt_id FROM events
+        WHERE evt_id = $1 
+        AND evt_is_use = true`,
+        [evt_id]
+    )
+
+    if (eventExists.rows.length === 0) {
+        throw new Error("Event not found or inactive");
+    }
+
     const { rows } = await pool.query(`
         UPDATE events
         SET evt_icon = $1,
@@ -102,6 +135,18 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
  * @author Fasai
  */
 export async function deleteEvent(evt_id: number, evt_is_use: boolean) {
+
+    const eventExists = await pool.query(`
+      SELECT evt_id FROM events
+      WHERE evt_id = $1
+      AND evt_is_use = true  
+    `, [evt_id]
+    )
+
+    if (eventExists.rows.length === 0) {
+        throw new Error('Event not found');
+    }
+
     const { rows } = await pool.query(`
         UPDATE events
         set evt_is_use = $1
