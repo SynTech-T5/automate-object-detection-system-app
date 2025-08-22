@@ -102,7 +102,6 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
         throw new Error("Event not found or inactive");
     }
 
-
     const { rows } = await pool.query(`
         UPDATE events
         SET evt_icon = $1,
