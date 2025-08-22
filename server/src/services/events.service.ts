@@ -37,6 +37,22 @@ export async function getAllEvents(): Promise<Event[]> {
  * @author Fasai
  */
 export async function createEvent(evt_icon: string, evt_name: string, evt_des: string) {
+    
+     if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
+        throw new Error("Event fields cannot be empty");
+    }
+    
+    const eventExists = await pool.query(`
+        SELECT evt_id FROM events
+        WHERE evt_id = $1 
+        AND evt_is_use = TRUE`,
+        [evt_name]
+    )
+
+    if (eventExists.rows.length > 0) {
+        throw new Error('Event already exists');
+    }
+
     const { rows } = await pool.query(`
         INSERT INTO events(evt_icon, evt_name, evt_description) 
         VALUES($1, $2, $3)

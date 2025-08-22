@@ -181,6 +181,7 @@ export async function createAlert(severity: string, camera_id: number, footage_i
     if (cameraExists.rows.length === 0) {
         throw new Error('Camera offline or not in use');
     }
+    
     const { rows } = await pool.query(`
         INSERT INTO alerts(
 	    alr_severity, alr_camera_id, alr_footage_id, alr_event_id, alr_description)
