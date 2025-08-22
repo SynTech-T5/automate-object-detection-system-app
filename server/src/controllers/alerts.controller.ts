@@ -22,6 +22,26 @@ export async function index(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
+ * Controller: ดึงสถานะของ Alerts ทั้งหมด
+ *
+ * @route GET /api/alerts/status
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับสถานะ alerts เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของสถานะ alerts
+ *
+ * @author Wanasart
+ */
+export async function status(req: Request, res: Response, next: NextFunction) {
+    try {
+        const cameras = await AlertService.countStatusAlerts();
+        res.json(cameras);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
  * Controller: ดึง log ของ Alert ตาม alert ID ที่ส่งมา
  *
  * @route GET /api/alerts/:alr_id/logs

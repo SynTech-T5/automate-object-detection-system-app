@@ -26,6 +26,41 @@ export async function getAlertList() {
 }
 
 /**
+ * นับจำนวน Alert ตามสถานะต่าง ๆ
+ *
+ * @returns {Promise<Model.AlertStatus>} สถานะของ Alert ที่ถูกนับ
+ * @description ดึงข้อมูล Alert จากฐานข้อมูลและนับจำนวนตามสถานะต่าง ๆ เช่น Active, Resolved, Critical
+ * 
+ * @author Wanasart
+ */
+export async function countStatusAlerts(): Promise<Model.AlertStatus> {
+    const { rows } = await pool.query(`
+      SELECT 
+        COUNT(*) FILTER (WHERE alr_is_use = true) AS total,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_status = 'Active') AS active,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_status = 'Resolved') AS resolved,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_status = 'Dismissed') AS dismissed,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_severity = 'Critical') AS critical,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_severity = 'High') AS high,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_severity = 'Medium') AS medium,
+        COUNT(*) FILTER (WHERE alr_is_use = true AND alr_severity = 'Low') AS low
+      FROM alerts
+    `);
+  
+    const r = rows[0];
+    return {
+      total: Number(r.total),
+      active: Number(r.active),
+      resolved: Number(r.resolved),
+      dismissed: Number(r.dismissed),
+      critical: Number(r.critical),
+      high: Number(r.high),
+      medium: Number(r.medium),
+      low: Number(r.low),
+    };
+  }
+
+/**
  * ดึง log ของ Alert ตามรหัส alr_id ที่กำหนด
  *
  * @param {number} alr_id - รหัสของ Alert ที่ต้องการดู log
