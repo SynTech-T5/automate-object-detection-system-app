@@ -1,88 +1,100 @@
 export interface Alert {
-    alr_id: number;
-    alr_severity: string;
-    alr_create_date: Date;
-    alr_status: string;
-    alr_is_use: boolean;
-    alr_description: string;
-    alr_camera: {
-        cam_id: number;
-        cam_name: string;
-        cam_address: string;
-        cam_type: string;
-        cam_resolution: string;
-        cam_description: string;
-        cam_status: boolean;
-        cam_installation_date: Date;
-        cam_health: string;
-        cam_video_quality: string;
-        cam_network_latency: number;
-        cam_is_use: boolean;
-        cam_location_id: number;
+    id: number;
+    severity: string;
+    create_date: string;
+    create_time: string;
+    status: string;
+    is_use: boolean;
+    description: string;
+    camera: {
+        id: number;
+        name: string;
+        address: string;
+        type: string;
+        resolution: string;
+        description: string;
+        status: boolean;
+        installation_date: string;
+        installation_time: string;
+        health: number;
+        video_quality: number;
+        network_latency: number;
+        is_use: boolean;
+        location: {
+            id: number;
+            name: string;
+        }
     };
-    alr_footage: {
-        fgt_id: number;
-        fgt_url: string;
-        fgt_start_ts: Date;
-        fgt_end_ts: Date;
+    footage: {
+        id: number;
+        url: string;
+        start_ts: string;
+        end_ts: string;
     };
-    alr_event: {
-        evt_id: number;
-        evt_icon: string;
-        evt_name: string;
-        evt_description: string;
-        evt_is_use: boolean;
-    };
+    event: {
+        id: number;
+        icon: string;
+        name: string;
+        description: string;
+        is_use: boolean;
+    }
 }
 
-export interface InsertAlert {
-    alr_severity: string;
-    alr_create_date: Date;
-    alr_status: string;
-    alr_description: string;
-    alr_camera_id: number;
-    alr_footage_id: number;
-    alr_event_id: number;
-} 
+export interface AlertSafe {
+    id: number;
+    severity: string;
+    create_date: string;
+    create_time: string;
+    status: string;
+    is_use: boolean;
+    description: string;
+    camera_id: number;
+    footage_id: number;
+    event_id: number;
+}
 
-export function mapToAlert(row: any): Alert {
-    return {
-        alr_id: row.alr_id,
-        alr_severity: row.alr_severity,
-        alr_create_date: new Date(row.alr_create_date),
-        alr_status: row.alr_status,
-        alr_is_use: row.alr_is_use,
-        alr_description: row.alr_description,
+export interface AlertSafeDelete {
+    id: number;
+    is_use: boolean;
+}
 
-        alr_camera: {
-            cam_id: row.cam_id,
-            cam_name: row.cam_name,
-            cam_address: row.cam_address,
-            cam_type: row.cam_type,
-            cam_resolution: row.cam_resolution,
-            cam_description: row.cam_description,
-            cam_status: row.cam_status,
-            cam_installation_date: new Date(row.cam_installation_date),
-            cam_health: row.cam_health,
-            cam_video_quality: row.cam_video_quality,
-            cam_network_latency: row.cam_network_latency,
-            cam_is_use: row.cam_is_use,
-            cam_location_id: row.cam_location_id,
-        },
+export interface LogItem {
+    id: number;
+    event_name: string;
+    create_date: string;
+    create_time: string;
+    user_id: number;
+};
 
-        alr_footage: {
-            fgt_id: row.fgt_id,
-            fgt_url: row.fgt_url,
-            fgt_start_ts: new Date(row.fgt_start_ts),
-            fgt_end_ts: new Date(row.fgt_end_ts),
-        },
+export interface Log {
+    alert_id: number;
+    log: LogItem[];
+};
 
-        alr_event: {
-            evt_id: row.evt_id,
-            evt_icon: row.evt_icon,
-            evt_name: row.evt_name,
-            evt_description: row.evt_description,
-            evt_is_use: row.evt_is_use,
-        },
-    };
+export interface Related {
+    event_id: number;
+    alert: AlertSafe[];
+}
+
+export interface Note {
+    alert_id: number;
+    notes: NoteItem[];
+}
+
+export interface NoteItem {
+    id: number;
+    note: string;
+    update_date: string;
+    update_time: string;
+    user_id: number;
+}
+
+export interface Trend {
+    date: string;
+    trend: TrendAlertItem[];
+}
+
+export interface TrendAlertItem {
+    severity: string;
+    count: number;
 }

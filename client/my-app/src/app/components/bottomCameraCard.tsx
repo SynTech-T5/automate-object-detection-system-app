@@ -49,7 +49,12 @@ export default function BottomCameraCard({
   // ปุ่ม: ไม่ใส่ border เอง ปล่อยให้เส้นแบ่งมาจาก parent
   // ใช้ inset box-shadow เป็น 'border สี' ตอน hover/active
   const btnBase =
-    "group relative flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 " +
+    "group relative flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 " +
+    "text-sm text-[var(--color-black)] transition-colors focus:outline-none " +
+    "rounded-none first:rounded-l-xl last:rounded-r-xl";
+
+  const btnTrash =
+    "group relative flex-1 inline-flex items-center justify-center gap-2 px-1 py-2 " +
     "text-sm text-[var(--color-black)] transition-colors focus:outline-none " +
     "rounded-none first:rounded-l-xl last:rounded-r-xl";
 
@@ -145,7 +150,7 @@ export default function BottomCameraCard({
       <button
         onClick={doDelete}
         type="button"
-        className={`${btnBase} ${hoverRed} ${active === "delete" ? activeRed : ""}`}
+        className={`${btnTrash} ${hoverRed} ${active === "delete" ? activeRed : ""}`}
         title="Delete"
         aria-label="Delete"
       >

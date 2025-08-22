@@ -61,7 +61,7 @@ export default function Header({ userName = "Admin" }: { userName?: string }) {
                         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-primary-bg)]">
                             {/* ถ้ามีโลโก้จริงใช้ <Image src="/logo.svg" .../> */}
                             <Image
-                                src="/automate-object-detection-system-2.png"
+                                src="/automate-object-detection-system-icon.png"
                                 alt="Automate Logo"
                                 width={36}
                                 height={36}

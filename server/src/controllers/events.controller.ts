@@ -2,6 +2,26 @@ import { Request, Response, NextFunction } from "express";
 import * as eventService from '../services/events.service';
 
 /**
+ * Controller: ดึงรายการ Events ทั้งหมดออกมาแสดง
+ *
+ * @route GET /api/events
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object (ส่งกลับรายการ events เป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของรายการ events
+ *
+ * @author Jirayu
+ */
+export async function index(req: Request, res: Response, next: NextFunction) {
+    try {
+        const events = await eventService.getAllEvents();
+        return res.json(events);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
  * เพิ่ม Event ตามข้อมูลใน req.body
  * ส่ง Event ที่เพิ่มแล้วเป็น JSON
  *
@@ -14,31 +34,11 @@ import * as eventService from '../services/events.service';
  *
  * @author Fasai
  */
-export async function create(req: Request, res: Response, next: NextFunction){
-    try{
+export async function store(req: Request, res: Response, next: NextFunction) {
+    try {
         const { icon, name, description } = req.body;
         const createEvent = await eventService.createEvent(icon, name, description);
         return res.json(createEvent);
-    }catch (err){
-         next(err);
-    }
-}
-
-/**
- * Controller: ดึงรายการ Events ทั้งหมดออกมาแสดง
- *
- * @route GET /api/events
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object (ส่งกลับรายการ events เป็น JSON)
- * @param {NextFunction} next - Express next middleware function
- * @returns {Promise<void>} JSON response ของรายการ events
- *
- * @author Jirayu
- */
-export async function list(req: Request, res: Response, next: NextFunction) {
-    try {
-        const events = await eventService.getAllEvents();
-        return res.json(events);
     } catch (err) {
         next(err);
     }
@@ -57,13 +57,13 @@ export async function list(req: Request, res: Response, next: NextFunction) {
  *
  * @author Fasai
  */
-export async function update(req: Request, res: Response, next: NextFunction){
-    try{
+export async function update(req: Request, res: Response, next: NextFunction) {
+    try {
         const evt_id = Number(req.params.evt_id);
         const { icon, name, description } = req.body;
         const updateEvent = await eventService.updateEvent(evt_id, icon, name, description);
         return res.json(updateEvent);
-    }catch(err){
+    } catch (err) {
         next(err);
     }
 }
@@ -82,12 +82,12 @@ export async function update(req: Request, res: Response, next: NextFunction){
  * @author Fasai
  */
 export async function softDelete(req: Request, res: Response, next: NextFunction) {
-    try{
+    try {
         const evt_id = Number(req.params.evt_id);
         const { status } = req.body
         const deleteEvent = await eventService.deleteEvent(evt_id, status);
         return res.json(deleteEvent);
-    }catch(err){
+    } catch (err) {
         next(err);
     }
 }
