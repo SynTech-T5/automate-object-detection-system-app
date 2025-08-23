@@ -173,6 +173,8 @@ function useFetchJson<T>(url: string) {
   return { data, loading, error };
 }
 
+
+
 /* -------------------------- Summary Context/Provider ---------------------- */
 interface SummaryCtxValue<T> {
   data: T | null;
@@ -315,6 +317,7 @@ export function DashboardSummaryCameraSection() {
     </CameraSummaryProvider>
   );
 }
+
 
 export function DashboardSummaryAlertSection() {
   return (
