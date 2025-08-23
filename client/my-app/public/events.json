@@ -1,0 +1,16 @@
+[
+  {
+    "evt_id": 1,
+    "evt_icon": "/icons/fight.png",
+    "evt_name": "Fighting / Physical Assault",
+    "evt_description": "Detect violent physical interactions such as fighting, pushing, or assaulting behavior.",
+    "evt_is_use": 1
+  },
+  {
+    "evt_id": 2,
+    "evt_icon": "/icons/fall.png",
+    "evt_name": "Person Falling Down",
+    "evt_description": "Detect incidents where a person collapses or falls, which may be caused by an accident or medical emergency.",
+    "evt_is_use": 0
+  }
+]
