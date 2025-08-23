@@ -3,6 +3,7 @@
 import FormCreateAlert from "../../components/FormCreateAlert"
 import IconPickerDemo from "../../components/IconPickerDemo";
 import CreateEventForm from "../../components/CreateEventForm";
+import EventDetectionTable from "@/app/components/EventDetectionTable";
 
 export default function Page() {
   return (
@@ -12,6 +13,7 @@ export default function Page() {
         <FormCreateAlert></FormCreateAlert>
         <CreateEventForm />
       </div>
+      <EventDetectionTable />
     </div>
   );
 }
