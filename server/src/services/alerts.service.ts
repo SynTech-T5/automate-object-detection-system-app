@@ -299,3 +299,4 @@ export async function deleteAlert(id: number): Promise<Model.AlertSafeDelete> {
 
     return Mapping.mapRowToAlertItemDelete(rows[0]);
 }
+

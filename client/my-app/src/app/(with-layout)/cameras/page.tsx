@@ -1,5 +1,5 @@
 import CameraCard, { type Camera } from "../../components/CameraCard";
-import * as StatusCard from "../../components/StatusCard";
+import * as StatusCard from "../../components/statusCard";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
 

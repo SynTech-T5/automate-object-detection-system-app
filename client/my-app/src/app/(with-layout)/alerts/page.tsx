@@ -1,5 +1,5 @@
 import AlertTable, { type Alert } from "../../components/AlertTable";
-import * as StatusCard from "../../components/StatusCard";
+import * as StatusCard from "../../components/statusCard";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
 
