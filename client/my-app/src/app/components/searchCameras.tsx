@@ -88,7 +88,7 @@ export default function CamerasGrid({ cameras }: { cameras: Camera[]}){
         onChange={(e) => setType(e.target.value)}
         className="bg-blue-500 text-white font-medium rounded-md 
              px-3 py-2 shadow-sm outline-none 
-             w-full sm:w-[130px] h-[30px] text-xs leading-[30px]"
+             w-full sm:w-[130px] h-[32px] text-xs leading-[30px]"
         >
           <option value="all">All Types</option>
           {typeCameras.map((type)=>(
