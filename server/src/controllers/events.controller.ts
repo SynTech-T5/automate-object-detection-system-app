@@ -46,8 +46,8 @@ export async function show(req: Request, res: Response, next:NextFunction){
  */
 export async function store(req: Request, res: Response, next: NextFunction) {
     try {
-        const { icon, name, description } = req.body;
-        const createEvent = await eventService.createEvent(icon, name, description);
+        const { icon, name, description, status } = req.body;
+        const createEvent = await eventService.createEvent(icon, name, description, status);
         return res.json(createEvent);
     } catch (err) {
         next(err);
