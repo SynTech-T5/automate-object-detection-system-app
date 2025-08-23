@@ -1,4 +1,4 @@
-import CameraCard, { type Camera } from "../components/CameraCard";
+import CameraCard, { type Camera } from "../components/cameraCard";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
 
