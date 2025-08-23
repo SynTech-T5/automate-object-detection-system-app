@@ -94,8 +94,8 @@ export default function CameraCard({ cam }: { cam: Camera }) {
 
           <span className={`absolute right-3 top-3 rounded-full px-3 py-0.5 text-[11px] font-semibold shadow-sm border
             ${cam.status
-              ? "bg-[var(--color-danger-bg)] text-[var(--color-danger)] border-[var(--color-danger)]"
-              : "bg-[var(--color-softGray)] text-[var(--color-black)] border-[var(--color-hardGray)]"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-700"
+              : "bg-red-50 text-red-700 border-red-700"
             }`}
           >
             {cam.status ? "Active" : "Inactive"}
