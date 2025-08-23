@@ -22,26 +22,40 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
     const imageSrc = "/library-room.jpg";
     const videoSrc = "/footage-library-room.mp4";
 
+    const camCode = `CAM${String(currentCamera.id).padStart(3, "0")}`;
+
     function onBack() {
         window.history.back();
     }
 
     return (
         <div className="grid gap-1">
-            <div className="grid gap-1">
-                <div className="grid grid-cols-2 mb-3">
-                    <label htmlFor="cameraName" className="font-bold text-xl text-[var(--color-primary)]">Camera name: {currentCamera.name}</label>
-                    <Button
-                        type="submit"
-                        onClick={onBack}
-                        className="justify-self-end bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-4 py-2 rounded-md disabled:opacity-50"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> 
-                        Exit Fullscreen
-                    </Button>
-                </div>
-                <div className="relative overflow-hidden rounded-md">
-                    <div className="relative aspect-video">
+            <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
+                <label
+                    htmlFor="cameraName"
+                    className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+                >
+                    {currentCamera.name} ({camCode})
+                </label>
+
+                <Button
+                    type="button"
+                    onClick={onBack}
+                    className="
+                    ml-auto shrink-0
+                    bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
+                    px-4 py-2 rounded-md disabled:opacity-50
+                    flex items-center gap-2
+                    "
+                >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Exit Fullscreen</span>
+                </Button>
+            </div>
+
+            <div className="relative overflow-hidden">
+                <div className="relative aspect-video mb-3">
+                    {currentCamera.status ? (
                         <video
                             src={videoSrc}
                             autoPlay
@@ -51,38 +65,44 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                             controls={false}
                             preload="metadata"
                             poster={imageSrc}
-                            className="absolute inset-0 h-full w-full object-cover"
-                            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = "none"; }}
+                            className="absolute inset-0 h-full w-full object-cover rounded-md"
+                            onError={(e) => {
+                                (e.currentTarget as HTMLVideoElement).style.display = "none";
+                            }}
                         />
-                    </div>
+                    ) : (
+                        <img
+                            src="/blind.svg"
+                            alt="Camera offline"
+                            className="absolute inset-0 h-full w-full object-cover rounded-md"
+                        />
+                    )}
                 </div>
 
-                <div className="">
-                    <label htmlFor="camerainfo" className="col-span-3 text-xl text-[var(--color-primary)]">Camera Information</label>
-                    <Table>
-                        {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Location</TableHead>
-                                <TableHead>IP Address</TableHead>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Health</TableHead>
-                                <TableHead>Resolution</TableHead>
-                                <TableHead>Last Maintenance</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow>
-                                <TableCell>{currentCamera.location.name}</TableCell>
-                                <TableCell>{currentCamera.address}</TableCell>
-                                <TableCell>{currentCamera.type}</TableCell>
-                                <TableCell>{currentCamera.health}</TableCell>
-                                <TableCell>{currentCamera.resolution}</TableCell>
-                                <TableCell>{currentCamera.installation_date} {currentCamera.installation_time}</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
+                <label htmlFor="camerainfo" className="col-span-3 text-lg text-[var(--color-primary)]">Camera Information</label>
+                <Table>
+                    {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Location</TableHead>
+                            <TableHead>IP Address</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Health</TableHead>
+                            <TableHead>Resolution</TableHead>
+                            <TableHead>Last Maintenance</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow>
+                            <TableCell>{currentCamera.location.name}</TableCell>
+                            <TableCell>{currentCamera.address}</TableCell>
+                            <TableCell>{currentCamera.type}</TableCell>
+                            <TableCell>{currentCamera.health}</TableCell>
+                            <TableCell>{currentCamera.resolution}</TableCell>
+                            <TableCell>{currentCamera.installation_date} {currentCamera.installation_time}</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );
