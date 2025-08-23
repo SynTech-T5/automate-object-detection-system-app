@@ -1,204 +1,254 @@
-"use client";
-import React, { useState, useRef } from "react";
+'use client';
 
-interface EditEventForm {
-  eventId: number;
-  eventName: string;
-  eventDescription?: string;
-  eventIcon?: string;
+import { useEffect, useState } from "react";
+import IconPickerInput from "./IconPickerInput";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+
+type Sensitivity = "Critical" | "High" | "Medium" | "Low";
+
+export interface EventRecord {
+  id: number;
+  name: string;
+  icon: string;
+  description: string;
+  sensitivity: Sensitivity;
+  status: boolean; // evt_status
 }
 
-export default function EditEventModal({ eventId, eventName = "Sample Event", eventDescription = "", eventIcon = "", }: EditEventForm) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [name, setName] = useState(eventName);
+type EditEventFormProps = {
+  /** ควบคุม open จาก component ภายนอก */
+  open: boolean;
+  setOpen: (open: boolean) => void;
+
+  /** ส่ง event object ที่กดมาเข้ามา (ใช้ prefill) */
+  event: EventRecord | null;
+
+  /** callback เรียกหลังบันทึกสำเร็จ พร้อมส่ง object ที่อัปเดตแล้วกลับไปให้ผู้เรียก */
+  onSaved?: (updated: EventRecord) => void;
+};
+
+export default function EditEventForm({ open, setOpen, event, onSaved }: EditEventFormProps) {
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState<string>("");
+
+  // local states สำหรับควบคุม input (sync ใหม่ทุกครั้งที่ event เปลี่ยน)
+  const [icon, setIcon] = useState<string | undefined>("TriangleAlert");
+  const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [enableDetection, setEnableDetection] = useState(true);
-  const [file, setFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [sensitivity, setSensitivity] = useState("Medium");
-  const [loading, setLoading] = useState(false);
+  const [sensitivity, setSensitivity] = useState<Sensitivity>("High");
+  const [status, setStatus] = useState<boolean>(true);
 
-  // ฟังก์ชันเมื่อกดปุ่ม Save
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log({ name, description, enableDetection, file, sensitivity });
-    alert("Saved! ดู console.log");
-    setIsOpen(false);
-  };
+  useEffect(() => {
+    if (!event) return;
+    setIcon(event.icon ?? "TriangleAlert");
+    setName(event.name ?? "");
+    setDescription(event.description ?? "");
+    setSensitivity((event.sensitivity as Sensitivity) ?? "High");
+    setStatus(Boolean(event.status));
+    setErr("");
+  }, [event, open]);
 
-  // ฟังก์ชันเมื่อกดปุ่ม Upload
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  // ฟังก์ชันเมื่อเลือกไฟล์
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+  async function putEvent(id: number, payload: Partial<EventRecord>): Promise<EventRecord> {
+    const res = await fetch(`/api/events/${id}/update`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Failed to update Event.");
     }
-  };
+    return res.json();
+  }
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!event) return;
+
+    setErr("");
+    setSubmitting(true);
+    try {
+      const payload: Partial<EventRecord> = {
+        name,
+        icon: icon || "",
+        description,
+        sensitivity,
+        status,
+      };
+
+      const updated = await putEvent(event.id, payload);
+
+      // ส่ง object ที่อัปเดตกลับไปให้ component แม่ใช้งานต่อ
+      onSaved?.(updated);
+
+      setOpen(false);
+    } catch (e: any) {
+      setErr(e?.message ?? "Submit failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <div>
-      {/* ปุ่มเปิด Modal */}
-      <button
-        onClick={() => setIsOpen(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
-        Test Edit Event
-      </button>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
+        <form id="editEventForm" onSubmit={onSubmit} className="space-y-4">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Edit Event</AlertDialogTitle>
+            <AlertDialogDescription>
+              Update the details and click Save changes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
 
-      {/* Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white w-full max-w-md p-6 rounded-xl shadow-lg relative">
+          <div className="grid gap-3">
+            {/* Name + Icon */}
+            <div className="grid gap-1">
+              <label className="text-sm font-medium" htmlFor="name">
+                Event Name
+              </label>
 
-            {/* ปุ่มปิด */}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200"
-            >
-              ✕
-            </button>
+              {/* ถ้า IconPickerInput ไม่ได้สร้าง input ชื่อ icon เอง ให้มี hidden ไว้ */}
+              <input type="hidden" name="icon" value={icon} />
 
-            {/* Header */}
-            <h2 className="text-blue-600 text-sm font-medium mb-4">
-              Edit Event: <span className="font-normal">{name}</span>
-            </h2>
+              <IconPickerInput
+                icon={icon}
+                onIconChange={setIcon}
+                value={name}
+                onChange={setName}
+                inputId="name"
+                inputName="name"
+                placeholder="Enter event name"
+              />
+            </div>
 
-            {/* Form */}
-            <form className="space-y-5" onSubmit={handleSave}>
+            {/* Description */}
+            <div className="grid gap-1">
+              <label className="text-sm font-medium" htmlFor="description">
+                Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter your description"
+                className="font-light w-full rounded-md border px-3 py-3 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
 
-              {/* Event Name + Upload */}
-              <div>
-                <label htmlFor="eventName" className="block text-gray-900 text-sm font-normal mb-1">
-                  Event Name<span className="text-red-600">*</span>
+            <div className="grid grid-cols-3 gap-3">
+              {/* Sensitivity */}
+              <div className="col-span-2">
+                <label className="text-sm font-medium" htmlFor="sensitivity">
+                  Sensitivity
                 </label>
-                <div className="flex items-center border border-gray-300 rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                  <button
-                    type="button"
-                    className="flex items-center justify-center px-3 border-r border-gray-300 text-gray-500 text-xs font-normal"
-                    onClick={handleUploadClick}
-                  >
-                    Upload Icon
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    className="hidden"
-                    onChange={handleFileChange}
-                  />
-                  <input
-                    id="eventName"
-                    name="eventName"
-                    type="text"
-                    placeholder="Enter event name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="flex-1 py-2 px-3 text-gray-900 text-sm placeholder-gray-400 focus:outline-none"
-                  />
-                </div>
-                {file && <p className="text-sm mt-1 text-gray-600">Selected file: {file.name}</p>}
+                <select
+                  id="sensitivity"
+                  name="sensitivity"
+                  className="w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                  value={sensitivity}
+                  onChange={(e) => setSensitivity(e.target.value as Sensitivity)}
+                >
+                  <option value="Critical">Critical</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
               </div>
 
-              {/* Description */}
+              {/* Enable Detection (status) */}
               <div>
-                <label htmlFor="description" className="block text-gray-900 text-sm font-normal mb-1">
-                  Description
+                <label className="text-sm font-medium" htmlFor="enable">
+                  Enable Detection
                 </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  rows={4}
-                  placeholder="Enter event description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md py-2 px-3 text-gray-900 text-sm resize-none placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                ></textarea>
-              </div>
-
-              <div className="flex gap-4">
-
-                {/* Sensitivity */}
-                <div className="flex-1 flex flex-col relative">
-                  <label
-                    htmlFor="sensitivity"
-                    className="text-gray-900 text-sm font-normal mb-1"
-                  >
-                    Sensitivity
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="w-40 px-3 py-2 border border-gray-300 rounded-md flex justify-between items-center text-gray-900 text-sm bg-white"
-                  >
-                    {sensitivity}
-                    <i className={`fi ${dropdownOpen ? 'fi-tr-angle-small-up' : 'fi-tr-angle-small-down'} arrow`}></i>
-                  </button>
-
-                  {dropdownOpen && (
-                    <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-300 rounded-md shadow-md z-20">
-                      <ul>
-                        {['High', 'Medium', 'Low'].map((level) => (
-                          <li key={level}>
-                            <button
-                              className="w-full text-left px-3 py-1 hover:bg-gray-100 text-sm"
-                              onClick={() => {
-                                setSensitivity(level);
-                                setDropdownOpen(false);
-                              }}
-                            >
-                              {level}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                {/* Enable Detection */}
-                <div className="flex-1 flex flex-col items-start">
-                  <label
-                    htmlFor="enableDetection"
-                    className="text-gray-900 text-sm font-normal mb-1"
-                  >
-                    Enable Detection
-                  </label>
+                <label className="mt-1 inline-flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    id="enableDetection"
-                    checked={enableDetection}
-                    onChange={() => setEnableDetection(!enableDetection)}
-                    className="relative w-10 h-5 bg-gray-300 rounded-full appearance-none cursor-pointer transition-colors
-                 before:content-[''] before:absolute before:top-0.5 before:left-0.5 before:w-4 before:h-4
-                 before:bg-white before:rounded-full before:shadow-sm before:transition-transform
-                 checked:bg-blue-500 checked:before:translate-x-5"
+                    id="enable"
+                    name="enable"
+                    className="sr-only peer"
+                    checked={status}
+                    onChange={(e) => setStatus(e.target.checked)}
                   />
-                </div>
+                  <span
+                    className="relative w-16 h-9 rounded-full
+                               bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
+                               transition-colors duration-200
+                               after:content-[''] after:absolute after:top-1 after:left-1
+                               after:w-7 after:h-7 after:bg-white after:rounded-full
+                               after:shadow after:transition-all after:duration-200
+                               peer-checked:after:translate-x-7"
+                  />
+                </label>
               </div>
+            </div>
 
-              {/* Buttons */}
-              <div className="flex justify-end space-x-2 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-center w-18 h-7 border border-gray-300 rounded-sm text-gray-900 hover:bg-gray-100 text-sm"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex items-center justify-center w-30 h-7 bg-blue-600 text-white rounded-sm hover:bg-blue-700 text-sm"
-                >
-                  Save Changes
-                </button>
-              </div>
-            </form>
+            {err && <p className="text-sm text-red-600">{err}</p>}
           </div>
-        </div>
-      )}
-    </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={submitting}
+              className="border-gray-300 hover:bg-gray-50"
+            >
+              Cancel
+            </AlertDialogCancel>
+
+            <Button
+              type="submit"
+              form="editEventForm"
+              disabled={submitting || !event}
+              className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-4 py-2 rounded-md disabled:opacity-50"
+            >
+              {submitting ? "Saving..." : "Save changes"}
+            </Button>
+          </AlertDialogFooter>
+        </form>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
+
+// import { useState } from "react";
+// import EditEventForm, { EventRecord } from "./EditEventForm";
+
+// export default function EventsPage() {
+//   const [dialogOpen, setDialogOpen] = useState(false);
+//   const [selectedEvent, setSelectedEvent] = useState<EventRecord | null>(null);
+//   const [events, setEvents] = useState<EventRecord[]>([]);
+
+//   function onClickEdit(ev: EventRecord) {
+//     setSelectedEvent(ev);   // ส่ง event object ที่กดมา
+//     setDialogOpen(true);    // เปิด dialog จากภายนอก
+//   }
+
+//   function handleSaved(updated: EventRecord) {
+//     // อัปเดต list ในหน้า
+//     setEvents((prev) => prev.map(e => e.id === updated.id ? updated : e));
+//   }
+
+//   return (
+//     <>
+//       {/* ... ตารางรายการ ... */}
+//       {/* <button onClick={() => onClickEdit(ev)}>Edit</button> */}
+
+//       <EditEventForm
+//         open={dialogOpen}
+//         setOpen={setDialogOpen}
+//         event={selectedEvent}
+//         onSaved={handleSaved}
+//       />
+//     </>
+//   );
+// }
