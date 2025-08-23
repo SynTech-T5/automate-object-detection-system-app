@@ -49,29 +49,29 @@ export async function getEventById(evt_id: number): Promise<Model.Events> {
  * 
  * @author Fasai
  */
-export async function createEvent(evt_icon: string, evt_name: string, evt_des: string): Promise<Model.Events> {
+export async function createEvent(evt_icon: string, evt_name: string, evt_des: string, evt_status: boolean): Promise<Model.Events> {
 
 
     if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
         throw new Error("Event fields cannot be empty");
     }
 
-    const eventExists = await pool.query(`
-        SELECT evt_id FROM events
-        WHERE evt_name = $1 
-        AND evt_is_use = true`,
-        [evt_name]
-    )
+    // const eventExists = await pool.query(`
+    //     SELECT evt_id FROM events
+    //     WHERE evt_name = $1 
+    //     AND evt_is_use = true`,
+    //     [evt_name]
+    // )
 
-    if (eventExists.rows.length > 0) {
-        throw new Error('Event already exists');
-    }
+    // if (eventExists.rows.length > 0) {
+    //     throw new Error('Event already exists');
+    // }
 
     const { rows } = await pool.query(`
-        INSERT INTO events(evt_icon, evt_name, evt_description) 
-        VALUES($1, $2, $3)
+        INSERT INTO events(evt_icon, evt_name, evt_description, evt_status) 
+        VALUES($1, $2, $3, $4)
         RETURNING *
-    `, [evt_icon, evt_name, evt_des]);
+    `, [evt_icon, evt_name, evt_des, evt_status]);
 
     const events = rows[0];
 
@@ -79,7 +79,7 @@ export async function createEvent(evt_icon: string, evt_name: string, evt_des: s
         throw new Error('Failed to insert events');
     }
 
-    return events.rows.map(Mapping.mapToEvent);
+    return Mapping.mapToEvent(rows[0]);
 }
 
 /**

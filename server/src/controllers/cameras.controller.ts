@@ -26,6 +26,29 @@ export async function index(req: Request, res: Response, next: NextFunction) {
 };
 
 /**
+ * Controller: ดึงข้อมูลกล้องตาม cam_id
+ * @route GET /api/cameras/:cam_id
+ * @param {Request} req - Express request object (ต้องมี params.cam_id)
+ * @param {Response} res - Express response object (ส่งกลับข้อมูลกล้องเป็น JSON)
+ * @param {NextFunction} next - Express next middleware function
+ * @returns {Promise<void>} JSON response ของกล้องที่เลือก
+ *
+ * @author Wanasart
+ */
+export async function show(req: Request, res: Response, next: NextFunction) {
+    try {
+        const cam_id = Number(req.params.cam_id);
+        if (isNaN(cam_id)) {
+            return res.status(400).json({ error: "Invalid camera ID" });
+        }
+        const camera = await CameraService.getCameraById(cam_id);
+        res.json(camera);
+    } catch (err) {
+        next(err);
+    }
+}
+
+/**
  * Controller: ดึงรายการ Camera Cards ทั้งหมด
  * @route GET /api/cameras/cards
  * @param {Request} req - Express request object

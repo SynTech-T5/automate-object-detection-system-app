@@ -90,7 +90,7 @@ router.patch('/:cam_id', ctrl.update);
 router.patch('/:cam_id/soft-delete', ctrl.softDelete);
 router.patch('/:cam_id/change', ctrl.change);
 // router.delete('/:cam_id', ctrl.destroy);
-// router.get('/:cam_id', ctrl.show);
+router.get('/:cam_id', ctrl.show);
 // router.patch('/:cam_id/restore', ctrl.restore);            // optional
 
 export default router;

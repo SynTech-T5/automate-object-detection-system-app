@@ -22,6 +22,25 @@ export async function listCameras(): Promise<Model.Camera[]> {
 }
 
 /**
+ * ดึงข้อมูลกล้องตาม ID
+ *
+ * @param {number} cam_id - รหัสของกล้องที่ต้องการดึงข้อมูล
+ * @returns {Promise<Model.Camera>} ข้อมูลกล้องที่ตรงกับ ID ที่ระบุ
+ * 
+ * @author Wanasart
+ */
+export async function getCameraById(cam_id: number): Promise<Model.Camera> {
+    const { rows } = await pool.query(`
+      SELECT * FROM cameras
+      JOIN locations ON cam_location_id = loc_id
+      WHERE cam_is_use = true
+      AND cam_id = $1
+      `, [cam_id]);
+
+    return Mapping.mapToCamera(rows[0]);
+}
+
+/**
  * ดึงรายการ Camera Cards พร้อมข้อมูล Location*
  * @returns {Promise<any[]>} รายการกล้อง
  * (id, status, name, type, health, location)
