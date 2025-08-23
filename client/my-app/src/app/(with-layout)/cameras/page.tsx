@@ -1,40 +1,40 @@
-import CameraCard, { type Camera } from "../../components/CameraCard";
 import * as StatusCard from "../../components/StatusCard";
 import CreateEventForm from "@/app/components/CreateEventForm";
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui/separator";
+import ToggleViewButton from "@/app/components/ToggleViewButton";
+import CameraView from "@/app/components/CameraView";
 
-const base = process.env.NEXT_PUBLIC_APP_URL!;
+type ViewMode = "grid" | "list";
 
-export default async function CamerasPage() {
-
-  const res = await fetch(`${base}/api/cameras/`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Failed to load cameras");
-  }
-
-  const cameras: Camera[] = await res.json();
+export default async function CamerasPage({
+  searchParams,
+}: {
+  searchParams?: { view?: ViewMode };
+}) {
+  const viewMode: ViewMode = searchParams?.view === "list" ? "list" : "grid";
 
   return (
     <div className="space-y-6">
       <StatusCard.DashboardSummaryCameraSection />
 
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
-        <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 justify-center mb-3">
           <label
             htmlFor="cameraName"
             className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
           >
             Camera Management
           </label>
-          <CreateEventForm />
+
+          <div className="flex gap-3">
+            <ToggleViewButton />
+            <CreateEventForm />
+          </div>
         </div>
-        <Separator className="bg-[var(--color-primary-bg)]" />
-        {/* <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6"> */}
-        <div className="grid md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-          {cameras.map((cam) => (
-            <CameraCard key={cam.id} cam={cam} />
-          ))}
-        </div>
+
+        <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+
+        <CameraView viewMode={viewMode} />
       </div>
 
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
