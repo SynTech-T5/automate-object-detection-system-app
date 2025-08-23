@@ -73,7 +73,7 @@ const App: React.FC = () => {
       {/* Location Badge */}
       <span 
         className="flex items-center px-3 py-0.5 border-2 border-gray-400 text-gray-600 rounded-full font-medium text-sm text-center">
-        <MapPin class="w-4 h-4 mr-2"/>
+        <MapPin className="w-4 h-4 mr-2"/>
         Dormitory Entrance
       </span>
 
