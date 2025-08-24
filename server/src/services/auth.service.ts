@@ -153,3 +153,29 @@ export async function getUserSafeById(id: number): Promise<UserSafe | null> {
     const user = rows[0];
     return user ? toUserSafe(user) : null;
 }  
+
+/**
+ * ตรวจสอบรหัสผ่านก่อนทำการเพิ่มข้อมูลกล้อง
+ *
+ * @param {number} userId - id ของที่ใช้งานอยู่
+ * @param {string} password รหัสผ่านที่กรอกมา
+ * @returns {Promise<boolean>} คืนค่า True หากรหัสผ่านที่ป้อนมาตรงกับผู้ที่ใช้งานอยู่
+ *
+ * @author Chokchai
+ */
+
+export async function verifyPassword(userId: number, password: string): Promise<boolean> {
+  // ดึง hash password ของ user จาก DB
+  const result = await pool.query(
+    "SELECT usr_password FROM users WHERE usr_id = $1 AND usr_is_use = true",
+    [userId]
+  );
+
+  if (result.rows.length === 0) {
+    return false; // ไม่เจอ user
+  }
+
+  const hash = result.rows[0].usr_password;
+  const ok = await bcrypt.compare(password, hash);
+  return ok; // true = password ถูก, false = ผิด
+}

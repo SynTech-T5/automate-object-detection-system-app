@@ -15,7 +15,8 @@ export async function listCameras(): Promise<Model.Camera[]> {
     const { rows } = await pool.query(`
       SELECT * FROM cameras
       JOIN locations ON cam_location_id = loc_id
-      WHERE cam_is_use = true
+      WHERE cam_is_use = true 
+      ORDER BY cam_id ASC
       `);
 
     return rows.map(Mapping.mapToCamera);
@@ -95,10 +96,11 @@ export async function createCamera(input: Model.CreateCameraInput): Promise<Mode
   input.cam_type ?? null,
   input.cam_resolution ?? null,
   input.cam_description ?? null,
-  input.cam_installation_date ?? null,
-  input.cam_health ?? null,
-  input.cam_video_quality ?? null,
-  input.cam_network_latency ?? null,
+  input.cam_installation_date ?? new Date().toISOString(),
+  input.cam_status ?? true,
+  input.cam_health ?? 100,
+  input.cam_video_quality ?? 80.66,
+  input.cam_network_latency ?? 20,
   input.cam_location_id ?? null,
   ];
   
@@ -114,13 +116,13 @@ export async function createCamera(input: Model.CreateCameraInput): Promise<Mode
   const sql = `
     INSERT INTO public.cameras
       (cam_name, cam_address, cam_type, cam_resolution, cam_description,
-       cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+       cam_installation_date, cam_status, cam_health, cam_video_quality, cam_network_latency,
         cam_location_id)
     VALUES
-      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
     RETURNING
       cam_id, cam_name, cam_address, cam_type, cam_resolution, cam_description,
-      cam_installation_date, cam_health, cam_video_quality, cam_network_latency,
+      cam_installation_date, cam_status, cam_health, cam_video_quality, cam_network_latency,
       cam_is_use, cam_location_id
   `;
     const r = await pool.query(sql, values);

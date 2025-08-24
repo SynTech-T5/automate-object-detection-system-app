@@ -20,6 +20,7 @@ import * as ctrl from '../controllers/auth.controller';
 const router = Router();
 
 router.get('/me',ctrl.me);
+router.post("/recheck", ctrl.recheckPassword);
 router.post('/login', ctrl.login);
 router.post('/logout', ctrl.logout);
 

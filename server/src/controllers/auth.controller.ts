@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifySessionToken, getUserSafeById } from '../services/auth.service';
+import { verifySessionToken, getUserSafeById,verifyPassword } from '../services/auth.service';
 import * as AuthService from '../services/auth.service';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -126,5 +126,42 @@ export async function me(req: Request, res: Response, next: NextFunction) {
     });
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+
+/**
+ * เป็นการตรวจสอบรหัสผ่านก่อนเพิ่ม camera
+ *
+ * - ใช้ token เพื่อเก็บค่าผู้ใช้งานที่กำลัง login อยู่
+ * - และทำการตรวจสอบว่า token หมดอายุหรือยัง
+ * 
+ *
+ * @route Post /api/auth/recheckPassword
+ * @param {Request} req - Express request object (cookie: access_token)
+ * @param {Response} res - Express response object (ส่งข้อมูลผู้ใช้)
+ * @returns {success: true } คืนค่า true หากรหัสผ่านถูกต้อง
+ *
+ * @author Chokchai
+ */
+
+export async function recheckPassword(req: Request, res: Response) {
+  try {
+    const token = req.cookies?.access_token;
+    if (!token) return res.status(401).json({ error: "Unauthenticated" });
+
+    const payload = verifySessionToken(token); // ตรวจสอบว่า token ถูกต้อง และยังไม่หมดอายุ
+    const { password } = req.body; //เก็บค่าเฉพาะ password
+
+    const ok = await verifyPassword(payload.id, password);
+
+    if (!ok) {
+      return res.status(401).json({ error: "Password incorrect" });
+    }
+    
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("recheckPassword error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 }
