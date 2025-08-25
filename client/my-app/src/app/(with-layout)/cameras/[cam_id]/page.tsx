@@ -19,6 +19,5 @@ export default async function Page({ params }: { params: Promise<{ cam_id: strin
         <FullScreenView camera={camera}/>
       </div>
     </div>
-
   )
 }

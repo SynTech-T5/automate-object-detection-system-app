@@ -224,30 +224,36 @@ export default function CameraCard({ cam }: { cam: Camera }) {
         {/* Media block */}
         <div className="relative overflow-hidden rounded-md">
           <div className="relative aspect-video">
-            {videoSrc ? (
-              <video
-                src={videoSrc}
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls={false}
-                preload="metadata"
-                poster={imageSrc}
-                className="absolute inset-0 h-full w-full object-cover"
-                onError={(e) => {
-                  // ถ้าวิดีโอพัง ให้ซ่อน <video> (เหลือภาพโปสเตอร์)
-                  (e.currentTarget as HTMLVideoElement).style.display = "none";
-                }}
-              />
+            {cam.status ? (
+              videoSrc ? (
+                <video
+                  src={videoSrc}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls={false}
+                  preload="metadata"
+                  poster={imageSrc}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={imageSrc}
+                  alt={cam.name}
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 400px, 100vw"
+                  priority={false}
+                />
+              )
             ) : (
               <Image
-                src={imageSrc}
-                alt={cam.name}
+                src="/blind.svg"
+                alt="Camera offline"
                 fill
-                className="object-cover"
+                className="absolute inset-0 h-full w-full object-cover rounded-md"
                 sizes="(min-width: 1024px) 400px, 100vw"
-                priority={false}
               />
             )}
           </div>
@@ -258,11 +264,10 @@ export default function CameraCard({ cam }: { cam: Camera }) {
           </span>
 
           <span
-            className={`absolute right-3 top-3 rounded-full px-3 py-0.5 text-[11px] font-semibold shadow-sm border ${
-              statusBool
+            className={`absolute right-3 top-3 rounded-full px-3 py-0.5 text-[11px] font-semibold shadow-sm border ${statusBool
                 ? "bg-emerald-50 text-emerald-700 border-emerald-700"
                 : "bg-red-50 text-red-700 border-red-700"
-            }`}
+              }`}
           >
             {statusLabel}
           </span>
