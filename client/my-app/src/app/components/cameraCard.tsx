@@ -287,7 +287,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
           <div className="mt-3 flex items-center justify-between">
             {/* Type badge + icon สีตามประเภท */}
             <span
-              className={`inline-flex items-center gap-1 rounded-md border px-3 py-1 text-sm font-medium ${typeStyle.badge}`}
+              className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium ${typeStyle.badge}`}
             >
               <TypeIcon className={`h-4 w-4 ${typeStyle.icon}`} />
               {typeLabel}
@@ -295,7 +295,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
 
             {/* Health badge + icon สีตามสถานะ */}
             <span
-              className={`inline-flex items-center gap-2 rounded-md border px-3 py-1 text-sm font-medium ${healthStyle.badge}`}
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium ${healthStyle.badge}`}
             >
               <Activity className="h-4 w-4" />
               Health: {healthText}

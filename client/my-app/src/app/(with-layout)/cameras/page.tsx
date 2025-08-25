@@ -48,11 +48,11 @@ export default async function CamerasPage({
 
         <Separator className="bg-[var(--color-primary-bg)] my-3" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start gap-2 sm:gap-3 mt-3">
+        <div className="grid gap-2 items-start sm:gap-3 mt-3">
           <div className="w-full">
             <SearchCamerasInput />
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-full">
             <CameraFilters />
           </div>
         </div>
