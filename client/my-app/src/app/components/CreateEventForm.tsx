@@ -87,7 +87,7 @@ export default function CreateEventForm() {
       <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
         <form id="userForm" onSubmit={onSubmit} className="space-y-4">
           <AlertDialogHeader>
-            <AlertDialogTitle>Add New Event</AlertDialogTitle>
+            <AlertDialogTitle className="text-[var(--color-primary)]">Add New Event</AlertDialogTitle>
             <AlertDialogDescription>
               Fill in the details and click Add New.
             </AlertDialogDescription>

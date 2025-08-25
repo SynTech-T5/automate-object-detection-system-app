@@ -5,6 +5,7 @@ import ToggleViewButton from "@/app/components/ToggleViewButton";
 import CameraView from "@/app/components/CameraView";
 import SearchCamerasInput from "@/app/components/SearchCamerasInput";
 import CameraFilters from "@/app/components/CameraFilters";
+import CreateCameraForm from "@/app/components/CreateCameraForm";
 
 type ViewMode = "grid" | "list";
 
@@ -41,7 +42,7 @@ export default async function CamerasPage({
 
           <div className="flex gap-3">
             <ToggleViewButton />
-            <CreateEventForm />
+            <CreateCameraForm />
           </div>
         </div>
 

@@ -16,4 +16,6 @@ export interface Camera {
         id: number;
         name: string;
     }
+    last_maintenance_date: string;
+    last_maintenance_time: string;
 }

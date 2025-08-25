@@ -99,7 +99,24 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                             <TableCell>{currentCamera.type}</TableCell>
                             <TableCell>{currentCamera.health}</TableCell>
                             <TableCell>{currentCamera.resolution}</TableCell>
-                            <TableCell>{currentCamera.installation_date} {currentCamera.installation_time}</TableCell>
+                            <TableCell>
+                                {(() => {
+                                    const date = currentCamera.last_maintenance_date as string | undefined;
+                                    const time = currentCamera.last_maintenance_time as string | undefined;
+
+                                    const combined = `${date ?? ""} ${time ?? ""}`.trim();
+
+                                    // เป็น "-" ถ้าไม่มีค่า หรือเป็นค่า epoch placeholder: 1970-01-01 07:00:00
+                                    const showDash =
+                                        !combined ||
+                                        combined === "1970-01-01 07:00:00" ||
+                                        (date === "1970-01-01" && (!time || time.startsWith("07:00")));
+
+                                    const label = showDash ? "-" : combined;
+
+                                    return <span className="truncate max-w-[260px]">{label}</span>;
+                                })()}
+                            </TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
