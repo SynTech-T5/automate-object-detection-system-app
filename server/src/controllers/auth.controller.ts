@@ -6,14 +6,18 @@ import dotenv from 'dotenv';
 dotenv.config({ path: path.resolve(__dirname, '../../..', '.env.local') });
 
 const isProd = process.env.NODE_ENV === 'production';
+const COOKIE_NAME = process.env.COOKIE_NAME || 'access_token';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined; // เช่น ".example.com"
-const cookieOpts = {
+const COOKIE_SAMESITE = (process.env.COOKIE_SAMESITE as 'lax' | 'none' | 'strict') || 'lax';
+const COOKIE_MAX_AGE_MS = Number(process.env.COOKIE_MAX_AGE_MS ?? 60 * 60 * 1000);
+
+const cookieBase = {
   httpOnly: true,
   secure: isProd,
-  sameSite: (process.env.COOKIE_SAMESITE as any) || (isProd ? 'lax' : 'lax'),
+  sameSite: COOKIE_SAMESITE,
   path: '/',
   domain: COOKIE_DOMAIN,
-};
+} as const;
 
 /**
  * จัดการการเข้าสู่ระบบของผู้ใช้
@@ -38,11 +42,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 
     const token = AuthService.createSessionToken({ id: user.usr_id, role: user.usr_role }); // Generate a token for the user
 
-    // ใช้ option เดียวกับด้านบนของไฟล์
-    res.cookie('access_token', token, {
-      ...cookieOpts,
-      maxAge: 60 * 60 * 1000, // หรืออ่านจาก ENV: Number(process.env.COOKIE_MAX_AGE_MS) ?? 3600000
-    });
+    res.cookie(COOKIE_NAME, token, { ...cookieBase, maxAge: COOKIE_MAX_AGE_MS });
 
     return res.json({ message: 'Login successful', success: true, user });
   } catch (err) {
@@ -65,9 +65,19 @@ export async function login(req: Request, res: Response, next: NextFunction) {
  */
 export async function logout(req: Request, res: Response, next: NextFunction) {
   try {
-    // ลบด้วย option เดิมทุกตัว + เขียนทับให้หมดอายุ
-    res.clearCookie('access_token', cookieOpts);
-    res.cookie('access_token', '', { ...cookieOpts, maxAge: 0 });
+    // ✅ เวอร์ชันต่าง ๆ ที่อาจหลงเหลือมาจากการตั้งค่าเก่า
+    const variants = [
+      { ...cookieBase },                    // มี domain (ถ้าตั้ง)
+      { path: '/' },                        // host-only (ไม่มี domain)
+      { path: '/api' },                     // เผื่อเคยตั้ง path = /api
+      ...(COOKIE_DOMAIN ? [{ path: '/', domain: undefined as any }] : []), // ลบ host-only แม้ปัจจุบันมี domain
+    ];
+
+    for (const v of variants) {
+      res.clearCookie(COOKIE_NAME, v);
+      res.cookie(COOKIE_NAME, '', { ...v, maxAge: 0 });
+    }
+
     return res.json({ message: 'Logout successful' });
   } catch (err) {
     next(err);
@@ -121,7 +131,7 @@ export async function me(req: Request, res: Response, next: NextFunction) {
     'Pragma': 'no-cache',
     'Vary': 'Cookie',
   });
-  
+
   try {
     const token = req.cookies?.access_token;
     if (!token) return res.status(401).json({ error: 'Unauthenticated' });
