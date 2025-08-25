@@ -166,8 +166,6 @@ export default function AlertsClient({ alerts }: { alerts: Alert[] }) {
                 </div>
                 <div className="w-full">
                     <AlertFilters
-                        severityOptions={severityOptions}
-                        statusOptions={statusOptions}
                         eventOptions={eventOptions}
                     /> {/* ถ้าใช้ CameraFilters ก็ใส่แทนได้ */}
                 </div>
