@@ -14,7 +14,7 @@ import * as Mapping from "../models/Mapping/events.map"
  */
 export async function getAllEvents(): Promise<Model.Events[]> {
     const query = `
-        SELECT evt_id, evt_icon, evt_name, evt_description, evt_is_use
+        SELECT evt_id, evt_icon, evt_name, evt_description, evt_status, evt_is_use
         FROM events 
         WHERE evt_is_use = true
         ORDER BY evt_id DESC

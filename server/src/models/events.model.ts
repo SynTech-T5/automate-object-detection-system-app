@@ -3,6 +3,7 @@ export interface Events {
     icon: string;
     name: string;
     description: string;
+    status: boolean;
     is_use: boolean;
 }
 

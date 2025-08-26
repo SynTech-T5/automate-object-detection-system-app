@@ -6,6 +6,7 @@ import CameraView from "@/app/components/Cameras/CameraView";
 import SearchCamerasInput from "@/app/components/Cameras/SearchCamerasInput";
 import CameraFilters from "@/app/components/Cameras/CameraFilters";
 import CreateCameraForm from "@/app/components/Forms/CreateCameraForm";
+import EventGrid from "@/app/components/Events/EventCardGrid";
 
 type ViewMode = "grid" | "list";
 
@@ -76,7 +77,9 @@ export default async function CamerasPage({
           </label>
           <CreateEventForm />
         </div>
-        <Separator className="bg-[var(--color-primary-bg)]" />
+        <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+
+        <EventGrid />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ export const mapToEvent = (row: any): Model.Events => {
         icon: row.evt_icon,
         name: row.evt_name,
         description: row.evt_description,
+        status: row.evt_status,
         is_use: row.evt_is_use
     }
 };
