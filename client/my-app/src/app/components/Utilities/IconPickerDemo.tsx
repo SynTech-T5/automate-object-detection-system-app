@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import IconPickerInput from "../components/IconPickerInput";
+import IconPickerInput from "./IconPickerInput";
 
 export default function IconPickerDemo() {
     const [icon, setIcon] = useState<string | undefined>("TriangleAlert");

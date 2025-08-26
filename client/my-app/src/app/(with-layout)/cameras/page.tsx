@@ -1,11 +1,11 @@
-import * as StatusCard from "../../components/StatusCard";
-import CreateEventForm from "@/app/components/CreateEventForm";
+import * as StatusCard from "../../components/Utilities/StatusCard";
+import CreateEventForm from "@/app/components/Forms/CreateEventForm";
 import { Separator } from "@/components/ui/separator";
-import ToggleViewButton from "@/app/components/ToggleViewButton";
-import CameraView from "@/app/components/CameraView";
-import SearchCamerasInput from "@/app/components/SearchCamerasInput";
-import CameraFilters from "@/app/components/CameraFilters";
-import CreateCameraForm from "@/app/components/CreateCameraForm";
+import ToggleViewButton from "@/app/components/Cameras/ToggleViewButton";
+import CameraView from "@/app/components/Cameras/CameraView";
+import SearchCamerasInput from "@/app/components/Cameras/SearchCamerasInput";
+import CameraFilters from "@/app/components/Cameras/CameraFilters";
+import CreateCameraForm from "@/app/components/Forms/CreateCameraForm";
 
 type ViewMode = "grid" | "list";
 
@@ -48,11 +48,11 @@ export default async function CamerasPage({
 
         <Separator className="bg-[var(--color-primary-bg)] my-3" />
 
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-start gap-2 sm:gap-3 mt-3">
+        <div className="grid gap-2 items-start sm:gap-3 mt-3">
           <div className="w-full">
             <SearchCamerasInput />
           </div>
-          <div className="w-full sm:w-auto">
+          <div className="w-full">
             <CameraFilters />
           </div>
         </div>

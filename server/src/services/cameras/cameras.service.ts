@@ -45,10 +45,24 @@ export async function listCameras(): Promise<Model.Camera[]> {
  * @author Wanasart
  */
 export async function getCameraById(cam_id: number): Promise<Model.Camera> {
+  // const { rows } = await pool.query(`
+  //     SELECT * FROM cameras
+  //     JOIN locations ON cam_location_id = loc_id
+  //     WHERE cam_is_use = true
+  //     AND cam_id = $1
+  //     `, [cam_id]);
   const { rows } = await pool.query(`
       SELECT * FROM cameras
       JOIN locations ON cam_location_id = loc_id
-      WHERE cam_is_use = true
+	    LEFT JOIN LATERAL (
+        SELECT mnt_camera_id,mnt_date
+        FROM maintenance_history
+        WHERE mnt_camera_id = cam_id
+        AND mnt_is_use = true
+        ORDER BY mnt_date DESC, mnt_id DESC
+        LIMIT 1
+      ) AS last_mnt ON TRUE
+      WHERE cam_is_use = true 
       AND cam_id = $1
       `, [cam_id]);
 

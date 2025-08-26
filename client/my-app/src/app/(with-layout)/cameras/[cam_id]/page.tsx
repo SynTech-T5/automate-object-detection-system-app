@@ -1,4 +1,4 @@
-import FullScreenView from "@/app/components/FullScreenView";
+import FullScreenView from "@/app/components/Cameras/FullScreenView";
 import { Camera } from "@/app/models/cameras.model";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
@@ -19,6 +19,5 @@ export default async function Page({ params }: { params: Promise<{ cam_id: strin
         <FullScreenView camera={camera}/>
       </div>
     </div>
-
   )
 }

@@ -32,7 +32,7 @@ export default function BottomCameraCard({
   const goView = () => (onView ? onView(camId) : router.push(`/cameras/${camId}`));
   const goEdit = () => (onEdit ? onEdit(camId) : router.push(`/cameras/${camId}/edit`));
   const goDetails = () =>
-    onDetails ? onDetails(camId) : router.push(`/cameras/${camId}?tab=details`);
+    onDetails ? onDetails(camId) : router.push(`/cameras/${camId}/details`)
   const doDelete = async () => {
     if (onDelete) return onDelete(camId);
     if (!confirm("ลบกล้องนี้?")) return;

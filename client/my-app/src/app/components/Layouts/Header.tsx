@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useUI } from "./ui-provider";
 import { PanelLeft, PanelLeftOpen, Bell, UserRound } from "lucide-react";
-import ClockLive from "./ClockLive";
+import ClockLive from "../Utilities/ClockLive";
 import Image from "next/image";
-import DropdownMenu from "./DropdownMenu";
+import DropdownMenu from "../Utilities/DropdownMenu";
 
 type Me = { usr_id: number; usr_username: string; usr_email: string; usr_role?: string };
 

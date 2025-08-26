@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import IconPickerInput from "./IconPickerInput";
+import IconPickerInput from "../Utilities/IconPickerInput";
 import {
   AlertDialog,
   AlertDialogCancel,
