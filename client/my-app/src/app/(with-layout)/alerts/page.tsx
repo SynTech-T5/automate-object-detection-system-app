@@ -1,8 +1,9 @@
-// app/(...)/alerts/page.tsx
 import AlertTable, { type Alert } from "../../components/Alerts/AlertTable";
 import * as StatusCard from "../../components/Utilities/StatusCard";
 import { Separator } from "@/components/ui/separator";
 import AlertsClient from "@/app/components/Alerts/AlertsClient";
+import DistributionChart from "@/app/components/Alerts/Chart/Distribution";
+import Trend from "@/app/components/Alerts/Chart/Trends";
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
 
@@ -43,7 +44,9 @@ export default async function AlertsPage() {
               Alert Trends
             </label>
           </div>
-          <Separator className="bg-[var(--color-primary-bg)]" />
+          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+
+          <Trend />
         </div>
         <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
           <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
@@ -54,7 +57,9 @@ export default async function AlertsPage() {
               Alert Distribution by Event Type
             </label>
           </div>
-          <Separator className="bg-[var(--color-primary-bg)]" />
+          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+
+          <DistributionChart />
         </div>
       </div>
 
@@ -68,6 +73,7 @@ export default async function AlertsPage() {
           </label>
         </div>
         <Separator className="bg-[var(--color-primary-bg)]" />
+
       </div>
     </div>
   );

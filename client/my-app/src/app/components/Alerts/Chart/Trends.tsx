@@ -1,0 +1,203 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import type { ApexOptions } from "apexcharts";
+
+const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
+
+type Severity = "Critical" | "High" | "Medium" | "Low";
+type TrendPoint = { severity: Severity; count: number };
+type TrendItem = { date: string; trend: TrendPoint[] };
+
+type QuickRange = "3d" | "7d" | "30d";
+
+const SEVERITIES: Severity[] = ["Critical", "High", "Medium", "Low"];
+
+function toYMD(d: Date): string {
+  const y = d.getFullYear();
+  const m = (`0${d.getMonth() + 1}`).slice(0 - 2);
+  const dd = (`0${d.getDate()}`).slice(0 - 2);
+  return `${y}-${m}-${dd}`;
+}
+
+function getRangeDates(range: QuickRange): { start: string; end: string } {
+  const now = new Date(); // ใช้เวลาเครื่อง (Asia/Bangkok ในโปรเจ็กต์คุณอยู่แล้ว)
+  const end = toYMD(now);
+  const startDate = new Date(now);
+  const delta = range === "3d" ? 3 : range === "7d" ? 7 : 30;
+  startDate.setDate(now.getDate() - (delta - 1)); // รวมวันนี้ด้วย
+  const start = toYMD(startDate);
+  return { start, end };
+}
+
+// ไล่เฉดสีจากสีหลัก (โทนเดียวคนละความเข้ม)
+function generateMonochromeShades(base: string): string[] {
+  // รองรับรูปแบบ #RRGGBB
+  const hex = base.replace("#", "");
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  const mix = (t: number) => {
+    // t = 0 (เข้ม) → 1 (อ่อน)
+    const bg = 255;
+    const rr = Math.round(r * (1 - t) + bg * t);
+    const gg = Math.round(g * (1 - t) + bg * t);
+    const bb = Math.round(b * (1 - t) + bg * t);
+    return `#${rr.toString(16).padStart(2, "0")}${gg
+      .toString(16)
+      .padStart(2, "0")}${bb.toString(16).padStart(2, "0")}`.toUpperCase();
+  };
+
+  // 4 เฉดจากเข้ม → อ่อน (ปรับค่าตามรสนิยม)
+  return [mix(0.15), mix(0.35), mix(0.55), mix(0.78)];
+}
+
+export default function AlertsTrendChart(): React.ReactElement {
+  const [range, setRange] = useState<QuickRange>("7d");
+  const [{ start, end }, setDates] = useState(getRangeDates("7d"));
+
+  const [raw, setRaw] = useState<TrendItem[]>([]);
+  const [series, setSeries] = useState<NonNullable<ApexOptions["series"]>>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+
+  // อ่านสีหลักจาก CSS var แล้วสร้างเฉด
+  const palette = useMemo(() => {
+    if (typeof window === "undefined") {
+      return ["#1E3A8A", "#2563EB", "#3B82F6", "#93C5FD"]; // fallback
+    }
+    const styles = getComputedStyle(document.documentElement);
+    const primary = (styles.getPropertyValue("--color-primary") || "#0077FF").trim();
+    return generateMonochromeShades(primary);
+  }, []);
+
+  // เปลี่ยนช่วงวัน → อัปเดตวันที่
+  useEffect(() => {
+    setDates(getRangeDates(range));
+  }, [range]);
+
+  // ดึงข้อมูล (ลองส่ง start/end ไปด้วย; ถ้าแบ็กเอนด์ยังไม่รับ ก็ยังกรองฝั่ง client ต่อ)
+  useEffect(() => {
+    (async () => {
+      try {
+        const url = `/api/alerts/analytics/trend?start=${encodeURIComponent(
+          start
+        )}&end=${encodeURIComponent(end)}`;
+        const res = await fetch(url);
+        const data: TrendItem[] = await res.json();
+        setRaw(data);
+      } catch (e) {
+        console.error("Error fetching trend data:", e);
+        setRaw([]);
+      }
+    })();
+  }, [start, end]);
+
+  // แปลงข้อมูล → categories + series (กรองตามช่วงวันอีกชั้น เผื่อ API ไม่รองรับ)
+  useEffect(() => {
+    const inRange = raw.filter((d) => d.date >= start && d.date <= end);
+    const sorted = [...inRange].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const cats = sorted.map((d) => d.date);
+
+    const getCount = (arr: TrendPoint[], sev: Severity) =>
+      arr.find((t) => t.severity === sev)?.count ?? 0;
+
+    const s: NonNullable<ApexOptions["series"]> = [
+      { name: "Critical", data: sorted.map((d) => getCount(d.trend, "Critical")) },
+      { name: "High", data: sorted.map((d) => getCount(d.trend, "High")) },
+      { name: "Medium", data: sorted.map((d) => getCount(d.trend, "Medium")) },
+      { name: "Low", data: sorted.map((d) => getCount(d.trend, "Low")) },
+    ];
+
+    setCategories(cats);
+    setSeries(s);
+  }, [raw, start, end]);
+
+  const options: ApexOptions = {
+    chart: {
+      type: "bar",
+      stacked: true,
+      toolbar: { show: true },
+      zoom: { enabled: true },
+    },
+    colors: palette, // โทนเดียวต่างเฉด
+    plotOptions: {
+      bar: {
+        horizontal: false,
+        borderRadius: 6,
+        columnWidth: "55%",
+      },
+    },
+    dataLabels: { enabled: false },
+    legend: {
+      position: "bottom",
+      fontSize: "13px",
+      labels: { colors: "#6B7280" },
+      itemMargin: { horizontal: 8, vertical: 4 },
+    },
+    xaxis: {
+      type: "category",
+      categories,
+      labels: {
+        style: { colors: Array(categories.length).fill("#6B7280"), fontSize: "12px" },
+        // ถ้าอยากย่อรูปแบบวันที่: 2025-08-15 → 15 Aug
+        formatter: (val: string) => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+          const d = new Date(val + "T00:00:00");
+          return new Intl.DateTimeFormat("en-GB", {
+            day: "2-digit",
+            month: "short",
+          }).format(d);
+        },
+      },
+      axisBorder: { color: "#E5E7EB" },
+      axisTicks: { color: "#E5E7EB" },
+    },
+    yaxis: {
+      labels: { style: { colors: ["#6B7280"], fontSize: "12px" } },
+    },
+    grid: {
+      borderColor: "#F3F4F6",
+      yaxis: { lines: { show: true } },
+      xaxis: { lines: { show: false } },
+    },
+    fill: { opacity: 1 },
+    tooltip: { theme: "light" },
+    responsive: [
+      {
+        breakpoint: 640,
+        options: { plotOptions: { bar: { columnWidth: "65%" } } },
+      },
+    ],
+  };
+
+  return (
+    <div className="w-full">
+      {/* Quick Range */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {(["3d", "7d", "30d"] as QuickRange[]).map((r) => (
+          <button
+            key={r}
+            onClick={() => setRange(r)}
+            className={`rounded-full border px-3 py-1 text-sm transition
+              ${range === r
+                ? "bg-[var(--color-primary)] text-[var(--color-white)] border-transparent"
+                : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+            aria-pressed={range === r}
+          >
+            {r === "3d" ? "Last 3 days" : r === "7d" ? "Last 7 days" : "Last 30 days"}
+          </button>
+        ))}
+
+        <span className="ml-auto text-xs text-gray-500">
+            Range: {start} → {end}
+        </span>
+      </div>
+
+      <ReactApexChart options={options} series={series} type="bar" height={350} />
+    </div>
+  );
+}
