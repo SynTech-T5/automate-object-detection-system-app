@@ -48,6 +48,9 @@ import * as ctrl from "../controllers/alerts.controller";
 
 const router = Router();
 
+/* ---------- Utilities ---------- */
+router.get('/status', ctrl.status);
+
 /* ---------- Analytics (static ก่อน :alr_id) ---------- */
 router.get("/analytics/trend", ctrl.trendAnalytics);              // แทน /:days_back/trend → ใช้ query ?days_back=
 router.get("/analytics/distribution", ctrl.distributionAnalytics);

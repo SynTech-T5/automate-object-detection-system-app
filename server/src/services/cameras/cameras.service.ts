@@ -252,35 +252,20 @@ export async function updateCameraStatus(cam_id: number, cam_status: boolean) {
 }
 
 export async function countStatusCameras(): Promise<Model.CameraStatus> {
-  const total = await pool.query(`
-    SELECT COUNT(*)::int
-    FROM cameras 
-    WHERE cam_is_use = true
-  `)
+  const { rows } = await pool.query(`
+    SELECT 
+      COUNT(*) FILTER (WHERE cam_is_use = true) AS total,
+      COUNT(*) FILTER (WHERE cam_is_use = true AND cam_status = true) AS active,
+      COUNT(*) FILTER (WHERE cam_is_use = true AND cam_status = false) AS inactive,
+      ROUND(AVG(cam_health)::numeric, 2)::float AS avg_health
+    FROM cameras
+  `);
 
-  const active = await pool.query(`
-    SELECT COUNT(*)::int
-    FROM cameras 
-    WHERE cam_is_use = true 
-    AND cam_status = true
-  `)
-
-  const inactive = await pool.query(`
-    SELECT COUNT(*)::int
-    FROM cameras 
-    WHERE cam_is_use = true 
-    AND cam_status = false
-  `)
-  const avgHealth = await pool.query(`
-    SELECT AVG(cam_health)::numeric(5,2)::float
-    FROM cameras 
-    WHERE cam_is_use = true
-  `)
-
+  const r = rows[0];
   return {
-    total: total.rows[0].count,
-    active: active.rows[0].count,
-    inactive: inactive.rows[0].count,
-    avg_health: avgHealth.rows[0].avg
-  }
+    total: Number(r.total),
+    active: Number(r.active),
+    inactive: Number(r.inactive),
+    avg_health: r.avg_health,
+  };
 }

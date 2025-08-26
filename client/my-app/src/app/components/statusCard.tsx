@@ -18,6 +18,17 @@ interface CameraStatus {
   avg_health: number;
 }
 
+interface AlertStatus {
+  total: number;
+  active: number;
+  resolved: number;
+  dismissed: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+}
+
 interface StatusCardProps {
   id: number;
   title: string;
@@ -163,37 +174,61 @@ function useFetchJson<T>(url: string) {
 }
 
 /* -------------------------- Summary Context/Provider ---------------------- */
-const SummaryCtx = React.createContext<{
-  data: CameraStatus | null;
+interface SummaryCtxValue<T> {
+  data: T | null;
   loading: boolean;
   error: string;
-}>({ data: null, loading: true, error: "" });
-
-export function SummaryProvider({
-  children,
-  path = `/api/cameras/status`, // ← ใช้ “path เดียว” สำหรับทุกการ์ด
-}: { children: React.ReactNode; path?: string }) {
-  const { data, loading, error } = useFetchJson<CameraStatus>(path);
-  return (
-    <SummaryCtx.Provider value={{ data, loading, error }}>
-      {children}
-    </SummaryCtx.Provider>
-  );
 }
 
-function useSummary() {
-  return React.useContext(SummaryCtx);
+function createSummaryCtx<T>() {
+  return React.createContext<SummaryCtxValue<T>>({
+    data: null,
+    loading: true,
+    error: "",
+  });
 }
+
+type SummaryProviderProps<T> = {
+  children: React.ReactNode;
+  path?: string;
+};
+
+function createSummaryProvider<T>(Ctx: React.Context<SummaryCtxValue<T>>) {
+  return function SummaryProvider({ children, path }: SummaryProviderProps<T>) {
+    const { data, loading, error } = useFetchJson<T>(path ?? "");
+    return (
+      <Ctx.Provider value={{ data, loading, error }}>
+        {children}
+      </Ctx.Provider>
+    );
+  };
+}
+
+/* ----------------- กล้อง ----------------- */
+const CameraSummaryCtx = createSummaryCtx<CameraStatus>();
+export const CameraSummaryProvider = createSummaryProvider<CameraStatus>(
+  CameraSummaryCtx
+);
+export const useCameraSummary = () => React.useContext(CameraSummaryCtx);
+
+/* ----------------- Alerts ----------------- */
+const AlertSummaryCtx = createSummaryCtx<AlertStatus>();
+export const AlertSummaryProvider = createSummaryProvider<AlertStatus>(
+  AlertSummaryCtx
+);
+export const useAlertSummary = () => React.useContext(AlertSummaryCtx);
 
 /* -------------------- Generic MetricCard (no per-card path) --------------- */
-type Selector = (s: CameraStatus) => { value: string; totalValue?: string; subtitle?: string };
+type Selector<T> = (s: T) => { value: string; totalValue?: string; subtitle?: string };
 
-function MetricCard({
+function MetricCard<T>({
   baseId,
   select,
+  useSummary,
 }: {
   baseId: number;
-  select: Selector;
+  select: Selector<T>;
+  useSummary: () => { data: T | null; loading: boolean; error: string };
 }) {
   const base = baseById(baseId);
   const { data, loading, error } = useSummary();
@@ -214,92 +249,82 @@ function MetricCard({
   );
 }
 
-/* ---------------------- Export: การ์ดแต่ละใบ (ใช้ path เดียว) ------------ */
-// export const TotalAlertsCard = () => (
-//   <MetricCard
-//     baseId={1}
-//     select={(s) => ({ value: String(s.alerts_total), subtitle: s.last7d_label ?? "Last 7 days" })}
-//   />
-// );
+/* ---------------------- Metric wrappers per domain ------------------------ */
+function MetricCardCamera(p: { baseId: number; select: Selector<CameraStatus> }) {
+  return <MetricCard<CameraStatus> baseId={p.baseId} select={p.select} useSummary={useCameraSummary} />;
+}
 
-export const TotalCamerasCard = () => (
-  <MetricCard
-    baseId={2}
-    select={(s) => ({ value: String(s.total) })}
-  />
+function MetricCardAlert(p: { baseId: number; select: Selector<AlertStatus> }) {
+  return <MetricCard<AlertStatus> baseId={p.baseId} select={p.select} useSummary={useAlertSummary} />;
+}
+
+/* ---------------------- Export: การ์ดแต่ละใบ (map domain) ---------------- */
+// ALERT CARDS (ids: 1,3,5,7)
+export const TotalAlertsCard = () => (
+  <MetricCardAlert baseId={1} select={(s) => ({ value: String(s.total) })} />
 );
 
-// export const ActiveAlertsCard = () => (
-//   <MetricCard
-//     baseId={3}
-//     select={(s) => ({ value: String(s.alerts_active), subtitle: "Require attention" })}
-//   />
-// );
+export const ActiveAlertsCard = () => (
+  <MetricCardAlert baseId={3} select={(s) => ({ value: String(s.active) })} />
+);
+
+export const ResolvedAlertsCard = () => (
+  <MetricCardAlert baseId={5} select={(s) => ({ value: String(s.resolved) })} />
+);
+
+export const CriticalAlertsCard = () => (
+  <MetricCardAlert baseId={7} select={(s) => ({ value: String(s.critical) })} />
+);
+
+// CAMERA CARDS (ids: 2,4,6,8)
+export const TotalCamerasCard = () => (
+  <MetricCardCamera baseId={2} select={(s) => ({ value: String(s.total) })} />
+);
 
 export const ActiveCamerasCard = () => (
-  <MetricCard
+  <MetricCardCamera
     baseId={4}
     select={(s) => {
       const active = s.active;
-      // const total = s.uptime?.total ?? s.cameras_total;
-      // return { value: String(active), totalValue: String(total) };
       return { value: String(active) };
     }}
   />
 );
 
-// export const ResolvedAlertsCard = () => (
-//   <MetricCard
-//     baseId={5}
-//     select={(s) => ({ value: String(s.alerts_resolved), subtitle: "Successfully handled" })}
-//   />
-// );
-
 export const InactiveCamerasCard = () => (
-  <MetricCard
-    baseId={6}
-    select={(s) => ({ value: String(s.inactive) })}
-  />
+  <MetricCardCamera baseId={6} select={(s) => ({ value: String(s.inactive) })} />
 );
 
-// export const CriticalAlertsCard = () => (
-//   <MetricCard
-//     baseId={7}
-//     select={(s) => ({ value: String(s.alerts_critical), subtitle: "High priority" })}
-//   />
-// );
-
 export const AvgCameraHealthCard = () => (
-  <MetricCard
+  <MetricCardCamera
     baseId={8}
     select={(s) => ({ value: `${Math.round(s.avg_health)} %` })}
   />
 );
 
 /* ---------------------- ตัวอย่างการใช้งานในหน้า Dashboard --------------- */
-// ใช้ครอบบริเวณที่มีการ์ดทั้งหมด เพื่อให้ fetch แค่ครั้งเดียว
 export function DashboardSummaryCameraSection() {
   return (
-    <SummaryProvider /* path={`${base}/api/status`} (ค่าเริ่มต้นแล้ว) */>
+    <CameraSummaryProvider path={`/api/cameras/status`}>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
         <TotalCamerasCard />
         <ActiveCamerasCard />
         <InactiveCamerasCard />
         <AvgCameraHealthCard />
       </div>
-    </SummaryProvider>
+    </CameraSummaryProvider>
   );
 }
 
 export function DashboardSummaryAlertSection() {
   return (
-    <SummaryProvider /* path={`${base}/api/status`} (ค่าเริ่มต้นแล้ว) */>
+    <AlertSummaryProvider path={`/api/alerts/status`}>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
-        {/* <TotalAlertsCard />
+        <TotalAlertsCard />
         <ActiveAlertsCard />
         <ResolvedAlertsCard />
-        <CriticalAlertsCard /> */}
+        <CriticalAlertsCard />
       </div>
-    </SummaryProvider>
+    </AlertSummaryProvider>
   );
 }

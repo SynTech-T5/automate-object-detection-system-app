@@ -1,4 +1,7 @@
 import { pool } from '../config/db';
+import * as Model from "../models/events.model"
+import * as Mapping from "../models/Mapping/events.map"
+
 
 /**
  * ดึงรายการ Events ทั้งหมดที่ยังใช้งานอยู่
@@ -9,7 +12,7 @@ import { pool } from '../config/db';
  * 
  * @author Jirayu
  */
-export async function getAllEvents(): Promise<Event[]> {
+export async function getAllEvents(): Promise<Model.Events[]> {
     const query = `
         SELECT evt_id, evt_icon, evt_name, evt_description, evt_is_use
         FROM events 
@@ -17,8 +20,18 @@ export async function getAllEvents(): Promise<Event[]> {
         ORDER BY evt_id DESC
     `;
 
-    const { rows } = await pool.query<Event>(query);
-    return rows;
+    const result = await pool.query<Event>(query);
+    return result.rows.map(Mapping.mapToEvent);
+}
+
+export async function getEventById(evt_id: number): Promise<Model.Events> {
+    const { rows } = await pool.query(`
+        SELECT * FROM events
+        WHERE evt_id = $1
+        AND evt_is_use = true    
+    `, [evt_id]) 
+
+    return Mapping.mapToEvent(rows[0]);
 }
 
 /**
@@ -36,7 +49,7 @@ export async function getAllEvents(): Promise<Event[]> {
  * 
  * @author Fasai
  */
-export async function createEvent(evt_icon: string, evt_name: string, evt_des: string) {
+export async function createEvent(evt_icon: string, evt_name: string, evt_des: string): Promise<Model.Events> {
 
 
     if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
@@ -66,7 +79,7 @@ export async function createEvent(evt_icon: string, evt_name: string, evt_des: s
         throw new Error('Failed to insert events');
     }
 
-    return events;
+    return events.rows.map(Mapping.mapToEvent);
 }
 
 /**
@@ -85,7 +98,7 @@ export async function createEvent(evt_icon: string, evt_name: string, evt_des: s
  *
  * @author Fasai
  */
-export async function updateEvent(evt_id: number, evt_icon: string, evt_name: string, evt_des: string) {
+export async function updateEvent(evt_id: number, evt_icon: string, evt_name: string, evt_des: string): Promise<Model.Events> {
 
     if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
         throw new Error("Event fields cannot be empty");
@@ -117,7 +130,7 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
         throw new Error('Failed to update event or event not found');
     }
 
-    return events;
+    return events.row.map(Mapping.mapToEvent);
 }
 
 /**
@@ -134,7 +147,7 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
  *
  * @author Fasai
  */
-export async function deleteEvent(evt_id: number, evt_is_use: boolean) {
+export async function deleteEvent(evt_id: number, evt_is_use: boolean): Promise<Model.EventSafeDelete> {
 
     const eventExists = await pool.query(`
       SELECT evt_id FROM events

@@ -21,6 +21,16 @@ export async function index(req: Request, res: Response, next: NextFunction) {
     }
 }
 
+export async function show(req: Request, res: Response, next:NextFunction){
+    try{
+        const evt_id = Number(req.params.evt_id);
+        const event = await eventService.getEventById(evt_id);
+        return res.json(event);
+    } catch (err) {
+        next(err);
+    }
+}
+
 /**
  * เพิ่ม Event ตามข้อมูลใน req.body
  * ส่ง Event ที่เพิ่มแล้วเป็น JSON

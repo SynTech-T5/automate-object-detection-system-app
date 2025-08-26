@@ -5,6 +5,7 @@ import { useUI } from "./ui-provider";
 import { PanelLeft, PanelLeftOpen, Bell, UserRound } from "lucide-react";
 import ClockLive from "./ClockLive";
 import Image from "next/image";
+import DropdownMenu from "./DropdownMenu";
 
 type Me = { usr_id: number; usr_username: string; usr_email: string; usr_role?: string };
 
@@ -103,7 +104,15 @@ export default function Header({ userName = "Admin" }: { userName?: string }) {
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <UserRound size={18} />
+                        <DropdownMenu>
+                            <button
+                                className="inline-flex h-9 w-9 items-center justify-center rounded-xl hover:bg-gray-50"
+                                title="UserMeun"
+                                aria-label="UserMeun"
+                            >
+                                <UserRound size={18} />
+                            </button>
+                        </DropdownMenu>
                         <span className="hidden sm:inline">{me ? `${me.usr_username}` : 'Guest'}</span>
                     </div>
                 </div>

@@ -98,3 +98,14 @@ export interface TrendAlertItem {
     severity: string;
     count: number;
 }
+
+export interface AlertStatus {
+    total: number;
+    active: number;
+    resolved: number;
+    dismissed: number;
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+}

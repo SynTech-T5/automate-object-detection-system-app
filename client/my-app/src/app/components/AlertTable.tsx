@@ -1,7 +1,9 @@
+"use client";
+import { useState, useMemo } from "react";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Eye, CheckCircle2, XCircle, MapPin } from "lucide-react";
+import { Eye, CheckCircle2, XCircle, MapPin, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { LucideProps } from "lucide-react";
 
@@ -30,7 +32,51 @@ function iconFromName(name?: string) {
 
 type Props = { alerts: Alert[] };
 
+type SortKey = keyof Alert | "timestamp";
+type SortOrder = "asc" | "desc" | null;
+
 export default function AlertTable({ alerts }: Props) {
+    const [sortKey, setSortKey] = useState<SortKey | null>(null);
+    const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+
+    const handleSort = (key: SortKey) => {
+        if (sortKey !== key) {
+            setSortKey(key);
+            setSortOrder("asc");
+        } else {
+            if (sortOrder === "asc") setSortOrder("desc");
+            else if (sortOrder === "desc") setSortOrder(null);
+            else setSortOrder("asc");
+        }
+    };
+
+    const sortedAlerts = useMemo(() => {
+        if (!sortKey || !sortOrder) return alerts;
+
+        return [...alerts].sort((a, b) => {
+            let valA: any;
+            let valB: any;
+
+            if (sortKey === "timestamp") {
+                valA = new Date(`${a.create_date} ${a.create_time}`).getTime();
+                valB = new Date(`${b.create_date} ${b.create_time}`).getTime();
+            } else {
+                valA = a[sortKey];
+                valB = b[sortKey];
+            }
+
+            if (valA < valB) return sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+    }, [alerts, sortKey, sortOrder]);
+
+    const renderSortIcon = (key: SortKey) => {
+        if (sortKey !== key || !sortOrder) return <ArrowUpDown className="w-4 h-4 ml-1 inline-block" />;
+        if (sortOrder === "asc") return <ArrowUp className="w-4 h-4 ml-1 inline-block" />;
+        if (sortOrder === "desc") return <ArrowDown className="w-4 h-4 ml-1 inline-block" />;
+    };
+
     if (!alerts?.length) {
         return (
             <div className="text-sm text-gray-500">
@@ -43,14 +89,23 @@ export default function AlertTable({ alerts }: Props) {
         <Table className="table-auto w-full">
             <TableHeader>
                 <TableRow className="border-b border-[var(--color-primary)]">
-                    <TableHead className="text-[var(--color-primary)]">
-                        <div className="border-r border-[var(--color-primary)]">Severity</div>
+                    <TableHead onClick={() => handleSort("severity")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                        <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                            <span>Severity</span>
+                            {renderSortIcon("severity")}
+                        </div>
                     </TableHead>
-                    <TableHead className="text-[var(--color-primary)]">
-                        <div className="border-r border-[var(--color-primary)]">Alert ID</div>
+                    <TableHead onClick={() => handleSort("id")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                        <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                            <span>Alert ID</span>
+                            {renderSortIcon("id")}
+                        </div>
                     </TableHead>
-                    <TableHead className="text-[var(--color-primary)]">
-                        <div className="border-r border-[var(--color-primary)]">Timestamp</div>
+                    <TableHead onClick={() => handleSort("timestamp")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                        <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                            <span>Timestamp</span>
+                            {renderSortIcon("timestamp")}
+                        </div>
                     </TableHead>
                     <TableHead className="text-[var(--color-primary)]">
                         <div className="border-r border-[var(--color-primary)]">Camera</div>
@@ -69,7 +124,7 @@ export default function AlertTable({ alerts }: Props) {
             </TableHeader>
 
             <TableBody>
-                {alerts.map((alr) => {
+                {sortedAlerts.map((alr) => {
                     const EventIcon = iconFromName(alr.event?.icon);
                     return (
                         <TableRow key={alr.id}>
@@ -78,7 +133,7 @@ export default function AlertTable({ alerts }: Props) {
                             <TableCell>{alr.create_date} {alr.create_time}</TableCell>
                             <TableCell>{alr.camera.name}</TableCell>
 
-                            {/* Event Type + icon จาก alr.event.icon */}
+                            {/* Event Type + icon */}
                             <TableCell>
                                 <div className="flex items-center gap-2">
                                     <EventIcon className="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
@@ -116,4 +171,4 @@ export default function AlertTable({ alerts }: Props) {
             </TableBody>
         </Table>
     );
-}  
+}

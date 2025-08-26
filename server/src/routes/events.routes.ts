@@ -35,7 +35,7 @@ router.get("/", ctrl.index);
 router.post("/", ctrl.store);
 
 /* ---------- Item ---------- */
-// router.get("/:evt_id", ctrl.show);
+router.get("/:evt_id", ctrl.show);
 router.patch("/:evt_id", ctrl.update);
 router.put("/:evt_id", ctrl.update);
 router.patch("/:evt_id/soft-delete", ctrl.softDelete);
