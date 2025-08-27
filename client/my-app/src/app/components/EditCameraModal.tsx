@@ -33,6 +33,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
         cam_type: "",
         cam_status: false,
         cam_location_id: "",
+        cam_description: "",
     });
 
     // โหลดข้อมูลกล้องเมื่อ modal เปิด
@@ -48,6 +49,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                         cam_type: data.type,
                         cam_status: data.status,
                         cam_location_id: String(data.location.id),
+                        cam_description: data.description,
                     })
                 });
         }
@@ -232,6 +234,20 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                             </label>
                         </div>
                     </div>
+                    {/* Description */}
+                    <div className="grid gap-1">
+                        <label className="text-sm font-medium" htmlFor="description">
+                            Description
+                        </label>
+                        <textarea
+                            name="cam_description"
+                            placeholder="Enter your description"
+                            className="font-light w-full rounded-md border px-3 py-3 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                            value={form.cam_description}
+                            onChange={handleChange}
+                        />
+                    </div>
+
                     {errMsg && (
                         <div className="text-sm text-red-600 mt-2">
                             {errMsg}
