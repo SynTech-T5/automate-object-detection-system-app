@@ -10,11 +10,7 @@ import { pool } from '../../config/db';
  */
 export async function listAllMaintenances(): Promise<any[]> {
     const query = `
-        SELECT 
-            mnt_date,
-            mnt_type,
-            mnt_technician,
-            mnt_note
+        SELECT *
         FROM maintenance_history 
         WHERE mnt_is_use = true
         ORDER BY mnt_date DESC
@@ -35,11 +31,7 @@ export async function listAllMaintenances(): Promise<any[]> {
  */
 export async function listMaintenancesByCamera(cam_id: number): Promise<any[]> {
     const query = `
-        SELECT 
-            mnt_date,
-            mnt_type,
-            mnt_technician,
-            mnt_note
+        SELECT *
         FROM maintenance_history 
         WHERE mnt_camera_id = $1 
         AND mnt_is_use = true
@@ -68,7 +60,7 @@ export async function listMaintenancesByCamera(cam_id: number): Promise<any[]> {
  * 
  * @author Napat
  */
-export async function createMaintenanceHistory(camId: number, date: Date, type: string, technician: string, note: string) {
+export async function createMaintenance(camId: number, date: Date, type: string, technician: string, note: string) {
     const { rows } = await pool.query(`
         INSERT INTO maintenance_history(mnt_date, mnt_type, mnt_technician, mnt_note, mnt_camera_id)
         VALUES ($1, $2, $3, $4, $5)

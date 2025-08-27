@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import * as CameraService from '../services/cameras/cameras.service';
 import * as MaintenanceService from '../services/cameras/maintenances.service';
 import * as EventDetectionService from '../services/cameras/eventDetections.service';
@@ -170,6 +170,7 @@ export async function store(req: Request, res: Response, next: NextFunction) { /
  * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
  * @param res ส่งข้อมูลของกล้องกลับ
  * @returns -JSON response ส่งข้อมูลของกล้องที่แก้ไขกลับพร้อมแสดงสถานะ 200
+ * 
  * @author Chokchai
  */
 export async function update(req: Request, res: Response, next: NextFunction) { //update camera
@@ -217,7 +218,7 @@ export async function softDelete(req: Request, res: Response, next: NextFunction
  *
  * @author Audomsak
  */
-export async function change(req: Request, res: Response, next: NextFunction) {
+export async function activate(req: Request, res: Response, next: NextFunction) {
     try {
         const { cam_id } = req.params;
         const { status } = req.body;
@@ -342,7 +343,16 @@ export async function softDeleteCameraMaintenance(req: Request, res: Response, n
     }
 }
 
-export async function storeCameraMaintenance(req: Request, res: Response, next: NextFunction) { }
+export async function storeCameraMaintenance(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { cam_id } = req.params;
+        const { date, type, technician, note } = req.body;
+        const createHistory = await MaintenanceService.createMaintenance(Number(cam_id), date, type, technician, note);
+        res.status(201).json(createHistory);
+    } catch (err) {
+        next(err);
+    }
+}
 
 /**
  * Controller: อัพเดท Maintenance History
@@ -369,7 +379,25 @@ export async function deleteCameraMaintenance(req: Request, res: Response, next:
 
 /* ------------------------------ Event Detection ------------------------------ */
 
-export async function indexEventDetections(req: Request, res: Response, next: NextFunction) { }
+/**
+ * Controller: ดึงรายการ Event Detection ทั้งหมด
+ *
+ * @route GET /api/events/detections
+ * @param req - Request ของ Express
+ * @param res - Response ของ Express (ส่งกลับรายการ EventDetect เป็น JSON)
+ * @param next - ส่งต่อ error
+ * @returns {Promise<Response>} JSON response ของรายการ EventDetect
+ *
+ * @author Wongsakon
+ */
+export async function indexEventDetections(req: Request, res: Response, next: NextFunction) {
+    try {
+        const eventDetection = await EventDetectionService.listEventDetections();
+        return res.json(eventDetection);
+    } catch (err) {
+        next(err);
+    }
+}
 
 /**
  * สร้าง Event Detect 
@@ -392,7 +420,30 @@ export async function storeEventDetection(req: Request, res: Response, next: Nex
     }
 }
 
-export async function updateEventDetection(req: Request, res: Response, next: NextFunction) { }
+/**
+ * อัพเดท EventDetect ตามข้อมูลใน req.body
+ * ส่ง EventDetect ที่อัพเดทแล้วกลับเป็น JSON
+ *
+ * @param req - Request ของ Express (body: cds_event_id, cds_camera_id, cds_sensitivity, cds_priority, cds_status)
+ * @param res - Response ของ Express
+ * @param next - ส่งต่อ error
+ * @returns {Promise<Response>} JSON response ของ EventDetect ที่อัพเดทแล้ว
+ *
+ * @throws Error หากเกิดข้อผิดพลาดระหว่างการอัพเดท
+ *
+ * @author Wanasart
+ */
+export async function updateEventDetection(req: Request, res: Response, next: NextFunction) {
+    try {
+        const id = Number(req.params.cds_id);
+        const { event_id, camera_id, sensitivity, priority, status } = req.body
+        console.log(event_id, camera_id, sensitivity, priority, status)
+        const updateEventDetection = await EventDetectionService.updateEventDetection(id, event_id, camera_id, sensitivity, priority, status);
+        return res.json(updateEventDetection);
+    } catch (err) {
+        next(err);
+    }
+}
 
 /**
  * ลบ EventDetect ตามข้อมูลใน req.body
@@ -454,6 +505,7 @@ export async function indexAccessControls(req: Request, res: Response, next: Nex
 export async function showAccessControl(req: Request, res: Response, next: NextFunction) {
     try {
         const cam_id = Number(req.params.cam_id);
+        console.log(cam_id)
         const cameraAccess = await AccessControlService.getAccessControlByCamera(cam_id);
         return res.json(cameraAccess);
     } catch (error) {

@@ -11,10 +11,11 @@ import { pool } from '../../config/db';
  * 
  * @author Wongsakon
  */
-export async function eventDetection() {
-    const result = await pool.query(
-        "SELECT evt_id, evt_icon, evt_name, cds_sensitivity, cds_priority, cds_status FROM events INNER JOIN camera_detection_settings ON evt_id = cds_event_id"
-    );
+export async function listEventDetections() {
+    const result = await pool.query(`
+        SELECT * FROM camera_detection_settings 
+        INNER JOIN events ON evt_id = cds_event_id
+    `);
     return result.rows;
 }
 
@@ -69,7 +70,40 @@ export async function createEventDetection( cds_event_id: number,
     return eventDetection;
 }
 
-export async function updateEventDetection(cds_camera_id: number) {}
+/**
+ * อัปเดตข้อมูลของ EventDetection
+ *
+ * @param {number} id - รหัสของ EventDetection ที่ต้องการอัปเดต
+ * @param {number} event_id - รหัสของ Event 
+ * @param {number} camera_id - รหัสของ Camera
+ * @param {string} sensitivity - ความไวในการตรวจจับ
+ * @param {string} priority - ความสำคัญของ Eventdetection
+ * @param {boolean} status - สถานะของ Eventdetection
+ * @returns {Promise<object>} EventDetection object หลังอัปเดตเสร็จ
+ * @throws {Error} ถ้าไม่พบ camera,event หรือไม่สามารถอัปเดตได้
+ * 
+ * @author Wanasart
+ */
+export async function updateEventDetection(id: number, event_id: number, camera_id: number, sensitivity: string, priority: string, status: boolean ) {
+    const { rows } = await pool.query(`
+        UPDATE camera_detection_settings
+        SET cds_event_id = $1,
+            cds_camera_id = $2,
+            cds_sensitivity = $3,
+            cds_priority = $4,
+            cds_status = $5
+        WHERE cds_id = $6
+        RETURNING *;
+    `, [event_id, camera_id, sensitivity, priority, status, id]);
+
+    const eventDetection = rows[0];
+
+    if (!eventDetection) {
+        throw new Error('Failed to update Event Detection or Event Detection not found');
+    }
+
+    return eventDetection;
+}
 
 /**
  * ลบ EventDetection ที่เลือก
