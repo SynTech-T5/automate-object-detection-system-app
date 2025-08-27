@@ -120,8 +120,8 @@ export default function Page() {
       credentials: "include",
     });
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Failed to Create");
+      const text = await res.json();
+      throw new Error(text.message || "Failed to Create");
     }
     return res.json();
   }

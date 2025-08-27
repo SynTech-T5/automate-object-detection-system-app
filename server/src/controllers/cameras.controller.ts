@@ -159,8 +159,8 @@ export async function store(req: Request, res: Response, next: NextFunction) { /
     try {
         const created = await CameraService.createCamera(req.body);
         return res.status(201).json(created);
-    } catch (err) {
-        next(err);
+    } catch (err: any) {
+        res.status(400).json({ message: err.message });
     }
 }
 
@@ -173,13 +173,19 @@ export async function store(req: Request, res: Response, next: NextFunction) { /
  * @author Chokchai
  */
 export async function update(req: Request, res: Response, next: NextFunction) { //update camera
-    const id = Number(req.params.id);
-    const updated = await CameraService.updateCamera(id, req.body);
-    if (!updated) {
-        // ไม่พบ id หรือไม่มีฟิลด์ให้อัปเดต
-        return res.status(404).json({ message: 'camera not found or no fields to update' });
+    try {
+        const id = Number(req.params.cam_id);
+        const updated = await CameraService.updateCamera(id, req.body);
+        if (!updated) {
+            // ไม่พบ id หรือไม่มีฟิลด์ให้อัปเดต
+            return res.status(404).json({ message: 'camera not found or no fields to update' });
+        }
+        return res.status(200).json(updated);
+
+    } catch (err:any){
+        res.status(400).json({ message: err.message });
     }
-    return res.status(200).json(updated);
+    
 }
 
 /**
@@ -455,7 +461,7 @@ export async function showAccessControl(req: Request, res: Response, next: NextF
     }
 }
 
-export async function createAccessControl(req: Request, res: Response, next: NextFunction) {}
+export async function createAccessControl(req: Request, res: Response, next: NextFunction) { }
 
 /**
  * อัพเดท Access Control ตามข้อมูลใน req.body
@@ -482,4 +488,4 @@ export async function updateAccessControl(req: Request, res: Response, next: Nex
     }
 }
 
-export async function deleteAccessControl(req: Request, res: Response, next: NextFunction) {}
+export async function deleteAccessControl(req: Request, res: Response, next: NextFunction) { }

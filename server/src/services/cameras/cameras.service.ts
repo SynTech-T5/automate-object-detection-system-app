@@ -115,7 +115,7 @@ export async function createCamera(input: Model.CreateCameraInput): Promise<Mode
            WHERE cam_name = $1 AND cam_is_use = TRUE
       `, [input.cam_name]);
   if (existing.rows.length > 0) {
-    throw new Error('cameras name already exists');
+    throw new Error('Cameras name already exists');
   }
 
   const values = [
@@ -165,12 +165,33 @@ export async function createCamera(input: Model.CreateCameraInput): Promise<Mode
  */
 export async function updateCamera(camId: number, patch: UpdateCameraInput): Promise<Model.Camera | null> { //แก้ไขข้อมูลกล้อง
 
+  if (patch.cam_name) {
+    const existing = await pool.query<Model.Camera>(
+      `SELECT cam_id 
+       FROM cameras 
+       WHERE cam_name = $1 
+         AND cam_is_use = TRUE 
+         AND cam_id <> $2`, // ไม่เอาตัวเอง
+      [patch.cam_name, camId]
+    );
+
+    if (existing.rows.length > 0) {
+      throw new Error("Camera name already exists");
+    }
+  }
+
+  
+  if (!Number.isInteger(camId)) {
+    throw new Error("camId must be an integer");
+  }
+
   const allowed = new Set([
     'cam_name',
     'cam_location_id',
     'cam_type',
     'cam_address',
-    'cam_resolution'
+    'cam_status',
+    'cam_resolution',
   ]);
   const entries = Object.entries(patch).filter(([key, value]) => allowed.has(key) && value !== undefined); //แปลงข้อมูลให้เป็น Array คู่ จากนั้นทำการ filter
 
@@ -183,7 +204,7 @@ export async function updateCamera(camId: number, patch: UpdateCameraInput): Pro
     UPDATE public.cameras
     SET ${set}
     WHERE cam_id = $${entries.length + 1} AND cam_is_use = true
-    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_resolution
+    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_status, cam_resolution
   `;
 
   const r = await pool.query<Model.Camera>(sql, [...val, camId]);

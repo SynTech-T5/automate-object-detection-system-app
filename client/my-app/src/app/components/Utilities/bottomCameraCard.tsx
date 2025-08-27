@@ -2,6 +2,8 @@
 import { useRouter } from "next/navigation";
 import { Eye, Pencil, Info, Trash2 } from "lucide-react"; // ใช้เมื่อ iconSet="lucide"
 import "@/styles/camera-card.css";
+import EditCameraModal from "./EditCameraModal";
+import { useState } from "react";
 
 type IconSet = "fi" | "lucide";
 
@@ -30,7 +32,17 @@ export default function BottomCameraCard({
 
   // default handlers
   const goView = () => (onView ? onView(camId) : router.push(`/cameras/${camId}`));
-  const goEdit = () => (onEdit ? onEdit(camId) : router.push(`/cameras/${camId}/edit`));
+  const [open, setOpen] = useState(false);
+
+  // const goEdit = () => (onEdit ? onEdit(camId) : router.push(`/cameras/${camId}/edit`));
+  const goEdit = () => {
+    if (onEdit) {
+      onEdit(camId); // ส่งค่า camId กลับไปให้ parent
+    }
+    setOpen(true);
+  };
+
+
   const goDetails = () =>
     onDetails ? onDetails(camId) : router.push(`/cameras/${camId}/details`)
   const doDelete = async () => {
@@ -129,6 +141,8 @@ export default function BottomCameraCard({
           Edit
         </span>
       </button>
+      
+      <EditCameraModal camId={camId} open={open} setOpen={setOpen} />
 
       {/* Details */}
       <button
@@ -156,7 +170,7 @@ export default function BottomCameraCard({
       >
         {icon.delete}
         <span className={`${active === "delete" ? "text-[var(--color-danger)]" : ""}`}>
-          
+
         </span>
       </button>
     </div>
