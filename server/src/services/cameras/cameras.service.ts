@@ -191,6 +191,7 @@ export async function updateCamera(camId: number, patch: UpdateCameraInput): Pro
     'cam_type',
     'cam_address',
     'cam_status',
+    'cam_description',
     'cam_resolution',
   ]);
   const entries = Object.entries(patch).filter(([key, value]) => allowed.has(key) && value !== undefined); //แปลงข้อมูลให้เป็น Array คู่ จากนั้นทำการ filter
@@ -204,7 +205,7 @@ export async function updateCamera(camId: number, patch: UpdateCameraInput): Pro
     UPDATE public.cameras
     SET ${set}
     WHERE cam_id = $${entries.length + 1} AND cam_is_use = true
-    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_status, cam_resolution
+    RETURNING cam_id, cam_name, cam_location_id, cam_type, cam_address, cam_status, cam_description, cam_resolution
   `;
 
   const r = await pool.query<Model.Camera>(sql, [...val, camId]);

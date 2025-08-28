@@ -33,6 +33,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
         cam_type: "",
         cam_status: false,
         cam_location_id: "",
+        cam_description: "",
     });
 
     // โหลดข้อมูลกล้องเมื่อ modal เปิด
@@ -48,6 +49,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                         cam_type: data.type,
                         cam_status: data.status,
                         cam_location_id: String(data.location.id),
+                        cam_description: data.description,
                     })
                 });
         }
@@ -113,9 +115,9 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
 
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogContent>
+            <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Edit Camera #{camId}</AlertDialogTitle>
+                    <AlertDialogTitle className="text-[var(--color-primary)]">Edit Camera #{camId}</AlertDialogTitle>
                     <AlertDialogDescription>Fill in the details and click Save.</AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -185,7 +187,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                             </select>
                         </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                         {/* Location */}
                         <div className="col-span-2">
                             <label className="text-sm font-medium" htmlFor="location">
@@ -221,17 +223,31 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                                     }
                                 />
                                 <div
-                                    className="relative w-14 h-7 rounded-full
-                                        bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
-                                        transition-colors duration-200
-                                        after:content-[''] after:absolute after:top-1 after:left-1
-                                        after:w-5 after:h-5 after:bg-white after:rounded-full
-                                        after:shadow after:transition-all after:duration-200
-                                        peer-checked:after:translate-x-7"
+                                    className="relative w-16 h-9 rounded-full
+                              bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
+                              transition-colors duration-200
+                              after:content-[''] after:absolute after:top-1 after:left-1
+                              after:w-7 after:h-7 after:bg-white after:rounded-full
+                              after:shadow after:transition-all after:duration-200
+                              peer-checked:after:translate-x-7"
                                 ></div>
                             </label>
                         </div>
                     </div>
+                    {/* Description */}
+                    <div className="grid gap-1">
+                        <label className="text-sm font-medium" htmlFor="description">
+                            Description
+                        </label>
+                        <textarea
+                            name="cam_description"
+                            placeholder="Enter your description"
+                            className="font-light w-full rounded-md border px-3 py-3 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                            value={form.cam_description}
+                            onChange={handleChange}
+                        />
+                    </div>
+
                     {errMsg && (
                         <div className="text-sm text-red-600 mt-2">
                             {errMsg}
