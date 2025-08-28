@@ -3,44 +3,38 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { ApexOptions } from "apexcharts";
-
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 type Severity = "Critical" | "High" | "Medium" | "Low";
 type TrendPoint = { severity: Severity; count: number };
 type TrendItem = { date: string; trend: TrendPoint[] };
-
 type QuickRange = "3d" | "7d" | "30d";
 
 const SEVERITIES: Severity[] = ["Critical", "High", "Medium", "Low"];
+const TZ = "Asia/Bangkok";
 
-function toYMD(d: Date): string {
-  const y = d.getFullYear();
-  const m = (`0${d.getMonth() + 1}`).slice(0 - 2);
-  const dd = (`0${d.getDate()}`).slice(0 - 2);
-  return `${y}-${m}-${dd}`;
+/** format เป็น YYYY-MM-DD ตามโซนเวลาเป้าหมาย (ไม่พึ่ง getFullYear/getMonth) */
+function toYMD_TZ(value: number | Date, tz = TZ): string {
+  const d = typeof value === "number" ? new Date(value) : value;
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(d);
 }
 
-function getRangeDates(range: QuickRange): { start: string; end: string } {
-  const now = new Date(); // ใช้เวลาเครื่อง (Asia/Bangkok ในโปรเจ็กต์คุณอยู่แล้ว)
-  const end = toYMD(now);
-  const startDate = new Date(now);
+/** คำนวณช่วงวันฝั่ง client เท่านั้น (ป้องกัน SSR/CSR ไม่ตรงกัน) */
+function getRangeDatesClient(range: QuickRange, tz = TZ): { start: string; end: string } {
   const delta = range === "3d" ? 3 : range === "7d" ? 7 : 30;
-  startDate.setDate(now.getDate() - (delta - 1)); // รวมวันนี้ด้วย
-  const start = toYMD(startDate);
+  const now = Date.now();
+  const end = toYMD_TZ(now, tz);
+  const start = toYMD_TZ(now - (delta - 1) * 86400000, tz); // Bangkok ไม่มี DST ใช้ 86400000 ได้
   return { start, end };
 }
 
-// ไล่เฉดสีจากสีหลัก (โทนเดียวคนละความเข้ม)
+/** ไล่เฉดสีจากสีหลัก (โทนเดียวคนละความเข้ม) */
 function generateMonochromeShades(base: string): string[] {
-  // รองรับรูปแบบ #RRGGBB
   const hex = base.replace("#", "");
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);
-
   const mix = (t: number) => {
-    // t = 0 (เข้ม) → 1 (อ่อน)
     const bg = 255;
     const rr = Math.round(r * (1 - t) + bg * t);
     const gg = Math.round(g * (1 - t) + bg * t);
@@ -49,14 +43,22 @@ function generateMonochromeShades(base: string): string[] {
       .toString(16)
       .padStart(2, "0")}${bb.toString(16).padStart(2, "0")}`.toUpperCase();
   };
-
-  // 4 เฉดจากเข้ม → อ่อน (ปรับค่าตามรสนิยม)
   return [mix(0.15), mix(0.35), mix(0.55), mix(0.78)];
+}
+
+/** ย่อ label โดยไม่พึ่ง Date (กัน timezone เพี้ยน) */
+function shortLabel(ymd: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return ymd;
+  const [y, m, d] = ymd.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${d} ${months[Number(m) - 1]}`;
 }
 
 export default function AlertsTrendChart(): React.ReactElement {
   const [range, setRange] = useState<QuickRange>("7d");
-  const [{ start, end }, setDates] = useState(getRangeDates("7d"));
+
+  // เริ่มต้นเป็นค่าว่าง → ค่อยคำนวณบน client ใน useEffect (กัน hydration mismatch)
+  const [{ start, end }, setDates] = useState<{ start: string; end: string }>({ start: "", end: "" });
 
   const [raw, setRaw] = useState<TrendItem[]>([]);
   const [series, setSeries] = useState<NonNullable<ApexOptions["series"]>>([]);
@@ -72,19 +74,18 @@ export default function AlertsTrendChart(): React.ReactElement {
     return generateMonochromeShades(primary);
   }, []);
 
-  // เปลี่ยนช่วงวัน → อัปเดตวันที่
+  // เปลี่ยนช่วง → คำนวณวันที่ฝั่ง client เท่านั้น
   useEffect(() => {
-    setDates(getRangeDates(range));
+    setDates(getRangeDatesClient(range));
   }, [range]);
 
-  // ดึงข้อมูล (ลองส่ง start/end ไปด้วย; ถ้าแบ็กเอนด์ยังไม่รับ ก็ยังกรองฝั่ง client ต่อ)
+  // ดึงข้อมูลเมื่อมี start/end แล้ว
   useEffect(() => {
+    if (!start || !end) return;
     (async () => {
       try {
-        const url = `/api/alerts/analytics/trend?start=${encodeURIComponent(
-          start
-        )}&end=${encodeURIComponent(end)}`;
-        const res = await fetch(url);
+        const url = `/api/alerts/analytics/trend?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`;
+        const res = await fetch(url, { cache: "no-store" });
         const data: TrendItem[] = await res.json();
         setRaw(data);
       } catch (e) {
@@ -94,12 +95,12 @@ export default function AlertsTrendChart(): React.ReactElement {
     })();
   }, [start, end]);
 
-  // แปลงข้อมูล → categories + series (กรองตามช่วงวันอีกชั้น เผื่อ API ไม่รองรับ)
+  // map raw → categories + series (กรองซ้ำตามช่วง)
   useEffect(() => {
+    if (!start || !end) return;
+
     const inRange = raw.filter((d) => d.date >= start && d.date <= end);
-    const sorted = [...inRange].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    const sorted = [...inRange].sort((a, b) => a.date.localeCompare(b.date));
     const cats = sorted.map((d) => d.date);
 
     const getCount = (arr: TrendPoint[], sev: Severity) =>
@@ -117,20 +118,9 @@ export default function AlertsTrendChart(): React.ReactElement {
   }, [raw, start, end]);
 
   const options: ApexOptions = {
-    chart: {
-      type: "bar",
-      stacked: true,
-      toolbar: { show: true },
-      zoom: { enabled: true },
-    },
-    colors: palette, // โทนเดียวต่างเฉด
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        borderRadius: 6,
-        columnWidth: "55%",
-      },
-    },
+    chart: { type: "bar", stacked: true, toolbar: { show: true }, zoom: { enabled: true } },
+    colors: palette,
+    plotOptions: { bar: { horizontal: false, borderRadius: 6, columnWidth: "55%" } },
     dataLabels: { enabled: false },
     legend: {
       position: "bottom",
@@ -143,35 +133,16 @@ export default function AlertsTrendChart(): React.ReactElement {
       categories,
       labels: {
         style: { colors: Array(categories.length).fill("#6B7280"), fontSize: "12px" },
-        // ถ้าอยากย่อรูปแบบวันที่: 2025-08-15 → 15 Aug
-        formatter: (val: string) => {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
-          const d = new Date(val + "T00:00:00");
-          return new Intl.DateTimeFormat("en-GB", {
-            day: "2-digit",
-            month: "short",
-          }).format(d);
-        },
+        formatter: (val: string) => shortLabel(val),
       },
       axisBorder: { color: "#E5E7EB" },
       axisTicks: { color: "#E5E7EB" },
     },
-    yaxis: {
-      labels: { style: { colors: ["#6B7280"], fontSize: "12px" } },
-    },
-    grid: {
-      borderColor: "#F3F4F6",
-      yaxis: { lines: { show: true } },
-      xaxis: { lines: { show: false } },
-    },
+    yaxis: { labels: { style: { colors: ["#6B7280"], fontSize: "12px" } } },
+    grid: { borderColor: "#F3F4F6", yaxis: { lines: { show: true } }, xaxis: { lines: { show: false } } },
     fill: { opacity: 1 },
     tooltip: { theme: "light" },
-    responsive: [
-      {
-        breakpoint: 640,
-        options: { plotOptions: { bar: { columnWidth: "65%" } } },
-      },
-    ],
+    responsive: [{ breakpoint: 640, options: { plotOptions: { bar: { columnWidth: "65%" } } } }],
   };
 
   return (
@@ -192,11 +163,13 @@ export default function AlertsTrendChart(): React.ReactElement {
           </button>
         ))}
 
-        <span className="ml-auto text-xs text-gray-500">
-            Range: {start} → {end}
+        {/* ใช้ suppressHydrationWarning กันกรณี edge ที่ SSR/CSR ต่างวันขณะเที่ยงคืน */}
+        <span className="ml-auto text-xs text-gray-500" suppressHydrationWarning>
+          Range: {start || "—"} → {end || "—"}
         </span>
       </div>
 
+      {/* chart แสดงเฉพาะตอน client อยู่แล้วเพราะ react-apexcharts ssr:false */}
       <ReactApexChart options={options} series={series} type="bar" height={350} />
     </div>
   );

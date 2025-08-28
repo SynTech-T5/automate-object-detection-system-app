@@ -133,10 +133,11 @@ export async function getAlertTrend(daysBack = 7): Promise<Model.Trend[]> {
     }>(
         `
       SELECT
-        date_trunc('day', alr_create_date)::date AS alert_date,
-        alr_severity,
-        COUNT(*)::int AS count
+      ((alr_create_date AT TIME ZONE 'UTC') AT TIME ZONE 'Asia/Bangkok')::date AS alert_date,
+      alr_severity,
+      COUNT(*)::int AS count
       FROM alerts
+      WHERE alr_is_use = true
       GROUP BY alert_date, alr_severity
       ORDER BY alert_date ASC, alr_severity ASC
       `);
