@@ -115,9 +115,9 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
 
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
-            <AlertDialogContent>
+            <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
                 <AlertDialogHeader>
-                    <AlertDialogTitle>Edit Camera #{camId}</AlertDialogTitle>
+                    <AlertDialogTitle className="text-[var(--color-primary)]">Edit Camera #{camId}</AlertDialogTitle>
                     <AlertDialogDescription>Fill in the details and click Save.</AlertDialogDescription>
                 </AlertDialogHeader>
 
@@ -187,7 +187,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                             </select>
                         </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                         {/* Location */}
                         <div className="col-span-2">
                             <label className="text-sm font-medium" htmlFor="location">
@@ -223,13 +223,13 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
                                     }
                                 />
                                 <div
-                                    className="relative w-14 h-7 rounded-full
-                                        bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
-                                        transition-colors duration-200
-                                        after:content-[''] after:absolute after:top-1 after:left-1
-                                        after:w-5 after:h-5 after:bg-white after:rounded-full
-                                        after:shadow after:transition-all after:duration-200
-                                        peer-checked:after:translate-x-7"
+                                    className="relative w-16 h-9 rounded-full
+                              bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
+                              transition-colors duration-200
+                              after:content-[''] after:absolute after:top-1 after:left-1
+                              after:w-7 after:h-7 after:bg-white after:rounded-full
+                              after:shadow after:transition-all after:duration-200
+                              peer-checked:after:translate-x-7"
                                 ></div>
                             </label>
                         </div>
