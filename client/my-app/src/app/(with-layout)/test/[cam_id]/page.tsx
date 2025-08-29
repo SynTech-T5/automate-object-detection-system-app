@@ -1,8 +1,5 @@
 "use client";
 
-import FormCreateAlert from "../../components/FormCreateAlert"
-import IconPickerDemo from "../../components/IconPickerDemo";
-import CreateEventForm from "../../components/CreateEventForm";
 import AccessControl from "@/app/components/AccessControl";
 
 export default function Page() {
