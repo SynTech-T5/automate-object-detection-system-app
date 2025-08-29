@@ -1,4 +1,6 @@
 import MaintenanceHistoryTable from '@/app/components/MaintenanceHistoryTable'
+import Createnote from "@/app/components/CreateNote"
+import { Separator } from "@/components/ui/separator";
 
 const records = [
     { id: "MNT001", cameraId: 1, date: "2025-05-15", type: "Routine Check", technician: "John Smith", notes: "Camera cleaned, firmware updated v3.2.1" },
@@ -26,6 +28,10 @@ export default function Maintenance() {
             </label>
 
             <MaintenanceHistoryTable records={records} />
+
+            <Separator className="bg-[var(--color-primary-bg)] my-3" />
+
+            <Createnote/>
         </>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import AccessControl from "@/app/components/AccessControl";
+import AccessControl from "@/app/components/CameraAccess";
 
 export default function Page() {
   return (

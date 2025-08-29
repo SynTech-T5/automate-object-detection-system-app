@@ -115,71 +115,73 @@ export default function MaintenanceHistoryTable({ records }: Props) {
   }, [records, sortKey, sortOrder]);
 
   return (
-    <Table className="w-full table-auto">
-      <TableHeader>
-        <TableRow>
-          <TableHead onClick={() => handleSort("id")} className="cursor-pointer select-none text-[var(--color-primary)]">
-            <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-              <span>ID</span>
-              {renderSortIcon("id")}
-            </div>
-          </TableHead>
-          <TableHead onClick={() => handleSort("date")} className="cursor-pointer select-none text-[var(--color-primary)]">
-            <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-              <span>Date</span>
-              {renderSortIcon("date")}
-            </div>
-          </TableHead>
-          <TableHead onClick={() => handleSort("type")} className="cursor-pointer select-none text-[var(--color-primary)]">
-            <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-              <span>Type</span>
-              {renderSortIcon("type")}
-            </div>
-          </TableHead>
-          <TableHead onClick={() => handleSort("technician")} className="cursor-pointer select-none text-[var(--color-primary)]">
-            <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-              <span>Technician</span>
-              {renderSortIcon("technician")}
-            </div>
-          </TableHead>
-          <TableHead className="text-[var(--color-primary)] text-[12px] text-left font-medium">
-            Notes
-          </TableHead>
-          <TableHead className="w-[36px]"></TableHead>
-        </TableRow>
-      </TableHeader>
-
-      <TableBody>
-        {sortedRecords.length === 0 ? (
+    <div className="w-full max-h-[400px] overflow-y-auto">
+      <Table className="w-full table-auto">
+        <TableHeader>
           <TableRow>
-            <TableCell colSpan={6} className="py-4 text-[12px] text-gray-500 text-center">
-              No maintenance records.
-            </TableCell>
+            <TableHead onClick={() => handleSort("id")} className="cursor-pointer select-none text-[var(--color-primary)]">
+              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                <span>ID</span>
+                {renderSortIcon("id")}
+              </div>
+            </TableHead>
+            <TableHead onClick={() => handleSort("date")} className="cursor-pointer select-none text-[var(--color-primary)]">
+              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                <span>Date</span>
+                {renderSortIcon("date")}
+              </div>
+            </TableHead>
+            <TableHead onClick={() => handleSort("type")} className="cursor-pointer select-none text-[var(--color-primary)]">
+              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                <span>Type</span>
+                {renderSortIcon("type")}
+              </div>
+            </TableHead>
+            <TableHead onClick={() => handleSort("technician")} className="cursor-pointer select-none text-[var(--color-primary)]">
+              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                <span>Technician</span>
+                {renderSortIcon("technician")}
+              </div>
+            </TableHead>
+            <TableHead className="text-[var(--color-primary)] text-[12px] text-left font-medium">
+              Notes
+            </TableHead>
+            <TableHead className="w-[36px]"></TableHead>
           </TableRow>
-        ) : (
-          sortedRecords.map((rec) => (
-            <TableRow key={rec.id} className="border-b border-gray-200 align-top text-[12px]">
-              <TableCell className="pl-0 py-3 align-top text-left font-medium">{rec.id}</TableCell>
-              <TableCell className="px-2 py-3 align-top text-left font-medium">{rec.date}</TableCell>
-              <TableCell className="px-2 py-3 align-top text-left font-medium">
-                <MaintenanceTypeBadge type={rec.type} />
-              </TableCell>
-              <TableCell className="px-2 py-3 align-top font-medium text-left">
-                <div className="flex items-center gap-1">
-                  <User className="h-4 w-4 text-[var(--color-primary)]" />
-                  <span>{rec.technician}</span>
-                </div>
-              </TableCell>
-              <TableCell className="px-2 py-3 whitespace-pre-wrap break-words align-top text-left">
-                {rec.notes}
-              </TableCell>
-              <TableCell className="px-2 py-3 align-top text-left">
-                <MoreVertical className="h-4 w-4 text-gray-500 cursor-pointer" />
+        </TableHeader>
+
+        <TableBody>
+          {sortedRecords.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="py-4 text-[12px] text-gray-500 text-center">
+                No maintenance records.
               </TableCell>
             </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+          ) : (
+            sortedRecords.map((rec) => (
+              <TableRow key={rec.id} className="border-b border-gray-200 align-top text-[12px]">
+                <TableCell className="pl-0 py-3 align-top text-left font-medium">{rec.id}</TableCell>
+                <TableCell className="px-2 py-3 align-top text-left font-medium">{rec.date}</TableCell>
+                <TableCell className="px-2 py-3 align-top text-left font-medium">
+                  <MaintenanceTypeBadge type={rec.type} />
+                </TableCell>
+                <TableCell className="px-2 py-3 align-top font-medium text-left">
+                  <div className="flex items-center gap-1">
+                    <User className="h-4 w-4 text-[var(--color-primary)]" />
+                    <span>{rec.technician}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="px-2 py-3 whitespace-pre-wrap break-words align-top text-left">
+                  {rec.notes}
+                </TableCell>
+                <TableCell className="px-2 py-3 align-top text-left">
+                  <MoreVertical className="h-4 w-4 text-gray-500 cursor-pointer" />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
