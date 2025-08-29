@@ -128,7 +128,7 @@ export default function AlertTable({ alerts }: Props) {
         <Table className="table-auto w-full">
             <TableHeader>
                 <TableRow className="border-b border-[var(--color-primary)]">
-                    <TableHead onClick={() => handleSort("severity")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                    <TableHead onClick={() => handleSort("severity")} className="cursor-pointer select-none ]">
                         <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
                             <span>Severity</span>
                             {renderSortIcon("severity")}
