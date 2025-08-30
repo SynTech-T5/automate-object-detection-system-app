@@ -154,6 +154,11 @@ export default function CameraCard({ cam }: { cam: Camera }) {
     (cam as any).footage_url ??
     null;
 
+  //portTest
+  const flaskHost = process.env.NEXT_PUBLIC_FLASK_HOST;
+  const flaskPort = process.env.NEXT_PUBLIC_FLASK_PORT;
+  const streamUrl = `http://${flaskHost}:${flaskPort}/video`;
+
   const statusBool = getStatusBool(cam);
   const statusLabel = statusBool ? "Active" : "Inactive";
 
@@ -226,15 +231,20 @@ export default function CameraCard({ cam }: { cam: Camera }) {
           <div className="relative aspect-video">
             {cam.status ? (
               videoSrc ? (
-                <video
-                  src={videoSrc}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  controls={false}
-                  preload="metadata"
-                  poster={imageSrc}
+                // <video
+                //   src={videoSrc}
+                //   autoPlay
+                //   muted
+                //   loop
+                //   playsInline
+                //   controls={false}
+                //   preload="metadata"
+                //   poster={imageSrc}
+                //   className="absolute inset-0 h-full w-full object-cover"
+                // />
+                <img
+                  src={streamUrl}
+                  alt={cam.name}
                   className="absolute inset-0 h-full w-full object-cover"
                 />
               ) : (
@@ -265,8 +275,8 @@ export default function CameraCard({ cam }: { cam: Camera }) {
 
           <span
             className={`absolute right-3 top-3 rounded-full px-3 py-0.5 text-[11px] font-semibold shadow-sm border ${statusBool
-                ? "bg-emerald-50 text-emerald-700 border-emerald-700"
-                : "bg-red-50 text-red-700 border-red-700"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-700"
+              : "bg-red-50 text-red-700 border-red-700"
               }`}
           >
             {statusLabel}
