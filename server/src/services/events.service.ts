@@ -130,7 +130,8 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
         throw new Error('Failed to update event or event not found');
     }
 
-    return events.row.map(Mapping.mapToEvent);
+    return Mapping.mapToEvent(events);
+    
 }
 
 /**
