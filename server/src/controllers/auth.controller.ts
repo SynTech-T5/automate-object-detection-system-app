@@ -10,6 +10,12 @@ const COOKIE_NAME = process.env.COOKIE_NAME || 'access_token';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined; // เช่น ".example.com"
 const COOKIE_SAMESITE = (process.env.COOKIE_SAMESITE as 'lax' | 'none' | 'strict') || 'lax';
 const COOKIE_MAX_AGE_MS = Number(process.env.COOKIE_MAX_AGE_MS ?? 60 * 60 * 1000);
+const COOKIE_MAX_AGE_REMEMBER_MS = Number(
+  process.env.COOKIE_MAX_AGE_REMEMBER_MS ?? 7 * 24 * 60 * 60 * 1000
+);
+const COOKIE_MAX_AGE_TEST_MS = Number(
+  process.env.COOKIE_MAX_AGE_TEST_MS ?? 5000
+);
 
 const cookieBase = {
   httpOnly: true,
@@ -34,15 +40,23 @@ const cookieBase = {
  * @author Wanasart
  */
 export async function login(req: Request, res: Response, next: NextFunction) {
-  console.log('LOGIN body:', req.body);
-
   try {
-    const { usernameOrEmail, password } = req.body;
-    const user = await AuthService.authenticateUser(usernameOrEmail, password);
+    const { usernameOrEmail, password, remember } = req.body as {
+      usernameOrEmail: string; password: string; remember?: boolean;
+    };
 
-    const token = AuthService.createSessionToken({ id: user.usr_id, role: user.usr_role }); // Generate a token for the user
+    const user = await AuthService.authenticateUser(usernameOrEmail, password, !!remember);
 
-    res.cookie(COOKIE_NAME, token, { ...cookieBase, maxAge: COOKIE_MAX_AGE_MS });
+    // ⬇️ ออกโทเค็นตามอายุที่เลือก (1h หรือ 7d)
+    const token = AuthService.createSessionToken(
+      { id: user.usr_id, role: user.usr_role },
+      { remember: !!remember }
+    );
+
+    // ⬇️ ตั้งอายุคุกกี้ตาม remember
+    const maxAge = !!remember ? COOKIE_MAX_AGE_REMEMBER_MS : COOKIE_MAX_AGE_MS;
+    // const maxAge = !!remember ? COOKIE_MAX_AGE_TEST_MS : COOKIE_MAX_AGE_MS; // ⬅️ สำหรับทดสอบ
+    res.cookie(COOKIE_NAME, token, { ...cookieBase, maxAge });
 
     return res.json({ message: 'Login successful', success: true, user });
   } catch (err) {
@@ -126,28 +140,23 @@ export async function register(req: Request, res: Response, next: NextFunction) 
  * @author Wanasart
  */
 export async function me(req: Request, res: Response, next: NextFunction) {
-  res.set({
-    'Cache-Control': 'no-store',
-    'Pragma': 'no-cache',
-    'Vary': 'Cookie',
-  });
+  res.set({ 'Cache-Control': 'no-store', 'Pragma': 'no-cache', 'Vary': 'Cookie' });
 
   try {
-    const token = req.cookies?.access_token;
+    const token = req.cookies?.[COOKIE_NAME]; // ⬅️ ใช้ COOKIE_NAME
     if (!token) return res.status(401).json({ error: 'Unauthenticated' });
 
-    const payload = verifySessionToken(token); // { id, role }
+    const payload = verifySessionToken(token);
     const user = await getUserSafeById(payload.id);
     if (!user) return res.status(401).json({ error: 'User not found' });
 
-    // ส่งเฉพาะ field ที่ใช้แสดงผล
     return res.json({
       usr_id: user.usr_id,
       usr_username: user.usr_username,
       usr_email: user.usr_email,
       usr_role: user.usr_role,
     });
-  } catch (err) {
+  } catch {
     return res.status(401).json({ error: 'Invalid token' });
   }
 }

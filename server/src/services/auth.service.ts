@@ -8,7 +8,9 @@ import { UserRow, UserSafe } from '../models/users.model';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const JWT_EXPIRES = process.env.JWT_EXPIRES || '1h';
+const JWT_EXPIRES_REMEMBER = process.env.JWT_EXPIRES_REMEMBER || '7d'; // ⬅️ เพิ่มบรรทัดนี้
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
+const JWT_EXPIRES_TEST = process.env.JWT_EXPIRES_TEST;
 
 /**
  * สร้าง JWT session token จาก payload
@@ -18,9 +20,14 @@ const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 12;
  *
  * @author Wanasart
  */
-export function createSessionToken(payload: { id: number, role: string }) {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-}
+export function createSessionToken(
+    payload: { id: number; role: string },
+    opts?: { remember?: boolean; expiresIn?: string | number }
+  ) {
+    const expiresIn = opts?.expiresIn ?? (opts?.remember ? JWT_EXPIRES_REMEMBER : JWT_EXPIRES);
+    // const expiresIn = opts?.expiresIn ?? (opts?.remember ? JWT_EXPIRES_TEST : JWT_EXPIRES); // ⬅️ สำหรับทดสอบ
+    return jwt.sign(payload, JWT_SECRET, { expiresIn });
+  }
 
 /**
  * ตรวจสอบความถูกต้องของ JWT session token
@@ -61,7 +68,7 @@ function toUserSafe(user: UserRow): UserSafe {
  *
  * @author Wanasart
  */
-export async function authenticateUser(usernameOrEmail: string, password: string) {
+export async function authenticateUser(usernameOrEmail: string, password: string, remember: boolean = false): Promise<UserSafe> {
     // console.log(`Authenticating user: ${usernameOrEmail} with password: ${password}`);
     const { rows } = await pool.query<UserRow>(`
         SELECT * FROM users 
