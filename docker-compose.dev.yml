@@ -17,29 +17,29 @@ services:
     command: npm run dev -- -p 8060
 
   server:
-      build:
-        context: ./server
-      volumes:
-        - ./server:/app
-        - /app/node_modules
-      ports:
-        - "8066:8066"
-      env_file:
-        - ./.env.local
-      environment:
-        - NODE_ENV=development
-      working_dir: /app
-      command: npm run dev
+    build:
+      context: ./server
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    ports:
+      - "8066:8066"
+    env_file:
+      - ./.env.local
+    environment:
+      - NODE_ENV=development
+    working_dir: /app
+    command: npm run dev
 
-      # RTSP Server
+  # ✅ RTSP Server (จำลองกล้อง)
   rtsp-server:
     image: bluenviron/mediamtx
     restart: unless-stopped
     ports:
-      - "8554:8554"   # ✅ RTSP port
-      - "8888:8888"   # Web UI / API (optional)
+      - "8554:8554"   # RTSP stream
+      - "8888:8888"   # Web UI (optional)
 
-  # FFmpeg publisher (push วิดีโอเข้า RTSP server)
+  # ✅ FFmpeg Publisher (ส่งวิดีโอเข้ากล้องจำลอง)
   ffmpeg-publisher:
     image: linuxserver/ffmpeg:version-4.4-cli
     depends_on:

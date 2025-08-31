@@ -98,4 +98,7 @@ router.patch('/:cam_id/soft-delete', ctrl.softDelete);
 // router.delete('/:cam_id', ctrl.destroy);
 // router.patch('/:cam_id/restore', ctrl.restore); // optional
 
+router.get("/stream/:cam_id", ctrl.streamCamera);
+
+
 export default router;

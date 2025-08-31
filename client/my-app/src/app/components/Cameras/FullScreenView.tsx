@@ -19,8 +19,15 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
 
     const [currentCamera, setCurrentCamera] = useState(camera);
 
+    // กำหนด base URL ไว้ตรงนี้
+    const streamBaseURL = "http://localhost:8066/api/cameras/stream/";
+    // address ที่ frontend ใช้จริง
+    const streamAddress = `${streamBaseURL}${camera.id}`;
+
     const imageSrc = "/library-room.jpg";
-    const videoSrc = "/footage-library-room.mp4";
+
+
+
 
     const camCode = `CAM${String(currentCamera.id).padStart(3, "0")}`;
 
@@ -57,7 +64,7 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                 <div className="relative aspect-video mb-3">
                     {currentCamera.status ? (
                         <video
-                            src={videoSrc}
+                            src={streamAddress}
                             autoPlay
                             muted
                             loop

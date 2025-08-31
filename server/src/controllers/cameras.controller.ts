@@ -4,6 +4,7 @@ import * as MaintenanceService from '../services/cameras/maintenances.service';
 import * as EventDetectionService from '../services/cameras/eventDetections.service';
 import * as AccessControlService from '../services/cameras/accessControl.service';
 import * as LocationService from '../services/cameras/location.service';
+import { ffmpegService } from '../services/cameras/ffmpeg.service';
 
 /* ------------------------------ Cameras ------------------------------ */
 /**
@@ -541,4 +542,26 @@ export async function updateAccessControl(req: Request, res: Response, next: Nex
     }
 }
 
+
 export async function deleteAccessControl(req: Request, res: Response, next: NextFunction) { }
+
+
+export async function streamCamera(req: Request, res: Response) {
+  try {
+    const camId = Number(req.params.cam_id);
+    if (!camId) return res.status(400).send("camId required");
+
+    const camera = await CameraService.getCameraById(camId);
+    if (!camera) return res.status(404).send("Camera not found");
+
+    const rtspUrl = camera.address;   // ✅ ใช้ RTSP จริง
+    if (!rtspUrl?.startsWith("rtsp://")) {
+      return res.status(400).json({ error: "Invalid RTSP URL" });
+    }
+
+    return ffmpegService.startStream(res, rtspUrl);
+  } catch (err) {
+    console.error("Stream error:", err);
+    return res.status(500).json({ error: "Failed to stream camera" });
+  }
+}

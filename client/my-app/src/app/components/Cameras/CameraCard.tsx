@@ -142,17 +142,22 @@ function getHealthStyle(health: HealthText) {
 
 // ---------- component ----------
 export default function CameraCard({ cam }: { cam: Camera }) {
+
+  console.log("📹 cam.address:", cam.address);
+
+  // กำหนด base URL ไว้ตรงนี้
+  const streamBaseURL = "http://localhost:8066/api/cameras/stream/";
+  // address ที่ frontend ใช้จริง
+  const streamAddress = `${streamBaseURL}${cam.id}`;
+
+
   const rawImg =
     (cam as any).cam_image ??
     (cam as any).image_url ??
     (cam as any).thumbnail ??
     null;
 
-  const rawVideo =
-    (cam as any).cam_video ??
-    (cam as any).video_url ??
-    (cam as any).footage_url ??
-    null;
+  
 
   
 
@@ -177,7 +182,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
 
   // ถ้าไม่มีวิดีโอ ใช้ภาพแทน
   const imageSrc = rawImg || "/library-room.jpg";
-  const videoSrc = rawVideo || "/footage-library-room.mp4";
+  // const videoSrc = rawVideo || "/footage-library-room.mp4";
 
   const camCode = `CAM${String(cam.id).padStart(3, "0")}`;
   const locationName = getLocationName(cam);
@@ -227,9 +232,9 @@ export default function CameraCard({ cam }: { cam: Camera }) {
         <div className="relative overflow-hidden rounded-md">
           <div className="relative aspect-video">
             {cam.status ? (
-              videoSrc ? (
+              streamAddress.startsWith("http") && cam.address?.startsWith("rtsp://") ? (
                 <video
-                  src={videoSrc}
+                  src={streamAddress}
                   autoPlay
                   muted
                   loop
