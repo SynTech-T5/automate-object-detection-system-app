@@ -1,32 +1,95 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
-    Table,
-    TableBody,
-    TableCaption,
-    TableCell,
-    TableFooter,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Camera } from "@/app/models/cameras.model";
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Camera as CameraIcon, Settings, TriangleAlert, MoreVertical } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider,
+} from "@/components/ui/tooltip";
+import {
+    DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 export default function FullScreenView({ camera }: { camera: Camera }) {
-
     const [currentCamera, setCurrentCamera] = useState(camera);
+
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const imgRef = useRef<HTMLImageElement | null>(null);
 
     const imageSrc = "/library-room.jpg";
     const videoSrc = "/footage-library-room.mp4";
-
     const camCode = `CAM${String(currentCamera.id).padStart(3, "0")}`;
 
     function onBack() {
         window.history.back();
     }
+
+    const handleCapture = useCallback(async () => {
+        const box = containerRef.current;
+        if (!box) return;
+
+        // ขนาดพื้นที่ที่ต้องการแคป (ตรงกับกรอบ aspect-video)
+        const rect = box.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+
+        // เตรียมแคนวาสความละเอียดสูง
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.scale(dpr, dpr);
+
+        // อ่าน border-radius จากสไตล์ของกรอบ เพื่อให้ภาพที่เซฟมีมุมโค้งเหมือนที่เห็น
+        const cs = getComputedStyle(box);
+        const radius = parseFloat(cs.borderRadius || "0");
+
+        // คลิปเป็นกรอบโค้งก่อนวาด
+        ctx.save();
+        roundRectPath(ctx, 0, 0, rect.width, rect.height, radius);
+        ctx.clip();
+
+        // ตัดเฟรมแบบ object-cover จาก video หรือ img
+        const v = videoRef.current;
+        const im = imgRef.current;
+
+        if (currentCamera.status && v && v.readyState >= 2 && !v.hidden && v.style.display !== "none") {
+            drawObjectCover(ctx, v, rect.width, rect.height);
+        } else if (im && im.complete) {
+            // fallback เมื่อกล้อง offline หรือวิดีโอแสดงไม่ได้ → ใช้รูป
+            drawObjectCover(ctx, im, rect.width, rect.height);
+        } else {
+            // ไม่มีอะไรให้วาด ก็หยุด
+            ctx.restore();
+            return;
+        }
+
+        ctx.restore();
+
+        // ตั้งชื่อไฟล์
+        const ts = new Date();
+        const stamp = ts.toISOString().replace(/[:.]/g, "-");
+        const filename = `${camCode}_${stamp}.png`;
+
+        // สร้างไฟล์และ trigger ดาวน์โหลด
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }, "image/png", 0.92);
+    }, [currentCamera.status, camCode]);
 
     return (
         <div className="grid gap-1">
@@ -38,25 +101,28 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                     {currentCamera.name} ({camCode})
                 </label>
 
-                <Button
-                    type="button"
-                    onClick={onBack}
-                    className="
-                    ml-auto shrink-0
-                    bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
-                    px-4 py-2 rounded-md disabled:opacity-50
-                    flex items-center gap-2
-                    "
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Exit Fullscreen</span>
-                </Button>
+                <div className="ml-auto flex gap-2">
+                    <Button
+                        type="button"
+                        onClick={onBack}
+                        className="shrink-0 bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
+            px-4 py-2 rounded-md flex items-center gap-2"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Exit Fullscreen</span>
+                    </Button>
+                </div>
             </div>
 
             <div className="relative overflow-hidden">
-                <div className="relative aspect-video mb-3">
+                {/* กรอบที่ต้องการแคปภาพ */}
+                <div
+                    ref={containerRef}
+                    className="relative aspect-video mb-3 rounded-md"  // สำคัญ: มี rounded-md เพื่ออ่าน radius
+                >
                     {currentCamera.status ? (
                         <video
+                            ref={videoRef}
                             src={videoSrc}
                             autoPlay
                             muted
@@ -72,6 +138,7 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                         />
                     ) : (
                         <img
+                            ref={imgRef}
                             src="/blind.svg"
                             alt="Camera offline"
                             className="absolute inset-0 h-full w-full object-cover rounded-md"
@@ -79,9 +146,117 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                     )}
                 </div>
 
-                <label htmlFor="camerainfo" className="col-span-3 text-lg text-[var(--color-primary)]">Camera Information</label>
+                <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
+                    {/* ▼▼ แทนที่บล็อก “Actions” เดิมตั้งแต่ label จนจบแถวนั้น ด้วยโค้ดนี้ ▼▼ */}
+                    <div
+                        className="
+    sticky top-1 z-20 mb-3 rounded-xl border
+    border-[var(--color-primary-bg)] bg-white/70 backdrop-blur
+    px-3 py-2
+  "
+                    >
+                        <div className="flex items-center gap-3">
+                            {/* Title ฝั่งซ้าย */}
+                            <div className="min-w-0 flex-1">
+                                <div className="text-sm font-medium text-[var(--color-primary)]">
+                                    Camera Controls
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                    Quick tools for this camera
+                                </div>
+                            </div>
+
+                            {/* Desktop toolbar */}
+                            <div className="hidden sm:flex items-center gap-2">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                onClick={handleCapture}
+                                                className="shrink-0 bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
+                         px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <CameraIcon className="w-4 h-4" />
+                                                <span>Snapshot</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom">Capture current frame</TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                disabled
+                                                className="shrink-0 bg-white text-[var(--color-primary)] border
+                         border-[var(--color-primary-bg)] hover:bg-[var(--color-primary-bg)]
+                         px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <Settings className="w-4 h-4" />
+                                                <span>Settings</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom">Configure camera (coming soon)</TooltipContent>
+                                    </Tooltip>
+
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                className="shrink-0 bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger-hard)]
+                         px-3 py-2 rounded-md flex items-center gap-2"
+                                            >
+                                                <TriangleAlert className="w-4 h-4" />
+                                                <span>Create Alert</span>
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="bottom">Raise a manual alert</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+
+                            {/* Mobile compact menu */}
+                            <div className="sm:hidden">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            className="h-9 w-9 p-0 border border-[var(--color-primary-bg)]"
+                                            aria-label="Open quick controls"
+                                        >
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-44">
+                                        <DropdownMenuItem onClick={handleCapture}>
+                                            <CameraIcon className="mr-2 h-4 w-4" />
+                                            <span>Snapshot</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem disabled>
+                                            <Settings className="mr-2 h-4 w-4" />
+                                            <span>Settings</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            className="text-[var(--color-danger)] focus:text-[var(--color-danger)]"
+                                        >
+                                            <TriangleAlert className="mr-2 h-4 w-4" />
+                                            <span>Create Alert</span>
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator className="bg-[var(--color-primary-bg)] my-3" />
+
+                <label htmlFor="camerainfo" className="col-span-3 text-lg text-[var(--color-primary)]">
+                    Camera Information
+                </label>
+
                 <Table>
-                    {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
                     <TableHeader>
                         <TableRow>
                             <TableHead>Location</TableHead>
@@ -103,17 +278,12 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                                 {(() => {
                                     const date = currentCamera.last_maintenance_date as string | undefined;
                                     const time = currentCamera.last_maintenance_time as string | undefined;
-
                                     const combined = `${date ?? ""} ${time ?? ""}`.trim();
-
-                                    // เป็น "-" ถ้าไม่มีค่า หรือเป็นค่า epoch placeholder: 1970-01-01 07:00:00
                                     const showDash =
                                         !combined ||
                                         combined === "1970-01-01 07:00:00" ||
                                         (date === "1970-01-01" && (!time || time.startsWith("07:00")));
-
                                     const label = showDash ? "-" : combined;
-
                                     return <span className="truncate max-w-[260px]">{label}</span>;
                                 })()}
                             </TableCell>
@@ -123,4 +293,49 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
             </div>
         </div>
     );
+}
+
+/* ==================== Utilities ==================== */
+
+// วาดเส้นทางกรอบโค้ง (ใช้คลิปก่อน drawImage)
+function roundRectPath(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    r: number
+) {
+    const radius = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+}
+
+// วาดแบบ object-cover ให้เต็มกรอบ โดยครอปส่วนเกิน
+function drawObjectCover(
+    ctx: CanvasRenderingContext2D,
+    source: HTMLVideoElement | HTMLImageElement,
+    destW: number,
+    destH: number
+) {
+    const isVideo = (s: any): s is HTMLVideoElement => "videoWidth" in s;
+    const sW = isVideo(source) ? source.videoWidth : (source as HTMLImageElement).naturalWidth;
+    const sH = isVideo(source) ? source.videoHeight : (source as HTMLImageElement).naturalHeight;
+
+    if (!sW || !sH) return;
+
+    const scale = Math.max(destW / sW, destH / sH);
+    const drawW = destW;
+    const drawH = destH;
+    const cropW = drawW / scale;
+    const cropH = drawH / scale;
+    const sx = (sW - cropW) / 2;
+    const sy = (sH - cropH) / 2;
+
+    ctx.drawImage(source, sx, sy, cropW, cropH, 0, 0, drawW, drawH);
 }
