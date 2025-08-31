@@ -172,7 +172,7 @@ export async function distributionAnalytics(req: Request, res: Response, next: N
 export async function store(req: Request, res: Response, next: NextFunction) {
     try {
         const { severity, camera_id, footage_id, event_id, description } = req.body;
-        if (!severity || !camera_id || !footage_id || !event_id || !description) {
+        if (!severity || !camera_id || !footage_id || !event_id ) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 

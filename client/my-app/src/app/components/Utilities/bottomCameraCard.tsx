@@ -4,7 +4,7 @@ import { Eye, Pencil, Info, Trash2 } from "lucide-react"; // ใช้เมื�
 import "@/styles/camera-card.css";
 import EditCameraModal from "../Cameras/EditCameraModal";
 import { useState } from "react";
-import { DeleteConfirmModal } from "@/app/components/Alertspopup"; // ⬅️ เพิ่ม import
+import { DeleteConfirmModal } from "@/app/components/Alertspopup";
 
 type IconSet = "fi" | "lucide";
 

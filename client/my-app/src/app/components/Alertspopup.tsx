@@ -168,11 +168,11 @@ export function ConfirmDialog({
         <AlertDialogHeader className="p-0">
           {/* Title/Description และ input ใช้ความกว้างเดียวกัน */}
           <div className={cn("mx-auto w-full max-w-[480px]")}>
-            <AlertDialogTitle className="text-lg font-semibold leading-tight tracking-tight">
+            <AlertDialogTitle className="text-lg font-semibold leading-tight tracking-tight text-center">
               {title}
             </AlertDialogTitle>
             {description ? (
-              <AlertDialogDescription className="mt-0.5 text-slate-500 leading-snug">
+              <AlertDialogDescription className="mt-0.5 text-slate-500 leading-snug text-center">
                 {description}
               </AlertDialogDescription>
             ) : null}
