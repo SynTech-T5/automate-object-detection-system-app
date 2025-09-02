@@ -104,15 +104,27 @@ export async function updateEvent(evt_id: number, evt_icon: string, evt_name: st
         throw new Error("Event fields cannot be empty");
     }
 
+    // ดึงข้อมูลปัจจุบันทั้งหมด
     const eventExists = await pool.query(`
-        SELECT evt_id FROM events
+        SELECT evt_id, evt_icon, evt_name, evt_description
+        FROM events
         WHERE evt_id = $1 
-        AND evt_is_use = true`,
-        [evt_id]
-    )
+        AND evt_is_use = true
+    `, [evt_id]);
 
     if (eventExists.rows.length === 0) {
         throw new Error("Event not found or inactive");
+    }
+
+    // เอาข้อมูลที่ดึงมาเก็บใส่ตัวแปรแล้วเทียบกับที่รับเข้ามาว่าเหมือนเดิมมั้ย
+    const currentEvent = eventExists.rows[0];
+
+    if (
+        currentEvent.evt_icon === evt_icon &&
+        currentEvent.evt_name === evt_name &&
+        currentEvent.evt_description === evt_des
+    ) {
+        throw new Error("No changes detected");
     }
 
     const { rows } = await pool.query(`

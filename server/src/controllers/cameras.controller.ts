@@ -4,6 +4,7 @@ import * as MaintenanceService from '../services/cameras/maintenances.service';
 import * as EventDetectionService from '../services/cameras/eventDetections.service';
 import * as AccessControlService from '../services/cameras/accessControl.service';
 import * as LocationService from '../services/cameras/location.service';
+import { ffmpegService } from '../services/cameras/ffmpeg.service';
 
 /* ------------------------------ Cameras ------------------------------ */
 /**
@@ -542,3 +543,45 @@ export async function updateAccessControl(req: Request, res: Response, next: Nex
 }
 
 export async function deleteAccessControl(req: Request, res: Response, next: NextFunction) { }
+
+export function rtspToWhep(rtspUrl: string, webrtcBase = 'http://localhost:8889') {
+    // rtsp://user:pass@host:8003/<path>
+    const m = rtspUrl.match(/^rtsp:\/\/([^@]*@)?[^/]+\/(.+)$/i);
+    const path = m?.[2] ?? ''; // เช่น 'city-traffic'
+    if (!path) throw new Error('Invalid RTSP url, no path');
+
+    // ถ้าต้อง auth (readUser/readPass) ให้แนบ Basic Auth
+    // ในงานจริง แนะนำซ่อนไว้หลัง API/Token ของคุณ
+    const authHeader = (rtspUrl.includes('viewer:viewpass@'))
+        ? 'Basic ' + Buffer.from('viewer:viewpass').toString('base64')
+        : undefined;
+
+    return {
+        whepUrl: `${webrtcBase.replace(/\/+$/, '')}/whep/${encodeURIComponent(path)}`,
+        authHeader,
+    };
+}
+
+export async function streamCamera(req: Request, res: Response) {
+    try {
+        const camId = Number(req.params.cam_id);
+        if (!camId) return res.status(400).send("cam_id required");
+
+        const cam = await CameraService.getCameraById(camId);
+        if (!cam) return res.status(404).send("Camera not found");
+
+        const rtspUrl = String(cam.address);
+        rtspToWhep(rtspUrl);
+
+        // const finalUrl = normalizeForHost(rtspUrl);
+        const finalUrl = rtspUrl;
+
+        const forceEncode = req.query.encode === "1"; // ?encode=1 จะบังคับ x264
+        ffmpegService.startStream(res, finalUrl, { forceEncode });
+    } catch (err: any) {
+        const status = err?.status ?? 500;
+        const msg = err?.message ?? "Failed to stream camera";
+        console.error("stream error:", err);
+        if (!res.headersSent) res.status(status).json({ error: msg });
+    }
+}

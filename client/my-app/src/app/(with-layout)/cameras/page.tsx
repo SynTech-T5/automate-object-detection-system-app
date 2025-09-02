@@ -1,3 +1,4 @@
+// app/(with-layout)/cameras/page.tsx
 import * as StatusCard from "../../components/Utilities/StatusCard";
 import CreateEventForm from "@/app/components/Forms/CreateEventForm";
 import { Separator } from "@/components/ui/separator";
@@ -9,30 +10,34 @@ import CreateCameraForm from "@/app/components/Forms/CreateCameraForm";
 import EventGrid from "@/app/components/Events/EventCardGrid";
 
 type ViewMode = "grid" | "list";
+type SP = Record<string, string | string[] | undefined>;
 
 export default async function CamerasPage({
   searchParams,
 }: {
-  searchParams?: {
-    view?: ViewMode;
-    q?: string;
-    status?: 'Active' | 'Inactive';
-    location?: string;
-    type?: string;
-  };
+  /** Next.js 15: searchParams เป็น Promise แล้ว */
+  searchParams: Promise<SP>;
 }) {
+  // ✅ ต้อง await ก่อนใช้งาน
+  const sp = await searchParams;
 
-  const viewMode: ViewMode = searchParams?.view === "list" ? "list" : "grid";
-  const q = searchParams?.q ?? "";
-  const status = searchParams?.status;
-  const location = searchParams?.location;
-  const type = searchParams?.type;
+  // helper ดึงค่าแบบ string เดี่ยว (กันกรณีเป็น array)
+  const pick = (key: keyof SP) =>
+    typeof sp?.[key] === "string" ? (sp[key] as string) : undefined;
+
+  const viewParam = pick("view");
+  const q = pick("q") ?? "";
+  const status = pick("status") as "Active" | "Inactive" | undefined;
+  const location = pick("location");
+  const type = pick("type");
+
+  const viewMode: ViewMode = viewParam === "list" ? "list" : "grid";
 
   return (
     <div className="space-y-6">
       <StatusCard.DashboardSummaryCameraSection />
 
-      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
+      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
         <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 justify-center mb-3">
           <label
             htmlFor="cameraName"
@@ -67,7 +72,7 @@ export default async function CamerasPage({
         />
       </div>
 
-      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
+      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
         <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
           <label
             htmlFor="cameraName"

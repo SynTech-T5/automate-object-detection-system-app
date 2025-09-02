@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import CreateAlertForm from "@/app/components/Forms/CreateAlertForm";
 import { SuccessModal } from "@/app/components/Utilities/AlertsPopup";
+import WhepPlayer from "../../components/WhepPlayer";
 
 export default function FullScreenView({ camera }: { camera: Camera }) {
     const [currentCamera, setCurrentCamera] = useState(camera);
@@ -26,7 +27,6 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
     const imgRef = useRef<HTMLImageElement | null>(null);
 
     const imageSrc = "/library-room.jpg";
-    const videoSrc = "/footage-library-room.mp4";
     const camCode = `CAM${String(currentCamera.id).padStart(3, "0")}`;
 
     function onBack() {
@@ -35,17 +35,15 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
 
     const goEdit = () => {
         setOpen(true);
-      };
+    };
 
     const handleCapture = useCallback(async () => {
         const box = containerRef.current;
         if (!box) return;
 
-        // ขนาดพื้นที่ที่ต้องการแคป (ตรงกับกรอบ aspect-video)
         const rect = box.getBoundingClientRect();
         const dpr = window.devicePixelRatio || 1;
 
-        // เตรียมแคนวาสความละเอียดสูง
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(rect.width * dpr);
         canvas.height = Math.round(rect.height * dpr);
@@ -53,38 +51,31 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
         if (!ctx) return;
         ctx.scale(dpr, dpr);
 
-        // อ่าน border-radius จากสไตล์ของกรอบ เพื่อให้ภาพที่เซฟมีมุมโค้งเหมือนที่เห็น
         const cs = getComputedStyle(box);
         const radius = parseFloat(cs.borderRadius || "0");
 
-        // คลิปเป็นกรอบโค้งก่อนวาด
         ctx.save();
         roundRectPath(ctx, 0, 0, rect.width, rect.height, radius);
         ctx.clip();
 
-        // ตัดเฟรมแบบ object-cover จาก video หรือ img
         const v = videoRef.current;
         const im = imgRef.current;
 
-        if (currentCamera.status && v && v.readyState >= 2 && !v.hidden && v.style.display !== "none") {
+        if (currentCamera.status && v && v.readyState >= 2) {
             drawObjectCover(ctx, v, rect.width, rect.height);
         } else if (im && im.complete) {
-            // fallback เมื่อกล้อง offline หรือวิดีโอแสดงไม่ได้ → ใช้รูป
             drawObjectCover(ctx, im, rect.width, rect.height);
         } else {
-            // ไม่มีอะไรให้วาด ก็หยุด
             ctx.restore();
             return;
         }
 
         ctx.restore();
 
-        // ตั้งชื่อไฟล์
         const ts = new Date();
         const stamp = ts.toISOString().replace(/[:.]/g, "-");
         const filename = `${camCode}_${stamp}.png`;
 
-        // สร้างไฟล์และ trigger ดาวน์โหลด
         canvas.toBlob((blob) => {
             if (!blob) return;
             const url = URL.createObjectURL(blob);
@@ -113,7 +104,7 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                         type="button"
                         onClick={onBack}
                         className="shrink-0 bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
-            px-4 py-2 rounded-md flex items-center gap-2"
+                          px-4 py-2 rounded-md flex items-center gap-2"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         <span className="hidden sm:inline">Exit Fullscreen</span>
@@ -122,26 +113,17 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
             </div>
 
             <div className="relative overflow-hidden">
-                {/* กรอบที่ต้องการแคปภาพ */}
+                {/* กรอบแสดงวิดีโอ/ภาพ */}
                 <div
                     ref={containerRef}
-                    className="relative aspect-video mb-3 rounded-md"  // สำคัญ: มี rounded-md เพื่ออ่าน radius
+                    className="relative aspect-video mb-3 rounded-md"
                 >
                     {currentCamera.status ? (
-                        <video
-                            ref={videoRef}
-                            src={videoSrc}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            controls={false}
-                            preload="metadata"
-                            poster={imageSrc}
-                            className="absolute inset-0 h-full w-full object-cover rounded-md"
-                            onError={(e) => {
-                                (e.currentTarget as HTMLVideoElement).style.display = "none";
-                            }}
+                        <WhepPlayer
+                            ref={videoRef}   // ✅ forwardRef จาก WhepPlayer
+                            camAddressRtsp={currentCamera.address}
+                            webrtcBase={process.env.NEXT_PUBLIC_WHEP_BASE ?? "http://localhost:8889"}
+                            onFailure={() => console.error("WHEP connection failed")}
                         />
                     ) : (
                         <img
@@ -153,16 +135,16 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                     )}
                 </div>
 
+                {/* Controls */}
                 <div className="flex flex-wrap items-start gap-3 justify-center my-3">
                     <div
                         className="
-    sticky top-1 z-20 mb-3 rounded-xl border
-    border-[var(--color-primary-bg)] bg-white/70 backdrop-blur
-    px-3 py-2
-  "
+                            sticky top-1 z-20 mb-3 rounded-xl border
+                            border-[var(--color-primary-bg)] bg-white/70 backdrop-blur
+                            px-3 py-2
+                        "
                     >
                         <div className="flex items-center gap-3">
-                            {/* Title ฝั่งซ้าย */}
                             <div className="min-w-0 flex-1">
                                 <div className="text-sm font-medium text-[var(--color-primary)]">
                                     Camera Controls
@@ -181,7 +163,7 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                                                 type="button"
                                                 onClick={handleCapture}
                                                 className="shrink-0 bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)]
-                         px-3 py-2 rounded-md flex items-center gap-2"
+                                                  px-3 py-2 rounded-md flex items-center gap-2"
                                             >
                                                 <CameraIcon className="w-4 h-4" />
                                                 <span>Snapshot</span>
@@ -189,15 +171,17 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom">Capture current frame</TooltipContent>
                                     </Tooltip>
+                                </TooltipProvider>
 
+                                <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 disabled
                                                 className="shrink-0 bg-white text-[var(--color-primary)] border
-                         border-[var(--color-primary-bg)] hover:bg-[var(--color-primary-bg)]
-                         px-3 py-2 rounded-md flex items-center gap-2"
+                                                  border-[var(--color-primary-bg)] hover:bg-[var(--color-primary-bg)]
+                                                  px-3 py-2 rounded-md flex items-center gap-2"
                                             >
                                                 <Settings className="w-4 h-4" />
                                                 <span>Settings</span>
@@ -205,14 +189,16 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                                         </TooltipTrigger>
                                         <TooltipContent side="bottom">Configure camera (coming soon)</TooltipContent>
                                     </Tooltip>
+                                </TooltipProvider>
 
+                                <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
                                             <Button
                                                 type="button"
                                                 onClick={goEdit}
                                                 className="shrink-0 bg-[var(--color-danger)] text-white hover:bg-[var(--color-danger-hard)]
-                         px-3 py-2 rounded-md flex items-center gap-2"
+                                                  px-3 py-2 rounded-md flex items-center gap-2"
                                             >
                                                 <TriangleAlert className="w-4 h-4" />
                                                 <span>Create Alert</span>
@@ -258,9 +244,10 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                     </div>
                 </div>
 
-                {/* <Separator className="bg-[var(--color-primary-bg)] my-3" /> */}
+                <Separator className="bg-[var(--color-primary-bg)] my-3" />
 
-                <label htmlFor="camerainfo" className="col-span-3 text-lg text-[var(--color-primary)]">
+                {/* Camera Info */}
+                <label className="col-span-3 text-lg text-[var(--color-primary)]">
                     Camera Information
                 </label>
 
@@ -299,22 +286,14 @@ export default function FullScreenView({ camera }: { camera: Camera }) {
                     </TableBody>
                 </Table>
             </div>
+
             <CreateAlertForm camera={currentCamera} open={open} setOpen={setOpen} />
         </div>
     );
 }
 
 /* ==================== Utilities ==================== */
-
-// วาดเส้นทางกรอบโค้ง (ใช้คลิปก่อน drawImage)
-function roundRectPath(
-    ctx: CanvasRenderingContext2D,
-    x: number,
-    y: number,
-    w: number,
-    h: number,
-    r: number
-) {
+function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
     const radius = Math.max(0, Math.min(r, Math.min(w, h) / 2));
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -325,26 +304,16 @@ function roundRectPath(
     ctx.closePath();
 }
 
-// วาดแบบ object-cover ให้เต็มกรอบ โดยครอปส่วนเกิน
-function drawObjectCover(
-    ctx: CanvasRenderingContext2D,
-    source: HTMLVideoElement | HTMLImageElement,
-    destW: number,
-    destH: number
-) {
+function drawObjectCover(ctx: CanvasRenderingContext2D, source: HTMLVideoElement | HTMLImageElement, destW: number, destH: number) {
     const isVideo = (s: any): s is HTMLVideoElement => "videoWidth" in s;
     const sW = isVideo(source) ? source.videoWidth : (source as HTMLImageElement).naturalWidth;
     const sH = isVideo(source) ? source.videoHeight : (source as HTMLImageElement).naturalHeight;
-
     if (!sW || !sH) return;
 
     const scale = Math.max(destW / sW, destH / sH);
-    const drawW = destW;
-    const drawH = destH;
-    const cropW = drawW / scale;
-    const cropH = drawH / scale;
+    const cropW = destW / scale;
+    const cropH = destH / scale;
     const sx = (sW - cropW) / 2;
     const sy = (sH - cropH) / 2;
-
-    ctx.drawImage(source, sx, sy, cropW, cropH, 0, 0, drawW, drawH);
+    ctx.drawImage(source, sx, sy, cropW, cropH, 0, 0, destW, destH);
 }
