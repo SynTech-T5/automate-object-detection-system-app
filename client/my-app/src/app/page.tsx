@@ -25,11 +25,11 @@ export default function Home() {
             alt="App logo"
             width={28}
             height={28}
-            className="rounded object-contain mix-blend-multiply dark:mix-blend-darken"
+            className="rounded"
             priority
           />
-          <span className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            Automate <span className="text-[var(--color-primary,_#0B63FF)]">ODS</span>
+          <span className="text-sm font-semibold tracking-tight text-[var(--color-secondary)]">
+            Automate <span className="text-[var(--color-primary,_#0B63FF)]">Object Detection System</span>
           </span>
         </div>
 
@@ -104,7 +104,7 @@ export default function Home() {
       <footer className="mx-auto w-full max-w-6xl px-6 pb-10">
         <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
           <p className="text-xs text-slate-500/80 dark:text-slate-400/80">
-            © {new Date().getFullYear()} Automate ODS
+            © {new Date().getFullYear()} Automate Object Detection System
           </p>
           <p className="text-[11px] sm:text-xs text-slate-500/80 dark:text-slate-400/80">
             SynTech-T5 x TTT Brother

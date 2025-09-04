@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+    --font-sans: var(--font-poppins);
+
     --color-bg: #ECF8FF;
     --color-white: #ffffff;
     --color-black: #000000;
@@ -96,6 +98,11 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 }
+
+body {
+  font-family: var(--font-poppins), sans-serif;
+}
+
 
 .dark {
     --background: oklch(0.145 0 0);

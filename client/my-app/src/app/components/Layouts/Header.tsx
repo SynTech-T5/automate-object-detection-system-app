@@ -59,7 +59,7 @@ export default function Header({ userName = "Admin" }: { userName?: string }) {
                     {/* โลโก้/ชื่อระบบ */}
                     <div className="flex items-center gap-2 min-w-0">
                         {/* ไอคอน (ตัวอย่าง) */}
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--color-primary-bg)]">
+                        <div className="flex h-9 w-9 items-center justify-center">
                             {/* ถ้ามีโลโก้จริงใช้ <Image src="/logo.svg" .../> */}
                             <Image
                                 src="/automate-object-detection-system-icon.png"
