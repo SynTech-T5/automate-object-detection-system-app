@@ -10,14 +10,16 @@ import { ffmpegService } from '../services/cameras/ffmpeg.service';
 /* ------------------------------ Cameras ------------------------------ */
 
 /**✅
- * Controller: ดึงรายการ Cameras ทั้งหมดที่ถูกใช้งาน
- *
+ * ดึงข้อมูลกล้องทั้งหมดในระบบ
+ * ใช้สำหรับแสดงรายการกล้องทุกตัวในระบบ รวมถึงรายละเอียดพื้นฐาน เช่น ชื่อ ประเภท สถานะ แหล่งข้อมูล และตำแหน่งที่ตั้ง
+ * 
  * @route GET /api/cameras
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object (ส่งกลับรายการ cameras เป็น JSON)
- * @param {NextFunction} next - Express next middleware function
- * @returns {Promise<void>} JSON response ของรายการ cameras
- *
+ * @param {Request} req - Request ที่ใช้เรียก API เพื่อดึงข้อมูลกล้องทั้งหมด
+ * @param {Response} res - Response สำหรับส่งข้อมูลรายการกล้องกลับไปยัง client
+ * @param {NextFunction} next - Middleware สำหรับส่งต่อ error หากเกิดข้อผิดพลาด
+ * @returns {Promise<Response>} คืนค่า response ที่มีรายการข้อมูลกล้องทั้งหมด
+ * @throws {Error} ถ้าเกิดข้อผิดพลาดระหว่างการดึงข้อมูลจากฐานข้อมูลหรือ service layer
+ * 
  * @author Wanasart
  * @lastModified 2025-10-12
  */
@@ -79,12 +81,15 @@ export async function getSummaryCameras(req: Request, res: Response, next: NextF
 };
 
 /**✅
- * Controller: เพิ่มกล้องใหม่
+ * เพิ่มข้อมูลกล้องใหม่เข้าสู่ระบบ
+ * ใช้สำหรับสร้างรายการกล้องใหม่พร้อมรายละเอียด เช่น ประเภท สถานะ แหล่งข้อมูล และตำแหน่งที่ตั้ง
+ * 
  * @route POST /api/cameras
- * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
- * @param res ส่งข้อมูลของกล้องกลับ
- * @param next ส่งต่อ error
- * @returns -JSON response ส่งข้อมูลของกล้องที่สร้างกลับพร้อมแสดงสถานะ 201
+ * @param {Request} req - Request ที่มีข้อมูลใน body (camera_name, camera_type, camera_status, source_type, source_value, location_id, description, creator_id)
+ * @param {Response} res - Response สำหรับส่งข้อมูลกล้องที่ถูกสร้างใหม่กลับไปยัง client
+ * @param {NextFunction} next - Middleware สำหรับส่งต่อ error หากเกิดข้อผิดพลาด
+ * @returns {Promise<Response>} คืนค่า response ที่มีข้อมูลของกล้องที่ถูกสร้างใหม่
+ * @throws {Error} ถ้าเกิดข้อผิดพลาดระหว่างการเพิ่มข้อมูลลงฐานข้อมูล หรือข้อมูลไม่ถูกต้องตามรูปแบบที่กำหนด
  * 
  * @author Wanasart
  * @lastModified 2025-10-12
@@ -119,11 +124,15 @@ export async function createCamera(req: Request, res: Response, next: NextFuncti
 }
 
 /**✅
- * Controller: แก้ไขข้อมูลกล้อง
+ * อัปเดตข้อมูลกล้องตามรหัสที่ระบุ
+ * ใช้สำหรับแก้ไขรายละเอียดของกล้อง เช่น ชื่อ ประเภท สถานะ แหล่งข้อมูล ตำแหน่งที่ตั้ง และคำอธิบาย
+ * 
  * @route PUT /api/cameras/:cam_id
- * @param req -กรอกข้อมูลของกล้องทั้งหมดตามฟิลด์
- * @param res ส่งข้อมูลของกล้องกลับ
- * @returns -JSON response ส่งข้อมูลของกล้องที่แก้ไขกลับพร้อมแสดงสถานะ 200
+ * @param {Request} req - Request ที่มีพารามิเตอร์ cam_id และข้อมูลใน body (camera_name, camera_type, camera_status, source_type, source_value, location_id, description)
+ * @param {Response} res - Response สำหรับส่งข้อมูลกล้องที่อัปเดตแล้วกลับไปยัง client
+ * @param {NextFunction} next - Middleware สำหรับจัดการ error หากเกิดข้อผิดพลาด
+ * @returns {Promise<Response>} คืนค่า response ที่มีข้อมูลของกล้องที่ถูกอัปเดต
+ * @throws {Error} ถ้าไม่พบกล้องที่ต้องการอัปเดต หรือเกิดข้อผิดพลาดระหว่างการอัปเดตฐานข้อมูล
  * 
  * @author Wanasart
  * @lastModified 2025-10-12
