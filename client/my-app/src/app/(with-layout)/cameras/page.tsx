@@ -35,6 +35,23 @@ export default async function CamerasPage({
 
   return (
     <div className="space-y-6">
+      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
+        <label
+            htmlFor="cameraName"
+            className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+          >
+            Search & Filter
+          </label>
+        <div className="grid gap-2 items-start sm:gap-3 mt-3">
+          <div className="w-full">
+            <SearchCamerasInput />
+          </div>
+          <div className="w-full">
+            <CameraFilters />
+          </div>
+        </div>
+      </div>
+
       <StatusCard.DashboardSummaryCameraSection />
 
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
@@ -53,15 +70,6 @@ export default async function CamerasPage({
         </div>
 
         <Separator className="bg-[var(--color-primary-bg)] my-3" />
-
-        <div className="grid gap-2 items-start sm:gap-3 mt-3">
-          <div className="w-full">
-            <SearchCamerasInput />
-          </div>
-          <div className="w-full">
-            <CameraFilters />
-          </div>
-        </div>
 
         <CameraView
           viewMode={viewMode}

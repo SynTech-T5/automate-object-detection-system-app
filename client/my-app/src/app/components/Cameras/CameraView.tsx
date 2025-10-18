@@ -1,7 +1,7 @@
-import CameraCard  from "./CameraCard";
 import { Camera } from "@/app/models/cameras.model";
 import CameraTable from "./CameraTable";
 import CameraGrid from "./CameraGrid";
+import { CameraSummaryProvider } from "../../components/Utilities/CameraSummaryProvider";
 
 type ViewMode = "grid" | "list";
 const base = process.env.NEXT_PUBLIC_APP_URL!;
@@ -57,7 +57,7 @@ export default async function CameraView({
   const res = await fetch(`${base}/api/cameras`, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${process.env.TOKEN}`,
+      "Authorization": `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
       "Content-Type": "application/json",
     }
   });
@@ -91,6 +91,7 @@ export default async function CameraView({
     );
   }
 
+  // CameraSummaryProvider
   return viewMode === "grid" ? (
       <CameraGrid cameras={filtered} />
   ) : (
