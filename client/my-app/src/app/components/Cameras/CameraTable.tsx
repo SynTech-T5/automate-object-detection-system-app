@@ -11,12 +11,13 @@ import {
   // เพิ่มไอคอนที่ใช้กับ Type/Health
   Camera as CameraIcon, Move, Scan, Thermometer, Activity,
 } from "lucide-react";
-import type { Camera } from "./CameraCard";
 import * as Icons from "lucide-react";
 import EditCameraModal from "../Forms/EditCameraForm";
 import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
+import { Camera } from "@/app/models/cameras.model";
+import { MaintenanceTypeBadge } from "../Badges/MaintenanceTypeBadge"
 
-type SortKey = "id" | "name" | "status" | "location" | "health";
+type SortKey = "id" | "name" | "status" | "location" | "maintenance";
 type SortOrder = "asc" | "desc" | null;
 
 type ActionActive = "view" | "edit" | "details" | "delete";
@@ -119,7 +120,7 @@ export default function CameraTable({
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name?: string } | null>(null);
 
   function openDelete(c: Camera) {
-    setDeleteTarget({ id: c.id!, name: c.name });
+    setDeleteTarget({ id: c.camera_id!, name: c.camera_name });
     setDeleteOpen(true);
   }
 
@@ -170,21 +171,21 @@ export default function CameraTable({
   const filtered = useMemo(() => {
     const want = parseStatusParam(statusParam);
     if (want === null) return cameras;
-    return cameras.filter((c) => !!c.status === want);
+    return cameras.filter((c) => !!c.camera_status === want);
   }, [cameras, statusParam]);
 
   const getVal = (c: Camera, key: SortKey) => {
     switch (key) {
       case "id":
-        return c.id ?? 0;
+        return c.camera_id ?? 0;
       case "name":
-        return c.name ?? "";
+        return c.camera_name ?? "";
       case "status":
-        return c.status ? 1 : 0;
+        return c.camera_status ? 1 : 0;
       case "location":
-        return c.location?.name ?? "";
-      case "health":
-        return c.health ?? 0;
+        return c.location_name ?? "";
+      case "maintenance":
+        return c.maintenance_type ?? "";
       default:
         return "";
     }
@@ -255,19 +256,12 @@ export default function CameraTable({
             </div>
           </TableHead>
 
-          <TableHead onClick={() => handleSort("health")} className="cursor-pointer select-none text-[var(--color-primary)]">
-            <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-              <span>Health</span>
-              {renderSortIcon("health")}
-            </div>
-          </TableHead>
-
-          <TableHead className="text-[var(--color-primary)]">
+          <TableHead onClick={() => handleSort("maintenance")} className="cursor-pointer select-none text-[var(--color-primary)]">
             <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
               <span>Last Maintenance</span>
+              {renderSortIcon("maintenance")}
             </div>
           </TableHead>
-
           <TableHead className="text-[var(--color-primary)]">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -275,33 +269,31 @@ export default function CameraTable({
       <EditCameraModal camId={getVal(cameras[0], "id") as number} open={open} setOpen={setOpen} />
       <TableBody>
         {sorted.map((c) => {
-          const camCode = `CAM${String(c.id).padStart(3, "0")}`;
-          const statusLabel = c.status ? "Active" : "Inactive";
+          const camCode = `CAM${String(c.camera_id).padStart(3, "0")}`;
+          const statusLabel = c.camera_status ? "Active" : "Inactive";
 
           // Badge สำหรับ Type
-          const TypeIcon = getTypeIcon(c.type);
-          const typeStyle = getTypeStyle(c.type);
+          const TypeIcon = getTypeIcon(c.camera_type);
+          const typeStyle = getTypeStyle(c.camera_type);
 
           // Badge สำหรับ Health
-          const healthStyle = getHealthStyle(c.health);
-          const healthLabel =
-            c.health == null ? "-" : (typeof c.health === "number" ? `${c.health}%` : String(c.health));
+          const healthStyle = getHealthStyle(c.maintenance_type);
 
           return (
-            <TableRow key={c.id} className="border-b last:border-b-0">
+            <TableRow key={c.camera_id} className="border-b last:border-b-0">
               <TableCell>{camCode}</TableCell>
 
               <TableCell className="font-medium truncate max-w-[320px]">
                 <div className="flex items-center gap-2">
                   <Icons.Camera className="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
-                  <span>{c.name}</span>
+                  <span>{c.camera_name}</span>
                 </div>
               </TableCell>
 
               <TableCell>
                 <div className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
-                  <span className="truncate max-w-[260px]">{c.location?.name ?? "-"}</span>
+                  <span className="truncate max-w-[260px]">{c.location_name ?? "-"}</span>
                 </div>
               </TableCell>
 
@@ -311,17 +303,17 @@ export default function CameraTable({
                   className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${typeStyle.badge}`}
                 >
                   <TypeIcon className={`w-3.5 h-3.5 ${typeStyle.icon}`} />
-                  <span className="capitalize">{c.type || "fixed"}</span>
+                  <span className="capitalize">{c.camera_type || "fixed"}</span>
                 </span>
               </TableCell>
 
               {/* STATUS: คงเดิม */}
               <TableCell>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.status ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.camera_status ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
                     }`}
                 >
-                  {c.status ? (
+                  {c.camera_status ? (
                     <CheckCircle2 className="w-3.5 h-3.5" />
                   ) : (
                     <XCircle className="w-3.5 h-3.5" />
@@ -330,38 +322,16 @@ export default function CameraTable({
                 </span>
               </TableCell>
 
-              {/* HEALTH: badge + icon + สี */}
+              {/* Last Maintenance */}
               <TableCell>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${healthStyle.badge}`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  {healthLabel}
-                </span>
-              </TableCell>
-
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-[var(--color-primary)]" aria-hidden="true" />
-                  {(() => {
-                    const date = (c as any).last_maintenance_date as string | undefined;
-                    const time = (c as any).last_maintenance_time as string | undefined;
-                    const combined = `${date ?? ""} ${time ?? ""}`.trim();
-                    const showDash =
-                      !combined ||
-                      combined === "1970-01-01 07:00:00" ||
-                      (date === "1970-01-01" && (!time || time.startsWith("07:00")));
-                    const label = showDash ? "-" : combined;
-                    return <span className="truncate max-w-[260px]">{label}</span>;
-                  })()}
-                </div>
+                <MaintenanceTypeBadge name={c.maintenance_type} date={c.date_last_maintenance} />
               </TableCell>
 
               <TableCell className="min-w-[220px]">
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => (onView ? onView(c.id) : router.push(`/cameras/${c.id}`))}
+                    onClick={() => (onView ? onView(c.camera_id) : router.push(`/cameras/${c.camera_id}`))}
                     title="View"
                     aria-label="View"
                     className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
@@ -381,7 +351,7 @@ export default function CameraTable({
 
                   <button
                     type="button"
-                    onClick={() => (onDetails ? onDetails(c.id) : router.push(`/cameras/${c.id}/details`))}
+                    onClick={() => (onDetails ? onDetails(c.camera_id) : router.push(`/cameras/${c.camera_id}/details`))}
                     title="Details"
                     aria-label="Details"
                     className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
@@ -394,7 +364,7 @@ export default function CameraTable({
                     onClick={() => openDelete(c)}
                     title="Delete"
                     aria-label="Delete"
-                    disabled={busyId === c.id}
+                    disabled={busyId === c.camera_id}
                     className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:border-[var(--color-danger)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
                   >
                     <Trash2 className="h-4 w-4" />

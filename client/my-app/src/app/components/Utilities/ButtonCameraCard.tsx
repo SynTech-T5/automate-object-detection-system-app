@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Eye, Pencil, Info, Trash2 } from "lucide-react"; // ใช้เมื่อ iconSet="lucide"
+import { Eye, Settings, Info, Trash2 } from "lucide-react"; // ใช้เมื่อ iconSet="lucide"
 import "@/styles/camera-card.css";
 import EditCameraModal from "../Forms/EditCameraForm";
 import { useState } from "react";
@@ -13,7 +13,7 @@ type Props = {
   camName: string;
   className?: string;
   iconSet?: IconSet; // "fi" (flaticon) | "lucide"
-  active?: "view" | "edit" | "details" | "delete";
+  active?: "view" | "settings" | "details" | "delete";
   onView?: (id: number) => void;
   onEdit?: (id: number) => void;
   onDetails?: (id: number) => void;
@@ -108,11 +108,11 @@ export default function BottomCameraCard({
       ) : (
         <Eye className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
       ),
-    edit:
+    settings:
       iconSet === "fi" ? (
         <i className="fi fi-tr-pen-field text-[16px] leading-none group-hover:text-[var(--color-primary)]" />
       ) : (
-        <Pencil className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
+        <Settings className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
       ),
     details:
       iconSet === "fi" ? (
@@ -148,13 +148,13 @@ export default function BottomCameraCard({
       <button
         onClick={goEdit}
         type="button"
-        className={`${btnBase} ${hoverBlue} ${active === "edit" ? activeBlue : ""}`}
+        className={`${btnBase} ${hoverBlue} ${active === "settings" ? activeBlue : ""}`}
         title="Edit"
         aria-label="Edit"
       >
-        {icon.edit}
-        <span className={`${active === "edit" ? "text-[var(--color-primary)]" : ""}`}>
-          Edit
+        {icon.settings}
+        <span className={`${active === "settings" ? "text-[var(--color-primary)]" : ""}`}>
+          Settings
         </span>
       </button>
 

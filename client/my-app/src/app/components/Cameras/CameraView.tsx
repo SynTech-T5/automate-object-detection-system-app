@@ -54,9 +54,16 @@ export default async function CameraView({
   location?: string;
   type?: string;
 }) {
-  const res = await fetch(`${base}/api/cameras`, { method: "GET" });
+  const res = await fetch(`${base}/api/cameras`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${process.env.TOKEN}`,
+      "Content-Type": "application/json",
+    }
+  });
   if (!res.ok) throw new Error("Failed to load cameras");
-  const cameras: Camera[] = await res.json();
+  const json = await res.json();
+  const cameras: Camera[] = json.data;
 
   // 1) ค้นหา
   const match = buildMatcher(search);

@@ -56,7 +56,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; classes: string }> = {
   },
 };
 
-function MaintenanceTypeBadge({ type }: MaintenanceTypeBadgeProps) {
+export function MaintenanceTypeBadge({ type }: MaintenanceTypeBadgeProps) {
   const meta = TYPE_META[type] ?? {
     icon: <ClipboardCheck className="w-3 h-3 mr-1" />,
     classes: "border border-gray-300 text-gray-700 bg-gray-50",

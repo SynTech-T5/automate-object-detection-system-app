@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import WhepPlayer from "../../components/WhepPlayer";
 import BottomCameraCard from "@/app/components/Utilities/ButtonCameraCard";
 import { Camera } from "@/app/models/cameras.model";
+import { MaintenanceTypeBadge } from "../Badges/MaintenanceTypeBadge"
+import BadgeError from "../Badges/BadgeError";
 
 // ---------- helpers (เฉพาะที่ใช้งานจริง) ----------
 const TYPE_ICON: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -152,11 +154,25 @@ export default function CameraCard({ cam }: { cam: Camera }) {
           <h3 className="text-base font-semibold text-[var(--color-primary)]">{cam.camera_name}</h3>
 
           <div className="mt-3 flex items-center justify-between">
-            <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium ${typeStyle.badge}`}>
-              <TypeIcon className={`h-4 w-4 ${typeStyle.icon}`} />
-              {cam.camera_type || "Fixed"}
-            </span>
+              <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-sm font-medium ${typeStyle.badge}`}>
+                <TypeIcon className={`h-4 w-4 ${typeStyle.icon}`} />
+                {cam.camera_type || "Fixed"}
+              </span>
+
+            <MaintenanceTypeBadge name={cam.maintenance_type} date={cam.date_last_maintenance} />
           </div>
+
+          {cam.camera_status ? "" : (
+            <div className="mt-1 flex items-center justify-between text-sm font-medium text-gray-700">
+              <span className="mr-2">Cause:</span>
+              <BadgeError reason="Connection Timeout" />
+              {/* <BadgeError reason="Unknown" />
+              <BadgeError reason="Critical Failure" />
+              <BadgeError reason="Server Down" />
+              <BadgeError reason="Power Failure" />
+              <BadgeError reason="Network Error" /> */}
+            </div>
+          )}
 
           <BottomCameraCard camId={cam.camera_id} camName={cam.camera_name} iconSet="lucide" className="mt-4" />
         </div>
