@@ -14,6 +14,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Cctv } from "lucide-react";
 import { useMe } from "@/hooks/useMe";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface CameraForm {
   cam_name: string;
@@ -27,7 +35,8 @@ interface CameraForm {
 
 type LocationItem = { id: number; name: string };
 
-export default function Page() {
+export default function
+  Page() {
   // Modal states
   const [openForm, setOpenForm] = useState(false);     // Modal 1: Add New Camera
   const [openAuth, setOpenAuth] = useState(false);     // Modal 2: Authentication
@@ -45,76 +54,67 @@ export default function Page() {
   const { me, loading, error: meError } = useMe();
 
   // ----- local state for selects (no props needed) -----
-  const [locations, setLocations] = useState<LocationItem[]>([]);
+  type ApiLocation = {
+    location_id: number;
+    location_name: string;
+    location_updated_date: string;
+    location_updated_time: string;
+  };
+
+  // แก้ชนิดของ state
+  const [locations, setLocations] = useState<ApiLocation[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(true);
   const [locationsError, setLocationsError] = useState<string>("");
 
-  const [types, setTypes] = useState<string[]>([]);
-  const [loadingTypes, setLoadingTypes] = useState(true);
-  const [typesError, setTypesError] = useState<string>("");
-
   useEffect(() => {
-    const ac = new AbortController();
+    let mounted = true;
 
-    // 1) fetch locations
     (async () => {
       try {
         setLoadingLocations(true);
         setLocationsError("");
-        const res = await fetch("/api/cameras/location", {
+
+        const res = await fetch(`/api/locations`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+            "Content-Type": "application/json",
+          },
           cache: "no-store",
-          credentials: "include",
-          signal: ac.signal,
         });
-        if (!res.ok) throw new Error(await res.text() || "Failed to load locations");
-        const raw = await res.json();
 
-        const normalized: LocationItem[] = (Array.isArray(raw) ? raw : []).map((l: any) => ({
-          id: l?.id ?? l?.loc_id ?? l?.location_id,
-          name: l?.name ?? l?.loc_name ?? l?.location_name ?? l?.location,
-        })).filter((x: LocationItem) => Number.isFinite(x.id) && !!x.name);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-        const uniq = Array.from(new Map(normalized.map(v => [v.id, v])).values());
-        setLocations(uniq);
+        // รูปแบบ: { message: string, data?: ApiLocation[] }
+        const payload: { message: string; data?: ApiLocation[] } = await res.json();
+
+        if (!mounted) return;
+
+        const arr = Array.isArray(payload?.data) ? payload.data! : [];
+        setLocations(arr);
       } catch (e: any) {
-        if (e?.name !== "AbortError") setLocationsError(e?.message || "Load locations error");
+        if (!mounted) return;
+        setLocations([]);
+        setLocationsError(e?.message || "Failed to load locations");
       } finally {
-        setLoadingLocations(false);
+        if (mounted) setLoadingLocations(false);
       }
     })();
 
-    // 2) fetch types
-    (async () => {
-      try {
-        setLoadingTypes(true);
-        setTypesError("");
-        const res = await fetch("/api/cameras", {
-          cache: "no-store",
-          credentials: "include",
-          signal: ac.signal,
-        });
-        if (!res.ok) throw new Error(await res.text() || "Failed to load camera types");
-        const cams = await res.json();
-        const uniqTypes = Array.from(new Set(
-          (Array.isArray(cams) ? cams : [])
-            .map((c: any) => c?.type ?? c?.cam_type ?? c?.camType)
-            .filter(Boolean)
-        )).sort();
-        setTypes(uniqTypes);
-      } catch (e: any) {
-        if (e?.name !== "AbortError") setTypesError(e?.message || "Load types error");
-      } finally {
-        setLoadingTypes(false);
-      }
-    })();
-
-    return () => ac.abort();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   async function createCamera(payload: CameraForm): Promise<CameraForm> {
     const res = await fetch("/api/cameras/", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(payload),
       cache: "no-store",
       credentials: "include",
@@ -150,7 +150,10 @@ export default function Page() {
       // 1) recheck auth
       const check = await fetch("/api/auth/recheck", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+          "Content-Type": "application/json",
+        },
         credentials: "include",
         body: JSON.stringify({ password: authPassword }),
       });
@@ -207,7 +210,7 @@ export default function Page() {
             className="bg-[#0077FF] text-white hover:bg-[#0063d6]"
           >
             <Cctv size={16} />
-            Add New Camera
+            Add Camera
           </Button>
         </AlertDialogTrigger>
 
@@ -220,95 +223,119 @@ export default function Page() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            {/* Camera Name */}
-            <div className="grid gap-1">
-              <label className="text-sm font-medium" htmlFor="name">
-                Camera Name
-              </label>
-              <input
-                id="name"
-                name="name"
-                placeholder="Enter your camera name"
-                className="font-light w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                required
-              />
-            </div>
-
-            {/* IP url */}
-            <div className="grid gap-1">
-              <label className="text-sm font-medium" htmlFor="url">
-                URL
-              </label>
-              <input
-                id="url"
-                name="url"
-                placeholder="Enter your URL"
-                className="font-light w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {/* Camera Type */}
               <div className="grid gap-1">
-                <label className="text-sm font-medium" htmlFor="type">
+                <Label className="text-sm font-medium text-black" htmlFor="type">
                   Camera Type
-                </label>
-                <select
-                  id="type"
-                  name="type"
-                  defaultValue="Fixed"
-                  className="w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                >
-                  {/* ถ้าอยากใช้ types จาก API ให้ map จาก state แทน */}
-                  <option value="Fixed">Fixed</option>
-                  <option value="PTZ">PTZ</option>
-                  <option value="Panoramic">Panoramic</option>
-                  <option value="Thermal">Thermal</option>
-                </select>
+                </Label>
+                <Select defaultValue="Fixed" name="type">
+                  <SelectTrigger
+                    id="type"
+                    className="w-full rounded-md border border-gray-300
+                 bg-white text-sm text-black
+                 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]
+                 px-3 py-2"
+                  >
+                    <SelectValue placeholder="Choose type" />
+                  </SelectTrigger>
+                  <SelectContent className="border-[var(--color-primary)] text-black">
+                    <SelectItem value="Fixed">Fixed</SelectItem>
+                    <SelectItem value="PTZ">PTZ</SelectItem>
+                    <SelectItem value="Panoramic">Panoramic</SelectItem>
+                    <SelectItem value="Thermal">Thermal</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Resolution */}
-              <div className="grid gap-1">
-                <label className="text-sm font-medium" htmlFor="resolution">
-                  Resolution
+              {/* Camera Name */}
+              <div className="col-span-2 gap-1">
+                <label className="text-sm font-medium" htmlFor="name">
+                  Camera Name
                 </label>
-                <select
-                  id="resolution"
-                  name="resolution"
-                  defaultValue="1080p"
-                  className="w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                >
-                  <option value="480p">480p</option>
-                  <option value="720p">720p</option>
-                  <option value="1080p">1080p</option>
-                  <option value="4K">4K</option>
-                </select>
+                <input
+                  id="name"
+                  name="name"
+                  placeholder="Max 32 characters"
+                  className="font-light w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {/* Source Type */}
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium text-black" htmlFor="type">
+                  Source Type
+                </Label>
+                <Select defaultValue="url" name="source_type">
+                  <SelectTrigger
+                    id="source_type"
+                    className="w-full rounded-md border border-gray-300
+                 bg-white text-sm text-black
+                 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]
+                 px-3 py-2"
+                  >
+                    <SelectValue placeholder="Choose type" />
+                  </SelectTrigger>
+                  <SelectContent className="border-[var(--color-primary)] text-black">
+                    <SelectItem value="url">URL</SelectItem>
+                    <SelectItem value="address">IP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Source Value */}
+              <div className="col-span-2 gap-1">
+                <label className="text-sm font-medium" htmlFor="url">
+                  Source Value
+                </label>
+                <input
+                  id="url"
+                  name="url"
+                  placeholder="Enter camera source"
+                  className="font-light w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
+                  required
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-2">
               {/* Location */}
-              <div className="col-span-2">
-                <label className="text-sm font-medium" htmlFor="location">
+              <div className="col-span-2 grid gap-1">
+                <Label className="text-sm font-medium text-black" htmlFor="location">
                   Location
-                </label>
-                <select
-                  id="location"
-                  name="location"
-                  defaultValue=""
-                  className="w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                  required
-                >
-                  <option value="" disabled>Choose location</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
-                {loadingLocations && <p className="text-xs text-gray-500 mt-1">Loading locations…</p>}
-                {locationsError && <p className="text-xs text-red-600 mt-1">{locationsError}</p>}
+                </Label>
+
+                <Select name="location" defaultValue="">
+                  <SelectTrigger
+                    id="location"
+                    className="w-full rounded-md border border-gray-300
+                 bg-white text-sm text-black
+                 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]
+                 px-3 py-2"
+                  >
+                    <SelectValue placeholder="Choose location" />
+                  </SelectTrigger>
+
+                  <SelectContent className="border-[var(--color-primary)] text-black">
+                    {loadingLocations && (
+                      <SelectItem disabled value="__loading">
+                        Loading locations…
+                      </SelectItem>
+                    )}
+                    {locations.map((loc) => (
+                      <SelectItem key={loc.location_id} value={String(loc.location_id)}>
+                        {loc.location_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {locationsError && (
+                  <p className="text-xs text-red-600 mt-1">{locationsError}</p>
+                )}
               </div>
 
               {/* Status */}
@@ -349,20 +376,20 @@ export default function Page() {
 
             {/* Footer ของ Modal ฟอร์ม */}
             <AlertDialogFooter>
-              <AlertDialogCancel
-                disabled={submitting}
-                className="border-gray-300 hover:bg-gray-50"
-              >
-                Cancel
-              </AlertDialogCancel>
               <Button
                 type="button"
                 onClick={handleOpenAuth}
                 disabled={submitting}
                 className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-4 py-2 rounded-md disabled:opacity-50"
               >
-                Add New
+                Add Camera
               </Button>
+              <AlertDialogCancel
+                disabled={submitting}
+                className="border-gray-300 hover:bg-gray-50"
+              >
+                Cancel
+              </AlertDialogCancel>
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>

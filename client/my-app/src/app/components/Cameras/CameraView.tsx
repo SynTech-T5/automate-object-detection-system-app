@@ -1,7 +1,14 @@
 import { Camera } from "@/app/models/cameras.model";
 import CameraTable from "./CameraTable";
 import CameraGrid from "./CameraGrid";
-import { CameraSummaryProvider } from "../../components/Utilities/CameraSummaryProvider";
+import {
+  CameraSummaryProvider,
+  DashboardSummaryCameraSection,
+} from "../../components/Utilities/CameraSummaryProvider";
+import ToggleViewButton from "@/app/components/Cameras/ToggleViewButton";
+import CreateCameraForm from "@/app/components/Forms/CreateCameraForm";
+import { Separator } from "@/components/ui/separator";
+import RefreshButton from "@/app/components/Utilities/RefreshButton";
 
 type ViewMode = "grid" | "list";
 const base = process.env.NEXT_PUBLIC_APP_URL!;
@@ -57,21 +64,22 @@ export default async function CameraView({
   const res = await fetch(`${base}/api/cameras`, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+      Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
       "Content-Type": "application/json",
-    }
+    },
+    cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to load cameras");
   const json = await res.json();
-  const cameras: Camera[] = json.data;
+  const cameras: Camera[] = Array.isArray(json.data) ? json.data : [];
 
   // 1) ค้นหา
   const match = buildMatcher(search);
   let filtered = cameras.filter(match);
 
-  // 2) กรองสถานะ (boolean -> Active/Inactive)
+  // 2) กรองสถานะ
   if (status === "Active" || status === "Inactive") {
-    const want = status === "Active"; // true = Active
+    const want = status === "Active";
     filtered = filtered.filter((c) => c.camera_status === want);
   }
 
@@ -91,12 +99,54 @@ export default async function CameraView({
     );
   }
 
-  // CameraSummaryProvider
-  return viewMode === "grid" ? (
-      <CameraGrid cameras={filtered} />
-  ) : (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
-      <CameraTable cameras={filtered} />
+  // ✅ 5) นับ “สรุปหลังกรอง”
+  const total = filtered.length;
+  const active = filtered.reduce((n, c) => n + (c.camera_status ? 1 : 0), 0);
+  const inactive = total - active;
+
+  // ปรับตาม schema จริงของคุณ
+  const repair = filtered.filter((c) => {
+    const t = (c.maintenance_type ?? "").toLowerCase();
+    return t.includes("repair"); // หรือ t === "repair"
+  }).length;
+
+  const summaryInitial = { total, active, inactive, repair };
+
+  // ✅ 6) เรนเดอร์ 'CameraSummary' (แทนที่ของเดิม) + การ์ด Camera Management + ตาราง/กริด
+  return (
+    <div className="space-y-6">
+      {/* === Summary Section (แทน <StatusCard.DashboardSummaryCameraSection /> เดิม) === */}
+      <CameraSummaryProvider initial={summaryInitial}>
+        <DashboardSummaryCameraSection />
+      </CameraSummaryProvider>
+
+      {/* === Camera Management Card (ย้าย layout จาก page มาไว้ในนี้) === */}
+      <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 justify-center mb-3">
+          <label
+            htmlFor="cameraName"
+            className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+          >
+            Camera Management
+          </label>
+
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+            <ToggleViewButton />
+            <CreateCameraForm />
+            <RefreshButton />
+          </div>
+        </div>
+
+        <Separator className="bg-[var(--color-primary-bg)] my-3" />
+
+        {viewMode === "grid" ? (
+          <CameraGrid cameras={filtered} />
+        ) : (
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+            <CameraTable cameras={filtered} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
