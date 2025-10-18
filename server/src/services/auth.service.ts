@@ -49,13 +49,18 @@ export function verifySessionToken(token: string) {
  *
  * @author Wanasart
  */
-function toUserSafe(user: UserRow): UserSafe {
-    return {
-        usr_id: user.usr_id,
-        usr_username: user.usr_username,
-        usr_email: user.usr_email,
-        usr_role: user.usr_role
-    };
+function toUserSafe(row: any): UserSafe {
+  const role =
+    row.role_name ??     // มาตรฐานใหม่
+    row.usr_role ??      // เผื่อเคย alias แบบนี้
+    row.rol_name ?? null; // เผื่อยังไม่ได้แก้
+
+  return {
+    usr_id: row.usr_id,
+    usr_username: row.usr_username,
+    usr_email: row.usr_email,
+    usr_role: row.rol_name,
+  };
 }
 
 /**
@@ -71,9 +76,18 @@ function toUserSafe(user: UserRow): UserSafe {
 export async function authenticateUser(usernameOrEmail: string, password: string, remember: boolean = false): Promise<UserSafe> {
     // console.log(`Authenticating user: ${usernameOrEmail} with password: ${password}`);
     const { rows } = await pool.query<UserRow>(`
-        SELECT * FROM users 
+        SELECT 
+            usr_id,
+            usr_username,
+            usr_email,
+            usr_password,
+            rol_name 
+        FROM users 
         JOIN roles ON usr_rol_id = rol_id 
-        WHERE (usr_username = $1 OR usr_email = $1) AND usr_is_use = true
+        WHERE 
+            (usr_username = $1 OR usr_email = $1) 
+        AND 
+            usr_is_use = true
     `, [usernameOrEmail]);
 
     const user = rows[0];
@@ -87,6 +101,7 @@ export async function authenticateUser(usernameOrEmail: string, password: string
         throw new Error('Invalid password');
     }
     
+    console.log(toUserSafe(user));
     return toUserSafe(user);
 }
 
@@ -123,9 +138,9 @@ export async function registerUser(username: string, email: string, password: st
     const hashPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const { rows } = await pool.query(`
-        INSERT INTO users(usr_username, usr_email, usr_password ,usr_rol_id)
+        INSERT INTO users(usr_username, usr_email, usr_password ,usr_role_id)
         VALUES($1, $2, $3, $4)
-        RETURNING usr_id, usr_username, usr_email, usr_rol_id,
+        RETURNING usr_id, usr_username, usr_email, usr_role_id,
               (SELECT rol_name FROM roles WHERE rol_id = $4) AS usr_role
     `, [username, email, hashPassword, role_id]);
 
@@ -149,12 +164,20 @@ export async function registerUser(username: string, email: string, password: st
  * @author Wanasart
  */
 export async function getUserSafeById(id: number): Promise<UserSafe | null> {
+
     const { rows } = await pool.query<UserRow>(`
-      SELECT usr_id, usr_username, usr_email, 
-             (SELECT rol_name FROM roles WHERE rol_id = usr_role_id) AS usr_role
-      FROM users
-      WHERE usr_id = $1 AND usr_is_use = true
-      LIMIT 1
+        SELECT 
+            usr_id,
+            usr_username,
+            usr_email,
+            rol_name 
+        FROM users 
+        JOIN roles ON usr_rol_id = rol_id 
+        WHERE 
+            usr_id = $1 
+        AND 
+            usr_is_use = true
+        LIMIT 1;
     `, [id]);
   
     const user = rows[0];
