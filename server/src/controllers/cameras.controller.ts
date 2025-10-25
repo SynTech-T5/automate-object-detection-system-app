@@ -143,6 +143,7 @@ export async function updateCamera(req: Request, res: Response, next: NextFuncti
             source_value, 
             location_id, 
             description,
+            user_id,
         } = req.body
 
         const update = await CameraService.updateCamera(
@@ -153,7 +154,8 @@ export async function updateCamera(req: Request, res: Response, next: NextFuncti
             source_type, 
             source_value, 
             location_id, 
-            description
+            description,
+            user_id
         );
         return res.status(200).json({ message: 'Updated successfully', data: update });
     } catch (err) {

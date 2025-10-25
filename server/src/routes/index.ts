@@ -39,7 +39,7 @@ router.use('/auth', login);
 router.use('/register', register);
 
 // Camera routes
-router.use('/cameras', authenticateToken, cameras);
+router.use('/cameras', cameras);
 
 // Alerts routes
 router.use('/alerts', alerts);
@@ -48,6 +48,6 @@ router.use('/alerts', alerts);
 router.use('/events', events);
 
 // Others routes
-router.use('/locations', authenticateToken, locations);
+router.use('/locations', locations);
 
 export default router;

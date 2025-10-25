@@ -1,5 +1,4 @@
 // app/(with-layout)/cameras/page.tsx
-// import * as StatusCard from "../../components/Utilities/StatusCard"; // ❌ ไม่ใช้แล้ว
 import CreateEventForm from "@/app/components/Forms/CreateEventForm";
 import { Separator } from "@/components/ui/separator";
 import CameraView from "@/app/components/Cameras/CameraView";

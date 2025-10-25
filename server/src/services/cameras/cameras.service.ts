@@ -64,7 +64,7 @@ export async function summaryCameras() {
  * @throws {Error} ถ้าเกิดข้อผิดพลาดระหว่างการบันทึกข้อมูลลงฐานข้อมูล
  * 
  * @author Wanasart
- * @lastModified 2025-10-12
+ * @lastModified 2025-10-25
  */
 export async function insertCamera (
   camera_name: string, 
@@ -100,6 +100,20 @@ export async function insertCamera (
       creator_id
     ]);
 
+    const log = await pool.query(`
+      INSERT INTO camera_logs(
+        clg_usr_id,
+        clg_cam_id,
+        clg_action,
+        clg_created_at
+      )
+      VALUES($1, $2, $3, CURRENT_TIMESTAMP);
+    `,[
+        creator_id,
+        rows[0].cam_id,
+        'CREATE',
+      ]);
+
   return Mapping.mapCameraToSaveResponse(rows[0]);
 }
 
@@ -120,7 +134,7 @@ export async function insertCamera (
  * @throws {Error} ถ้าไม่พบกล้องที่ต้องการอัปเดต หรือเกิดข้อผิดพลาดระหว่างการอัปเดตฐานข้อมูล
  * 
  * @author Wanasart
- * @lastModified 2025-10-12
+ * @lastModified 2025-10-25
  */
 export async function updateCamera (
   camera_id: number,
@@ -130,7 +144,8 @@ export async function updateCamera (
   source_type: string,
   source_value: string,
   location_id: number,
-  description: string
+  description: string,
+  user_id: number
 ) {
 
   const { rows } = await pool.query(
@@ -159,6 +174,20 @@ export async function updateCamera (
       camera_id,
     ]
   );
+
+  const log = await pool.query(`
+      INSERT INTO camera_logs(
+        clg_usr_id,
+        clg_cam_id,
+        clg_action,
+        clg_created_at
+      )
+      VALUES($1, $2, $3, CURRENT_TIMESTAMP);
+    `,[
+        user_id,
+        rows[0].cam_id,
+        'UPDATE',
+      ]);
 
   return Mapping.mapCameraToSaveResponse(rows[0]);
 }

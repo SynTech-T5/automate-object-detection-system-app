@@ -22,6 +22,18 @@ export default function CameraCard({ cam }: { cam: Camera }) {
   const isRtsp = typeof cam.source_value === "string" && cam.source_value.startsWith("rtsp://");
 
   const [webrtcFailed, setWebrtcFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setWebrtcFailed(false);
+    setImageFailed(false);
+  }, []);
+
+  useEffect(() => {
+    setWebrtcFailed(false);
+    setImageFailed(false);
+  }, [cam.camera_id, cam.source_value]);
+
   useEffect(() => { setWebrtcFailed(false); }, []);
   useEffect(() => setWebrtcFailed(false), [cam.camera_id, cam.source_value]);
 
@@ -55,7 +67,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
                 key={cam.camera_id}
                 camAddressRtsp={cam.source_value}
                 webrtcBase={WHEP_BASE}
-                onFailure={() => setWebrtcFailed(true)}  // เงียบ ๆ แล้วเป็นรูปแทน
+                onFailure={() => setWebrtcFailed(true)}
               />
             ) : isOnline ? (
               <Image
@@ -64,6 +76,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
                 fill
                 className="absolute inset-0 h-full w-full object-cover rounded-md"
                 sizes="(min-width: 1024px) 400px, 100vw"
+                onError={() => setImageFailed(true)}
               />
             ) : (
               <Image
@@ -102,15 +115,25 @@ export default function CameraCard({ cam }: { cam: Camera }) {
             <MaintenanceTypeBadge name={cam.maintenance_type} date={cam.date_last_maintenance} />
           </div>
 
-          {cam.camera_status ? "" : (
+          {cam.camera_status === false ? (
+            // ออฟไลน์ ⇒ Disabled
             <div className="mt-1 flex items-center justify-between text-sm font-medium text-gray-700">
               <span className="mr-2">Cause:</span>
-              <BadgeError reason="Connection Timeout" />
-              {/* <BadgeError reason="Unknown" />
-              <BadgeError reason="Critical Failure" />
-              <BadgeError reason="Server Down" />
-              <BadgeError reason="Power Failure" />
-              <BadgeError reason="Network Error" /> */}
+              <BadgeError reason="disabled" />
+            </div>
+          ) : cam.camera_status === true ? (
+            // ออนไลน์ ⇒ ถ้าภาพไม่ขึ้น (webrtc หรือรูป fail) ⇒ Connection Timeout, ไม่งั้นไม่แสดง
+            (webrtcFailed || imageFailed) ? (
+              <div className="mt-1 flex items-center justify-between text-sm font-medium text-gray-700">
+                <span className="mr-2">Cause:</span>
+                <BadgeError reason="connection timeout" />
+              </div>
+            ) : null
+          ) : (
+            // ค่าอื่น ⇒ Unknown
+            <div className="mt-1 flex items-center justify-between text-sm font-medium text-gray-700">
+              <span className="mr-2">Cause:</span>
+              <BadgeError reason="unknown" />
             </div>
           )}
 

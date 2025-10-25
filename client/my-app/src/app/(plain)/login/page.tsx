@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card, CardContent, CardFooter, CardHeader,
@@ -15,29 +15,6 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState('');
 
-  // async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-  //   e.preventDefault();
-  //   setSubmitting(true);
-  //   setErr('');
-
-  //   try {
-  //     const res = await fetch('/api/auth/login', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       credentials: 'include',
-  //       body: JSON.stringify({ usernameOrEmail, password, remember }),
-  //     });
-
-  //     const data = await res.json().catch(() => ({}));
-  //     if (!res.ok) throw new Error(data?.message || 'Login failed');
-
-  //     window.location.href = '/cameras';
-  //   } catch (e: any) {
-  //     setErr(e.message ?? 'Login failed');
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // }
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSubmitting(true);
@@ -48,33 +25,13 @@ export default function LoginPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        cache: 'no-store',
         body: JSON.stringify({ usernameOrEmail, password, remember }),
       });
 
-      // อ่านแบบ raw ก่อนเพื่อดูจริงๆ ได้อะไรมา
-      const raw = await res.clone().text();
-      let data: any = null;
-      try { data = JSON.parse(raw); } catch { }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.message || 'Login failed');
 
-      console.log('STATUS:', res.status);
-      console.log('RAW:', raw);      // ← ตรงนี้ต้องเห็น JSON มี token ตามที่ Postman ได้
-      console.log('DATA:', data);
-
-      if (!res.ok) {
-        throw new Error(data?.message || `Login failed (${res.status})`);
-      }
-
-      // token อาจอยู่ top-level หรือซ่อนใน data.token (กันไว้)
-      const token: string | null = data?.token ?? data?.data?.token ?? null;
-
-      if (token) {
-        (remember ? localStorage : sessionStorage).setItem('aods_token', token);
-      } else {
-        // ไม่มี token ใน body → เป็นไปได้ว่า backend ตั้ง HttpOnly cookie ให้แทน (JS มองไม่เห็น)
-        // ให้เรียก API ต่อๆ ไปด้วย credentials:'include' ก็พอ
-        console.debug('No token in JSON (maybe using HttpOnly cookie).');
-      }
+      localStorage.setItem("access_token", data.token);
 
       window.location.href = '/cameras';
     } catch (e: any) {
@@ -83,6 +40,8 @@ export default function LoginPage() {
       setSubmitting(false);
     }
   }
+
+  console.log('Token: ', localStorage.getItem("access_token"));
 
   return (
     <main

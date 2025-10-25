@@ -8,6 +8,7 @@ import {
   Clock,
   ServerCrash,
   AlertTriangle,
+  Ban,
 } from "lucide-react";
 
 /* -------------------- Props -------------------- */
@@ -50,6 +51,11 @@ const ERROR_META: Record<
     icon: <AlertTriangle className="h-4 w-4" />,
     label: "Critical Failure",
     classes: "border border-rose-300 text-rose-700 bg-rose-50",
+  },
+  disabled: {
+    icon: <Ban className="h-4 w-4" />, // ใช้ไอคอน Ban หรือ XCircle ก็ได้
+    label: "Disabled",
+    classes: "border border-gray-400 text-gray-600 bg-gray-100",
   },
 };
 

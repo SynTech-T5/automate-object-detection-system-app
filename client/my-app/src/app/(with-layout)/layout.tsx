@@ -3,8 +3,6 @@ import Sidebar from "../components/Layouts/SideBar";
 import Header from "../components/Layouts/Header";
 import { UIProvider } from "../components/Layouts/UI-Provider";
 import Title from "../components/Layouts/Title";
-import { AuthProvider } from "@/app/providers/AuthProvider";
-import TokenBridge from "@/app/components/TokenBridge";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -19,10 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Sidebar />
             <main className="flex-1 min-w-0 p-4 md:p-6 space-y-6">
               <Title />
-              <AuthProvider>
-                <TokenBridge />
                 {children}
-              </AuthProvider>
             </main>
           </div>
         </UIProvider>
