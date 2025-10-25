@@ -8,15 +8,15 @@ import {
 import {
   Eye, CheckCircle2, XCircle, MapPin,
   ArrowUpDown, ArrowUp, ArrowDown, Calendar, Trash2, Pencil, CircleAlert,
-  // เพิ่มไอคอนที่ใช้กับ Type/Health
   Camera as CameraIcon, Move, Scan, Thermometer, Activity,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import EditCameraModal from "../Forms/EditCameraForm";
 import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
 import { Camera } from "@/app/models/cameras.model";
-import { MaintenanceTypeBadge } from "../Badges/BadgeMaintenanceType"
-import BadgeCameraType from "../Badges/BadgeCameraType"
+import { MaintenanceTypeBadge } from "../Badges/BadgeMaintenanceType";
+import BadgeCameraType from "../Badges/BadgeCameraType";
+import { useMe } from "@/hooks/useMe"; // ✅ เพิ่ม
 
 type SortKey = "id" | "name" | "status" | "location" | "maintenance";
 type SortOrder = "asc" | "desc" | null;
@@ -27,13 +27,12 @@ type Props = {
   active?: ActionActive;
   onView?: (id: number) => void;
   onEdit?: (id: number) => void;
-  onDetails?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onDetails?: (camera: Camera) => void;
+  onDelete?: (id: number, user_id?: number) => void | Promise<void>;
 };
 
 // ------------------------------------------
 
-// แปลงค่าจาก query เป็น boolean | null
 function parseStatusParam(v: string | null): boolean | null {
   if (!v) return null;
   const s = v.trim().toLowerCase();
@@ -52,7 +51,9 @@ export default function CameraTable({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const statusParam = searchParams.get("status"); // e.g. "Active" | "Inactive"
+  const statusParam = searchParams.get("status");
+
+  const { me, loading: loadingMe, error: meError } = useMe(); // ✅ ดึง me
 
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
@@ -68,21 +69,40 @@ export default function CameraTable({
 
   async function onConfirmDelete(_: { input?: string; note?: string }) {
     if (!deleteTarget) return;
+
+    // ✅ สร้าง user_id จาก me
+    const user_id = Number((me as any)?.usr_id);
+    if (!Number.isFinite(user_id) || user_id <= 0) {
+      alert(meError || "Cannot resolve user_id from current user.");
+      return;
+    }
+
     try {
       setBusyId(deleteTarget.id);
 
       if (onDelete) {
-        await Promise.resolve(onDelete(deleteTarget.id));
+        // ✅ ส่ง user_id ให้ callback ภายนอกด้วย
+        await Promise.resolve(onDelete(deleteTarget.id, user_id));
       } else {
-        const res = await fetch(`/api/cameras/${deleteTarget.id}/soft-delete`, { method: "PATCH" });
-        if (!res.ok) throw new Error("Delete failed");
+        // ✅ ส่ง usr_id ไปกับ API ตามที่ร้องขอ
+        const res = await fetch(`/api/cameras/${deleteTarget.id}`, {
+          method: "PATCH", // ใช้เมธอดเดิมของคุณ
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify({ user_id }),
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || "Delete failed");
       }
 
-      // ปิด modal ก่อน แล้ว reload หน้า
+      // ปิด modal แล้ว reload หน้า
       setDeleteOpen(false);
       setDeleteTarget(null);
-
-      // ✅ reload ทั้งหน้า
       setTimeout(() => window.location.reload(), 0);
     } catch (e) {
       alert((e as Error).message || "Delete failed");
@@ -109,7 +129,6 @@ export default function CameraTable({
     }
   };
 
-  // ✅ กรองตาม status จาก URL ก่อน (เทียบกับ cam.status แบบ boolean)
   const filtered = useMemo(() => {
     const want = parseStatusParam(statusParam);
     if (want === null) return cameras;
@@ -232,16 +251,15 @@ export default function CameraTable({
                 </div>
               </TableCell>
 
-              {/* TYPE: badge + icon + สี */}
               <TableCell>
                 <BadgeCameraType type={cam.camera_type} />
               </TableCell>
 
-              {/* STATUS: คงเดิม */}
               <TableCell>
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${cam.camera_status ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
-                    }`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    cam.camera_status ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                  }`}
                 >
                   {cam.camera_status ? (
                     <CheckCircle2 className="w-3.5 h-3.5" />
@@ -252,7 +270,6 @@ export default function CameraTable({
                 </span>
               </TableCell>
 
-              {/* Last Maintenance */}
               <TableCell>
                 <MaintenanceTypeBadge name={cam.maintenance_type} date={cam.date_last_maintenance} />
               </TableCell>
@@ -281,7 +298,7 @@ export default function CameraTable({
 
                   <button
                     type="button"
-                    onClick={() => (onDetails ? onDetails(cam.camera_id) : router.push(`/cameras/${cam.camera_id}/details`))}
+                    onClick={() => (onDetails ? onDetails(cam) : router.push(`/cameras/${cam.camera_id}/details`))}
                     title="Details"
                     aria-label="Details"
                     className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
@@ -291,7 +308,7 @@ export default function CameraTable({
 
                   <button
                     type="button"
-                    onClick={() => openDelete(c)}
+                    onClick={() => openDelete(cam)}
                     title="Delete"
                     aria-label="Delete"
                     disabled={busyId === cam.camera_id}
@@ -314,11 +331,10 @@ export default function CameraTable({
         }}
         title="Delete Camera?"
         description={`This will remove ${deleteTarget?.name ?? "this camera"} (ID: ${deleteTarget?.id ?? "—"}) and related data. This action cannot be undone.`}
-        confirmWord={deleteTarget?.name || undefined}   // ต้องพิมพ์ชื่อกล้องให้ตรง
+        confirmWord={deleteTarget?.name || undefined}
         confirmText="Delete"
         onConfirm={onConfirmDelete}
       />
-
     </Table>
   );
 }

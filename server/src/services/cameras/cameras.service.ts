@@ -201,9 +201,12 @@ export async function updateCamera (
  * @throws {Error} ถ้าไม่พบกล้องที่ต้องการลบ หรือเกิดข้อผิดพลาดระหว่างการอัปเดตฐานข้อมูล
  * 
  * @author Wanasart
- * @lastModified 2025-10-12
+ * @lastModified 2025-10-25
  */
-export async function removeCamera(camera_id: number) { //ลบข้อมูลกล้องแบบ soft delete
+export async function removeCamera(
+  camera_id: number,
+  user_id: number
+) {
   const { rows } = await pool.query(
     `
     UPDATE cameras
@@ -217,6 +220,20 @@ export async function removeCamera(camera_id: number) { //ลบข้อมู�
       camera_id
     ]
   );
+
+  const log = await pool.query(`
+      INSERT INTO camera_logs(
+        clg_usr_id,
+        clg_cam_id,
+        clg_action,
+        clg_created_at
+      )
+      VALUES($1, $2, $3, CURRENT_TIMESTAMP);
+    `,[
+        user_id,
+        rows[0].cam_id,
+        'DELETE',
+      ]);
 
   return Mapping.mapCameraToSaveResponse(rows[0]);
 }

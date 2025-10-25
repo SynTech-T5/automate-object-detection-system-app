@@ -13,21 +13,21 @@ import {
 } from "@/components/ui/table"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Camera } from "@/app/Models/cameras.model";
+import { Camera } from "@/app/models/cameras.model";
 import { ArrowLeft } from "lucide-react"
-import HealthStatus from "@/app/components/Cameras/Details/HealthStatus";
-import Maintenance from "@/app/components/Cameras/Details/Maintenance";
+import Performance from "@/app/components/Cameras/Details/Performance";
+import Maintenance from "@/app/components/Cameras/Details/MaintenanceHistoryTable";
 import EventDetection from "@/app/components/Cameras/Details/EventDetection";
-import AccessControl from "@/app/components/Cameras/Details/AccessControl";
+import AccessControl from "@/app/components/Cameras/Details/CameraAccess";
 
 export default function CameraDetails({ camera }: { camera: Camera }) {
-
+    
     const [currentCamera, setCurrentCamera] = useState(camera);
 
     const imageSrc = "/library-room.jpg";
     const videoSrc = "/footage-library-room.mp4";
 
-    const camCode = `CAM${String(currentCamera.id).padStart(3, "0")}`;
+    const camCode = `CAM${String(currentCamera.camera_id).padStart(3, "0")}`;
 
     function onBack() {
         window.history.back();
@@ -59,7 +59,7 @@ export default function CameraDetails({ camera }: { camera: Camera }) {
                 </Button>
 
                 {/* Tabs */}
-                <Tabs defaultValue="health" className="w-full">
+                <Tabs defaultValue="performance" className="w-full">
                     {/* เส้นขอบยาวเต็มความกว้าง (อยู่นอก TabsList) */}
                     {/* ตัวสกรอลของแถบเมนู */}
                     <div className="overflow-x-auto scrollbar-hide ios-smooth snap-x snap-mandatory scroll-gutter">
@@ -71,7 +71,7 @@ export default function CameraDetails({ camera }: { camera: Camera }) {
                             "
                             >
                                 {[
-                                    { id: "health", label: "Health Status" },
+                                    { id: "performance", label: "Performance" },
                                     { id: "event", label: "Event Detection" },
                                     { id: "access", label: "Access Control" },
                                     { id: "maint", label: "Maintenance" },
@@ -96,17 +96,17 @@ export default function CameraDetails({ camera }: { camera: Camera }) {
                         </div>
                     </div>
 
-                    <TabsContent value="health" className="px-4 py-2">
-                        <HealthStatus />
+                    <TabsContent value="performance" className="px-4 py-2">
+                        <Performance camera={currentCamera} />
                     </TabsContent>
                     <TabsContent value="event" className="px-4 py-2">
-                        <EventDetection />
+                        <EventDetection camera={currentCamera} />
                     </TabsContent>
                     <TabsContent value="access" className="px-4 py-2">
-                        <AccessControl />
+                        <AccessControl camera={currentCamera} />
                     </TabsContent>
                     <TabsContent value="maint" className="px-4 py-2">
-                        <Maintenance />
+                        <Maintenance camera={currentCamera} />
                     </TabsContent>
                 </Tabs>
 

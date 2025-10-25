@@ -90,27 +90,27 @@ export async function getSummaryCameras(req: Request, res: Response, next: NextF
  * @author Wanasart
  * @lastModified 2025-10-12
  */
-export async function createCamera(req: Request, res: Response, next: NextFunction) { 
+export async function createCamera(req: Request, res: Response, next: NextFunction) {
     try {
-        const { 
-            camera_name, 
-            camera_type, 
-            camera_status, 
-            source_type, 
-            source_value, 
-            location_id, 
-            description, 
-            creator_id 
+        const {
+            camera_name,
+            camera_type,
+            camera_status,
+            source_type,
+            source_value,
+            location_id,
+            description,
+            creator_id
         } = req.body
 
         const create = await CameraService.insertCamera(
-            camera_name, 
-            camera_type, 
-            camera_status, 
-            source_type, 
-            source_value, 
-            location_id, 
-            description, 
+            camera_name,
+            camera_type,
+            camera_status,
+            source_type,
+            source_value,
+            location_id,
+            description,
             creator_id
         );
         return res.status(201).json({ message: 'Created successfully', data: create });
@@ -130,30 +130,30 @@ export async function createCamera(req: Request, res: Response, next: NextFuncti
  * @throws {Error} ถ้าไม่พบกล้องที่ต้องการอัปเดต หรือเกิดข้อผิดพลาดระหว่างการอัปเดตฐานข้อมูล
  * 
  * @author Wanasart
- * @lastModified 2025-10-12
+ * @lastModified 2025-10-25
  */
 export async function updateCamera(req: Request, res: Response, next: NextFunction) { //update camera
     try {
         const camera_id = Number(req.params.cam_id);
-        const { 
-            camera_name, 
-            camera_type, 
-            camera_status, 
-            source_type, 
-            source_value, 
-            location_id, 
+        const {
+            camera_name,
+            camera_type,
+            camera_status,
+            source_type,
+            source_value,
+            location_id,
             description,
             user_id,
         } = req.body
 
         const update = await CameraService.updateCamera(
             camera_id,
-            camera_name, 
-            camera_type, 
-            camera_status, 
-            source_type, 
-            source_value, 
-            location_id, 
+            camera_name,
+            camera_type,
+            camera_status,
+            source_type,
+            source_value,
+            location_id,
             description,
             user_id
         );
@@ -161,7 +161,7 @@ export async function updateCamera(req: Request, res: Response, next: NextFuncti
     } catch (err) {
         next(err);
     }
-    
+
 }
 
 /**✅
@@ -175,12 +175,14 @@ export async function updateCamera(req: Request, res: Response, next: NextFuncti
  * @throws {Error} ถ้าไม่พบกล้องที่ต้องการลบ หรือเกิดข้อผิดพลาดระหว่างการอัปเดตฐานข้อมูล
  * 
  * @author Wanasart
- * @lastModified 2025-10-12
+ * @lastModified 2025-10-25
  */
 export async function softDeleteCamera(req: Request, res: Response, next: NextFunction) { //soft delete
     try {
         const camera_id = Number(req.params.cam_id);
-        const softDelete = await CameraService.removeCamera(camera_id);
+        const user_id = Number(req.body.user_id);
+
+        const softDelete = await CameraService.removeCamera(camera_id, user_id);
 
         return res.status(200).json({ message: 'Deleted successfully', data: softDelete });
     } catch (err) {
@@ -210,7 +212,7 @@ export async function getMaintenanceByCameraId(req: Request, res: Response, next
         const list = await MaintenanceService.getMaintenanceByCameraId(camera_id);
         return res.status(200).json({ message: 'Fetched successfully', data: list });
     } catch (err) {
-            next(err);
+        next(err);
     }
 }
 
@@ -240,7 +242,7 @@ export async function createMaintenance(req: Request, res: Response, next: NextF
         const create = await MaintenanceService.insertMaintenance(camera_id, technician, type, date, note);
         return res.status(201).json({ message: 'Created successfully', data: create });
     } catch (err) {
-            next(err);
+        next(err);
     }
 }
 
@@ -270,7 +272,7 @@ export async function updateMaintenance(req: Request, res: Response, next: NextF
         const update = await MaintenanceService.updateMaintenance(maintenance_id, technician, type, date, note);
         return res.status(201).json({ message: 'Updated successfully', data: update });
     } catch (err) {
-            next(err);
+        next(err);
     }
 }
 
@@ -294,7 +296,7 @@ export async function softDeleteMaintenance(req: Request, res: Response, next: N
         const softDelete = await MaintenanceService.removeMaintenance(maintenance_id);
         return res.status(200).json({ message: 'Deleted successfully', data: softDelete });
     } catch (err) {
-            next(err);
+        next(err);
     }
 }
 
@@ -340,16 +342,16 @@ export async function getEventDetectionById(req: Request, res: Response, next: N
 export async function updateEventDetection(req: Request, res: Response, next: NextFunction) {
     try {
         const detection_id = Number(req.params.cds_id);
-        const { 
-            detection_sensitivity, 
-            detection_priority, 
+        const {
+            detection_sensitivity,
+            detection_priority,
             detection_status
         } = req.body;
 
         const updateEventDetection = await EventDetectionService.updateEventDetection(
-            detection_sensitivity, 
-            detection_priority, 
-            detection_status, 
+            detection_sensitivity,
+            detection_priority,
+            detection_status,
             detection_id
         );
         return res.status(200).json({ message: 'Updated successfully', data: updateEventDetection });
@@ -529,26 +531,25 @@ export function rtspToWhep(rtspUrl: string, webrtcBase = 'http://localhost:8889'
     };
 }
 
-// export async function streamCamera(req: Request, res: Response) {
-//     try {
-//         const camId = Number(req.params.cam_id);
-//         if (!camId) return res.status(400).send("cam_id required");
+export async function streamCamera(req: Request, res: Response) {
+    try {
+        const camId = Number(req.params.cam_id);
+        if (!camId) return res.status(400).send("cam_id required");
 
-//         const cam = await CameraService.getCameraById(camId);
-//         if (!cam) return res.status(404).send("Camera not found");
+        const cams = await CameraService.getCameraById(camId);
+        const cam = cams?.[0];
+        if (!cam) return res.status(404).send("Camera not found");
 
-//         const rtspUrl = String(cam.address);
-//         rtspToWhep(rtspUrl);
+        const rtspUrl = String(cam.source_value);
+        rtspToWhep(rtspUrl);
+        const finalUrl = rtspUrl;
+        const forceEncode = req.query.encode === "1";
+        ffmpegService.startStream(res, finalUrl, { forceEncode });
 
-//         // const finalUrl = normalizeForHost(rtspUrl);
-//         const finalUrl = rtspUrl;
-
-//         const forceEncode = req.query.encode === "1"; // ?encode=1 จะบังคับ x264
-//         ffmpegService.startStream(res, finalUrl, { forceEncode });
-//     } catch (err: any) {
-//         const status = err?.status ?? 500;
-//         const msg = err?.message ?? "Failed to stream camera";
-//         console.error("stream error:", err);
-//         if (!res.headersSent) res.status(status).json({ error: msg });
-//     }
-// }
+    } catch (err: any) {
+        const status = err?.status ?? 500;
+        const msg = err?.message ?? "Failed to stream camera";
+        console.error("stream error:", err);
+        if (!res.headersSent) res.status(status).json({ error: msg });
+    }
+}

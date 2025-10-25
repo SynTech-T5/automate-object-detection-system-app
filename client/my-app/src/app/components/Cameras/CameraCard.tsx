@@ -137,7 +137,7 @@ export default function CameraCard({ cam }: { cam: Camera }) {
             </div>
           )}
 
-          <BottomCameraCard camId={cam.camera_id} camName={cam.camera_name} iconSet="lucide" className="mt-4" />
+          <BottomCameraCard camId={cam.camera_id} camName={cam.camera_name} className="mt-4" />
         </div>
       </div>
     </div>

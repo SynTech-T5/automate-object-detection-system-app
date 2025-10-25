@@ -1,4 +1,4 @@
-import { Camera } from "@/app/Models/cameras.model";
+import { Camera } from "@/app/models/cameras.model";
 import CameraDetails from '@/app/components/Cameras/Details/CameraDetails'
 
 const base = process.env.NEXT_PUBLIC_APP_URL!;
@@ -11,7 +11,8 @@ export default async function Page({ params }: { params: Promise<{ cam_id: strin
         throw new Error("Failed to load cameras");
     }
 
-    const camera: Camera = await res.json();
+    const json = await res.json();
+    const camera: Camera = json.data[0];
 
     return (
         <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">

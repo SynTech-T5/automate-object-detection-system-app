@@ -1,30 +1,27 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { Eye, Settings, Info, Trash2 } from "lucide-react"; // ใช้เมื่อ iconSet="lucide"
+import { Eye, Settings, Info, Trash2 } from "lucide-react";
 import "@/styles/camera-card.css";
 import EditCameraModal from "../Forms/EditCameraForm";
 import { useState } from "react";
 import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
-
-type IconSet = "fi" | "lucide";
+import { useMe } from "@/hooks/useMe";
 
 type Props = {
   camId: number;
   camName: string;
   className?: string;
-  iconSet?: IconSet; // "fi" (flaticon) | "lucide"
   active?: "view" | "settings" | "details" | "delete";
   onView?: (id: number) => void;
   onEdit?: (id: number) => void;
   onDetails?: (id: number) => void;
-  onDelete?: (id: number) => void;
+  onDelete?: (id: number, user_id?: number) => void | Promise<void>;
 };
 
 export default function BottomCameraCard({
   camId,
   camName,
   className = "",
-  iconSet = "fi",
   active,
   onView,
   onEdit,
@@ -32,50 +29,57 @@ export default function BottomCameraCard({
   onDelete,
 }: Props) {
   const router = useRouter();
+  const { me, error: meError } = useMe();
 
-  // default handlers
-  const goView = () => (onView ? onView(camId) : router.push(`/cameras/${camId}`));
   const [open, setOpen] = useState(false);
+  const [busyDelete, setBusyDelete] = useState(false);
 
-  // const goEdit = () => (onEdit ? onEdit(camId) : router.push(`/cameras/${camId}/edit`));
+  const goView = () => (onView ? onView(camId) : router.push(`/cameras/${camId}`));
   const goEdit = () => {
-    if (onEdit) {
-      onEdit(camId); // ส่งค่า camId กลับไปให้ parent
-    }
+    if (onEdit) onEdit(camId);
     setOpen(true);
   };
-
   const goDetails = () =>
     onDetails ? onDetails(camId) : router.push(`/cameras/${camId}/details`);
 
-  // ลบ + reload หน้า
-  const [busyDelete, setBusyDelete] = useState(false);
   async function confirmDelete() {
+    const user_id = Number((me as any)?.usr_id);
+    if (!Number.isFinite(user_id) || user_id <= 0) {
+      alert(meError || "Cannot resolve user_id from current user.");
+      return;
+    }
+
     try {
       setBusyDelete(true);
       if (onDelete) {
-        await Promise.resolve(onDelete(camId));
+        await Promise.resolve(onDelete(camId, user_id));
       } else {
-        const res = await fetch(`/api/cameras/${camId}/soft-delete`, { method: "PATCH" });
-        if (!res.ok) throw new Error("Delete failed");
+        const res = await fetch(`/api/cameras/${camId}`, {
+          method: "PATCH", // เปลี่ยนเป็น DELETE ได้ถ้าหลังบ้านรองรับ
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          cache: "no-store",
+          body: JSON.stringify({ user_id }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || "Delete failed");
       }
-      // ✅ reload ทั้งหน้าให้เห็นผลทันที
       setTimeout(() => window.location.reload(), 0);
-    } catch (e) {
-      alert((e as Error).message || "Delete failed");
+    } catch (e: any) {
+      alert(e?.message || "Delete failed");
     } finally {
       setBusyDelete(false);
     }
   }
 
-  // กล่องรวมปุ่ม: ใช้ border ที่ container + divide-x เพื่อไม่ให้ขอบทับกัน
   const wrap =
     "flex w-full overflow-hidden rounded-xl border border-[var(--color-hardGray)] " +
     "bg-[var(--color-white)] shadow-sm divide-x divide-[var(--color-hardGray)] " +
     className;
 
-  // ปุ่ม: ไม่ใส่ border เอง ปล่อยให้เส้นแบ่งมาจาก parent
-  // ใช้ inset box-shadow เป็น 'border สี' ตอน hover/active
   const btnBase =
     "group relative flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 " +
     "text-sm text-[var(--color-black)] transition-colors focus:outline-none " +
@@ -86,47 +90,15 @@ export default function BottomCameraCard({
     "text-sm text-[var(--color-black)] transition-colors focus:outline-none " +
     "rounded-none first:rounded-l-xl last:rounded-r-xl";
 
-  // ไฮไลต์สีน้ำเงิน (hover/active)
   const hoverBlue =
-    "hover:text-[var(--color-primary)] " +
-    "hover:shadow-[inset_0_0_0_2px_var(--color-primary)]";
+    "hover:text-[var(--color-primary)] hover:shadow-[inset_0_0_0_2px_var(--color-primary)]";
   const activeBlue =
     "text-[var(--color-primary)] shadow-[inset_0_0_0_2px_var(--color-primary)]";
 
-  // ไฮไลต์แดง (ปุ่มลบ)
   const hoverRed =
-    "hover:text-[var(--color-danger)] " +
-    "hover:shadow-[inset_0_0_0_2px_var(--color-danger)]";
+    "hover:text-[var(--color-danger)] hover:shadow-[inset_0_0_0_2px_var(--color-danger)]";
   const activeRed =
     "text-[var(--color-danger)] shadow-[inset_0_0_0_2px_var(--color-danger)]";
-
-  // ไอคอน: เลือก flaticon หรือ lucide
-  const icon = {
-    view:
-      iconSet === "fi" ? (
-        <i className="fi fi-tr-eye-lashes text-[16px] leading-none group-hover:text-[var(--color-primary)]" />
-      ) : (
-        <Eye className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
-      ),
-    settings:
-      iconSet === "fi" ? (
-        <i className="fi fi-tr-pen-field text-[16px] leading-none group-hover:text-[var(--color-primary)]" />
-      ) : (
-        <Settings className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
-      ),
-    details:
-      iconSet === "fi" ? (
-        <i className="fi fi-tr-info text-[16px] leading-none group-hover:text-[var(--color-primary)]" />
-      ) : (
-        <Info className="h-4 w-4 group-hover:text-[var(--color-primary)]" />
-      ),
-    delete:
-      iconSet === "fi" ? (
-        <i className="fi fi-rr-trash text-[18px] leading-none group-hover:text-[var(--color-danger)]" />
-      ) : (
-        <Trash2 className="h-4 w-4 group-hover:text-[var(--color-danger)]" />
-      ),
-  };
 
   return (
     <div className={wrap} role="group" aria-label="Camera actions">
@@ -138,10 +110,8 @@ export default function BottomCameraCard({
         title="View"
         aria-label="View"
       >
-        {icon.view}
-        <span className={`${active === "view" ? "text-[var(--color-primary)]" : ""}`}>
-          View
-        </span>
+        <Eye className="h-4 w-4" />
+        <span className={active === "view" ? "text-[var(--color-primary)]" : ""}>View</span>
       </button>
 
       {/* Edit */}
@@ -152,8 +122,8 @@ export default function BottomCameraCard({
         title="Edit"
         aria-label="Edit"
       >
-        {icon.settings}
-        <span className={`${active === "settings" ? "text-[var(--color-primary)]" : ""}`}>
+        <Settings className="h-4 w-4" />
+        <span className={active === "settings" ? "text-[var(--color-primary)]" : ""}>
           Settings
         </span>
       </button>
@@ -168,22 +138,20 @@ export default function BottomCameraCard({
         title="Details"
         aria-label="Details"
       >
-        {icon.details}
-        <span
-          className={`${active === "details" ? "text-[var(--color-primary)]" : ""}`}
-        >
+        <Info className="h-4 w-4" />
+        <span className={active === "details" ? "text-[var(--color-primary)]" : ""}>
           Details
         </span>
       </button>
 
-      {/* Delete (ใช้ shadcn modal เป็น trigger รอบปุ่ม) */}
+      {/* Delete */}
       <DeleteConfirmModal
         title="Delete Camera?"
-        description={`This will remove camera ID: ${camId}. This action cannot be undone.`}
-        confirmWord={camName || undefined} 
-        confirmText="Delete"
+        description={`This will remove ${camName || `camera ID: ${camId}`}. This action cannot be undone.`}
+        confirmWord={camName || undefined}
+        confirmText={busyDelete ? "Deleting..." : "Delete"}
         onConfirm={async () => {
-          await confirmDelete();
+          if (!busyDelete) await confirmDelete();
         }}
         trigger={
           <button
@@ -193,9 +161,7 @@ export default function BottomCameraCard({
             title="Delete"
             aria-label="Delete"
           >
-            {icon.delete}
-            {/* เว้น label ว่างไว้ตามดีไซน์เดิม */}
-            <span className={`${active === "delete" ? "text-[var(--color-danger)]" : ""}`} />
+            <Trash2 className="h-4 w-4" />
           </button>
         }
       />

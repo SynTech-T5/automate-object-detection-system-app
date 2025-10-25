@@ -1,30 +1,65 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  MoreVertical, Wrench, RefreshCw, Hammer, ArrowUpCircle, Search, Settings, ClipboardCheck,
-  ArrowUpDown, ArrowUp, ArrowDown, User
+  ArrowDown, ArrowUp, ArrowUpDown, ClipboardCheck, Hammer, MoreVertical,
+  RefreshCw, Search, Settings, Wrench, ArrowUpCircle, User, Pencil, Trash2, Plus
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
+  AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Camera } from "@/app/models/cameras.model";
 
-/* -------------------- Types -------------------- */
-type MaintenanceHistory = {
-  id: string;
+/* =========================================================
+   Types
+========================================================= */
+type ApiMaintenance = {
+  maintenance_id: number;
+  camera_id: number;
+  maintenance_date: string;             // "YYYY-MM-DD"
+  maintenance_type: string;             // e.g. "routine check"
+  maintenance_technician: string;
+  maintenance_note: string;
+  maintenance_created_date?: string;    // "YYYY-MM-DD"
+  maintenance_created_time?: string;    // "HH:mm:ss"
+};
+
+type Row = {
+  id: number;
   cameraId: number;
-  date: string;       // e.g. "2025-05-15"
-  type: string;
+  date: string;       // "YYYY-MM-DD"
+  type: string;       // Title Case for UI
+  typeRaw: string;    // raw lowercase for API conversions
   technician: string;
   notes: string;
 };
 
-type SortKey = keyof MaintenanceHistory;
+type SortKey = "id" | "date" | "type" | "technician";
 type SortOrder = "asc" | "desc" | null;
 
-/* -------------------- Badge -------------------- */
-type MaintenanceTypeBadgeProps = { type: string };
+/* =========================================================
+   Helpers
+========================================================= */
+function toTitleCase(s: string) {
+  return s
+    .trim()
+    .split(/\s+/)
+    .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
+    .join(" ");
+}
+function toApiType(s: string) {
+  // UI -> API: Title Case → lowercase with space
+  return s.trim().toLowerCase();
+}
 
+/* =========================================================
+   Badge
+========================================================= */
 const TYPE_META: Record<string, { icon: React.ReactNode; classes: string }> = {
   "Routine Check": {
     icon: <ClipboardCheck className="w-3 h-3 mr-1" />,
@@ -56,7 +91,7 @@ const TYPE_META: Record<string, { icon: React.ReactNode; classes: string }> = {
   },
 };
 
-export function MaintenanceTypeBadge({ type }: MaintenanceTypeBadgeProps) {
+function MaintenanceTypeBadge({ type }: { type: string }) {
   const meta = TYPE_META[type] ?? {
     icon: <ClipboardCheck className="w-3 h-3 mr-1" />,
     classes: "border border-gray-300 text-gray-700 bg-gray-50",
@@ -69,16 +104,386 @@ export function MaintenanceTypeBadge({ type }: MaintenanceTypeBadgeProps) {
   );
 }
 
-/* -------------------- Table with Sorting -------------------- */
-type Props = { records: MaintenanceHistory[] };
+/* =========================================================
+   Add Modal
+========================================================= */
+function AddMaintenanceModal({
+  camId,
+  onAdded,
+}: {
+  camId: number;
+  onAdded: (row: Row) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState("");
 
-export default function MaintenanceHistoryTable({ records }: Props) {
+  // form fields
+  const [date, setDate] = useState<string>("");
+  const [type, setType] = useState<string>("Routine Check"); // UI label
+  const [technician, setTechnician] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+
+  async function handleSubmit() {
+    try {
+      setSubmitting(true);
+      setErr("");
+
+      if (!camId || !date || !type || !technician) {
+        throw new Error("Please fill date, type, and technician.");
+      }
+
+      const body = {
+        technician,
+        type: toApiType(type), // api expects lowercase words
+        date,
+        note,
+      };
+
+      const res = await fetch(`/api/cameras/${camId}/maintenance`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+
+      // Some backends return created object; if not, construct from form:
+      const created: ApiMaintenance = json?.data?.[0] || {
+        maintenance_id: json?.data?.maintenance_id ?? Math.floor(Math.random() * 1e9),
+        camera_id: camId,
+        maintenance_date: date,
+        maintenance_type: body.type,
+        maintenance_technician: technician,
+        maintenance_note: note,
+      };
+
+      const row: Row = {
+        id: created.maintenance_id,
+        cameraId: created.camera_id,
+        date: created.maintenance_date,
+        type: toTitleCase(created.maintenance_type),
+        typeRaw: created.maintenance_type,
+        technician: created.maintenance_technician,
+        notes: created.maintenance_note,
+      };
+
+      onAdded(row);
+      setOpen(false);
+
+      // reset
+      setDate("");
+      setType("Routine Check");
+      setTechnician("");
+      setNote("");
+    } catch (e: any) {
+      setErr(e?.message || "Create failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-3 py-2 rounded-md flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add Maintenance
+        </Button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-[var(--color-primary)]">Add Maintenance</AlertDialogTitle>
+          <AlertDialogDescription>Fill in the maintenance details and click Save.</AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-3">
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="mnt_date">Date</label>
+            <input
+              id="mnt_date" type="date" value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+              required
+            />
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="mnt_type">Type</label>
+            <select
+              id="mnt_type" value={type} onChange={(e) => setType(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+            >
+              {[
+                "Routine Check",
+                "Repair",
+                "Installation",
+                "Upgrade",
+                "Replacement",
+                "Inspection",
+                "Configuration",
+              ].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="mnt_technician">Technician</label>
+            <input
+              id="mnt_technician" value={technician}
+              onChange={(e) => setTechnician(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+              placeholder="Technician name"
+              required
+            />
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="mnt_note">Note</label>
+            <textarea
+              id="mnt_note" value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+              placeholder="Note"
+            />
+          </div>
+
+          {err && <p className="text-sm text-red-600">{err}</p>}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel className="border-gray-300 hover:bg-gray-50">Cancel</AlertDialogCancel>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-4 py-2 rounded-md disabled:opacity-50"
+          >
+            {submitting ? "Saving..." : "Save"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/* =========================================================
+   Edit Modal
+========================================================= */
+function EditMaintenanceModal({
+  row,
+  onUpdated,
+}: {
+  row: Row;
+  onUpdated: (row: Row) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [err, setErr] = useState("");
+
+  const [date, setDate] = useState<string>(row.date);
+  const [type, setType] = useState<string>(row.type); // Title Case
+  const [technician, setTechnician] = useState<string>(row.technician);
+  const [note, setNote] = useState<string>(row.notes);
+
+  async function handleSubmit() {
+    try {
+      setSubmitting(true);
+      setErr("");
+
+      const body = {
+        technician,
+        type: toApiType(type),
+        date,
+        note,
+      };
+
+      const res = await fetch(`/api/cameras/maintenance/${row.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+
+      const updated: Row = {
+        ...row,
+        date,
+        type,
+        typeRaw: body.type,
+        technician,
+        notes: note,
+      };
+
+      onUpdated(updated);
+      setOpen(false);
+    } catch (e: any) {
+      setErr(e?.message || "Update failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <button
+          type="button"
+          title="Edit"
+          aria-label="Edit"
+          className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+      </AlertDialogTrigger>
+
+      <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-[var(--color-primary)]">Edit Maintenance #{row.id}</AlertDialogTitle>
+          <AlertDialogDescription>Update the fields and click Save.</AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="space-y-3">
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="em_date">Date</label>
+            <input
+              id="em_date" type="date" value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+              required
+            />
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="em_type">Type</label>
+            <select
+              id="em_type" value={type} onChange={(e) => setType(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+            >
+              {[
+                "Routine Check",
+                "Repair",
+                "Installation",
+                "Upgrade",
+                "Replacement",
+                "Inspection",
+                "Configuration",
+              ].map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="em_technician">Technician</label>
+            <input
+              id="em_technician" value={technician}
+              onChange={(e) => setTechnician(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+              required
+            />
+          </div>
+
+          <div className="grid gap-1">
+            <label className="text-sm font-medium" htmlFor="em_note">Note</label>
+            <textarea
+              id="em_note" value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
+            />
+          </div>
+
+          {err && <p className="text-sm text-red-600">{err}</p>}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel className="border-gray-300 hover:bg-gray-50">Cancel</AlertDialogCancel>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="bg-[var(--color-primary)] text-white hover:bg-[var(--color-secondary)] px-4 py-2 rounded-md disabled:opacity-50"
+          >
+            {submitting ? "Saving..." : "Save"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/* =========================================================
+   Main: CameraMaintenance
+========================================================= */
+export default function CameraMaintenance({ camera }: { camera: Camera }) {
+  const camId = Number(camera?.camera_id ?? 0);
+
+  const [records, setRecords] = useState<Row[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("id");
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!Number.isFinite(camId) || camId <= 0) {
+      setErr("Invalid camera id.");
+      setLoading(false);
+      return;
+    }
+
+    let mounted = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setErr("");
+
+        const res = await fetch(`/api/cameras/${camId}/maintenance`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+          credentials: "include",
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+
+        const rows: ApiMaintenance[] = Array.isArray(json?.data) ? json.data : [];
+        const mapped: Row[] = rows.map(r => ({
+          id: r.maintenance_id,
+          cameraId: r.camera_id,
+          date: r.maintenance_date,
+          type: toTitleCase(r.maintenance_type),
+          typeRaw: r.maintenance_type,
+          technician: r.maintenance_technician,
+          notes: r.maintenance_note,
+        }));
+
+        if (mounted) setRecords(mapped);
+      } catch (e: any) {
+        if (mounted) setErr(e?.message || "Failed to load maintenance");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [camId]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
+      setSortOrder(prev => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
     } else {
       setSortKey(key);
       setSortOrder("asc");
@@ -95,8 +500,8 @@ export default function MaintenanceHistoryTable({ records }: Props) {
     if (!sortOrder) return records;
     const arr = [...records];
     return arr.sort((a, b) => {
-      let aVal = a[sortKey] as unknown;
-      let bVal = b[sortKey] as unknown;
+      let aVal: any = a[sortKey];
+      let bVal: any = b[sortKey];
 
       if (sortKey === "date") {
         const aTime = new Date(String(aVal)).getTime();
@@ -114,51 +519,101 @@ export default function MaintenanceHistoryTable({ records }: Props) {
     });
   }, [records, sortKey, sortOrder]);
 
-  return (
-    <div className="w-full max-h-[400px] overflow-y-auto">
-      <Table className="w-full table-auto">
-        <TableHeader>
-          <TableRow>
-            <TableHead onClick={() => handleSort("id")} className="cursor-pointer select-none text-[var(--color-primary)]">
-              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-                <span>ID</span>
-                {renderSortIcon("id")}
-              </div>
-            </TableHead>
-            <TableHead onClick={() => handleSort("date")} className="cursor-pointer select-none text-[var(--color-primary)]">
-              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-                <span>Date</span>
-                {renderSortIcon("date")}
-              </div>
-            </TableHead>
-            <TableHead onClick={() => handleSort("type")} className="cursor-pointer select-none text-[var(--color-primary)]">
-              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-                <span>Type</span>
-                {renderSortIcon("type")}
-              </div>
-            </TableHead>
-            <TableHead onClick={() => handleSort("technician")} className="cursor-pointer select-none text-[var(--color-primary)]">
-              <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-                <span>Technician</span>
-                {renderSortIcon("technician")}
-              </div>
-            </TableHead>
-            <TableHead className="text-[var(--color-primary)] text-[12px] text-left font-medium">
-              Notes
-            </TableHead>
-            <TableHead className="w-[36px]"></TableHead>
-          </TableRow>
-        </TableHeader>
+  function onAdded(row: Row) {
+    setRecords(prev => [row, ...prev]);
+  }
 
-        <TableBody>
-          {sortedRecords.length === 0 ? (
+  function onUpdated(row: Row) {
+    setRecords(prev => prev.map(r => (r.id === row.id ? row : r)));
+  }
+
+  async function onDelete(id: number) {
+    if (!confirm(`Delete maintenance #${id}? This cannot be undone.`)) return;
+
+    try {
+      setBusyId(id);
+      // optimistic remove
+      const prev = records;
+      setRecords(prev.filter(r => r.id !== id));
+
+      const res = await fetch(`/api/cameras/maintenance/${id}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        cache: "no-store",
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // rollback
+        setRecords(prev);
+        throw new Error(json?.message || `HTTP ${res.status}`);
+      }
+    } catch (e: any) {
+      alert(e?.message || "Delete failed");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="w-full">
+      {/* Header + Add button */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-semibold text-[var(--color-primary)]">Maintenance</h3>
+        <AddMaintenanceModal camId={camId} onAdded={onAdded} />
+      </div>
+
+      {loading && <p className="text-sm text-slate-500 mb-2">Loading maintenance…</p>}
+      {err && !loading && <p className="text-sm text-red-600 mb-2">{err}</p>}
+
+      <div className="w-full max-h-[420px] overflow-y-auto">
+        <Table className="w-full table-auto">
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={6} className="py-4 text-[12px] text-gray-500 text-center">
-                No maintenance records.
-              </TableCell>
+              <TableHead onClick={() => handleSort("id")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                  <span>ID</span>
+                  {renderSortIcon("id")}
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort("date")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                  <span>Date</span>
+                  {renderSortIcon("date")}
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort("type")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                  <span>Type</span>
+                  {renderSortIcon("type")}
+                </div>
+              </TableHead>
+              <TableHead onClick={() => handleSort("technician")} className="cursor-pointer select-none text-[var(--color-primary)]">
+                <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                  <span>Technician</span>
+                  {renderSortIcon("technician")}
+                </div>
+              </TableHead>
+              <TableHead className="text-[var(--color-primary)] text-[12px] text-left font-medium">
+                Notes
+              </TableHead>
+              <TableHead className="w-[96px] text-[var(--color-primary)] text-left font-medium">Actions</TableHead>
             </TableRow>
-          ) : (
-            sortedRecords.map((rec) => (
+          </TableHeader>
+
+          <TableBody>
+            {!loading && !err && sortedRecords.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="py-4 text-[12px] text-gray-500 text-center">
+                  No maintenance records.
+                </TableCell>
+              </TableRow>
+            )}
+
+            {sortedRecords.map((rec) => (
               <TableRow key={rec.id} className="border-b border-gray-200 align-top text-[12px]">
                 <TableCell className="pl-0 py-3 align-top text-left font-medium">{rec.id}</TableCell>
                 <TableCell className="px-2 py-3 align-top text-left font-medium">{rec.date}</TableCell>
@@ -175,13 +630,25 @@ export default function MaintenanceHistoryTable({ records }: Props) {
                   {rec.notes}
                 </TableCell>
                 <TableCell className="px-2 py-3 align-top text-left">
-                  <MoreVertical className="h-4 w-4 text-gray-500 cursor-pointer" />
+                  <div className="flex items-center gap-2">
+                    <EditMaintenanceModal row={rec} onUpdated={onUpdated} />
+                    <button
+                      type="button"
+                      title="Delete"
+                      aria-label="Delete"
+                      onClick={() => onDelete(rec.id)}
+                      disabled={busyId === rec.id}
+                      className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white transition"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
