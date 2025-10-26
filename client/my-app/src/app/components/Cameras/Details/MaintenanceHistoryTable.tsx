@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Camera } from "@/app/models/cameras.model";
+import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
 
 /* =========================================================
    Types
@@ -434,6 +435,11 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
+  // ⬇️ state สำหรับ modal ลบ
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
+  const [busyDelete, setBusyDelete] = useState(false);
+
   useEffect(() => {
     if (!Number.isFinite(camId) || camId <= 0) {
       setErr("Invalid camera id.");
@@ -527,16 +533,18 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
     setRecords(prev => prev.map(r => (r.id === row.id ? row : r)));
   }
 
-  async function onDelete(id: number) {
-    if (!confirm(`Delete maintenance #${id}? This cannot be undone.`)) return;
+  // ⬇️ เปิด modal ลบ
+  function askDelete(row: Row) {
+    setDeleteTarget(row);
+    setDeleteOpen(true);
+  }
 
+  // ⬇️ ยืนยันลบ (PATCH แล้วค่อยลบออกจาก state)
+  async function confirmDelete() {
+    if (!deleteTarget) return;
     try {
-      setBusyId(id);
-      // optimistic remove
-      const prev = records;
-      setRecords(prev.filter(r => r.id !== id));
-
-      const res = await fetch(`/api/cameras/maintenance/${id}`, {
+      setBusyDelete(true);
+      const res = await fetch(`/api/cameras/maintenance/${deleteTarget.id}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
@@ -546,15 +554,15 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
         cache: "no-store",
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        // rollback
-        setRecords(prev);
-        throw new Error(json?.message || `HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
+
+      setRecords(prev => prev.filter(r => r.id !== deleteTarget.id));
+      setDeleteOpen(false);
+      setDeleteTarget(null);
     } catch (e: any) {
       alert(e?.message || "Delete failed");
     } finally {
-      setBusyId(null);
+      setBusyDelete(false);
     }
   }
 
@@ -613,42 +621,63 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
               </TableRow>
             )}
 
-            {sortedRecords.map((rec) => (
-              <TableRow key={rec.id} className="border-b border-gray-200 align-top text-[12px]">
-                <TableCell className="pl-0 py-3 align-top text-left font-medium">{rec.id}</TableCell>
-                <TableCell className="px-2 py-3 align-top text-left font-medium">{rec.date}</TableCell>
-                <TableCell className="px-2 py-3 align-top text-left font-medium">
-                  <MaintenanceTypeBadge type={rec.type} />
-                </TableCell>
-                <TableCell className="px-2 py-3 align-top font-medium text-left">
-                  <div className="flex items-center gap-1">
-                    <User className="h-4 w-4 text-[var(--color-primary)]" />
-                    <span>{rec.technician}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="px-2 py-3 whitespace-pre-wrap break-words align-top text-left">
-                  {rec.notes}
-                </TableCell>
-                <TableCell className="px-2 py-3 align-top text-left">
-                  <div className="flex items-center gap-2">
-                    <EditMaintenanceModal row={rec} onUpdated={onUpdated} />
-                    <button
-                      type="button"
-                      title="Delete"
-                      aria-label="Delete"
-                      onClick={() => onDelete(rec.id)}
-                      disabled={busyId === rec.id}
-                      className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white transition"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {sortedRecords.map((rec) => {
+              const maintenanceCode = `MNT${String(rec.id).padStart(3, "0")}`;
+              return (
+                <TableRow key={rec.id} className="border-b border-gray-200 align-top text-[12px]">
+                  <TableCell className="pl-0 py-3 align-top text-left font-medium">
+                    {maintenanceCode}
+                  </TableCell>
+
+                  <TableCell className="px-2 py-3 align-top text-left font-medium">{rec.date}</TableCell>
+                  <TableCell className="px-2 py-3 align-top text-left font-medium">
+                    <MaintenanceTypeBadge type={rec.type} />
+                  </TableCell>
+                  <TableCell className="px-2 py-3 align-top font-medium text-left">
+                    <div className="flex items-center gap-1">
+                      <User className="h-4 w-4 text-[var(--color-primary)]" />
+                      <span>{rec.technician}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-2 py-3 whitespace-pre-wrap break-words align-top text-left">
+                    {rec.notes}
+                  </TableCell>
+                  <TableCell className="px-2 py-3 align-top text-left">
+                    <div className="flex items-center gap-2">
+                      <EditMaintenanceModal row={rec} onUpdated={onUpdated} />
+                      <button
+                        type="button"
+                        title="Delete"
+                        aria-label="Delete"
+                        onClick={() => askDelete(rec)}
+                        disabled={busyId === rec.id || busyDelete}
+                        className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white transition"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
+
+      {/* 🔴 Modal ลบ (สไตล์เดียวกับ Event) */}
+      <DeleteConfirmModal
+        open={deleteOpen}
+        onOpenChange={(v) => {
+          if (busyDelete) return;
+          setDeleteOpen(v);
+          if (!v) setDeleteTarget(null);
+        }}
+        title="Delete Maintenance?"
+        description="This action cannot be undone."
+        confirmText={busyDelete ? "Deleting..." : "Delete"}
+        cancelText="Cancel"
+        onConfirm={() => !busyDelete && confirmDelete()}
+      />
     </div>
   );
 }

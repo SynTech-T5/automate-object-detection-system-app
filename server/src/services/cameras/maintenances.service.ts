@@ -26,7 +26,8 @@ export async function getMaintenanceByCameraId(camera_id: number){
         WHERE
             mnt_cam_id = $1
         AND
-            mnt_is_use = true;
+            mnt_is_use = true
+        ORDER BY mnt_date DESC;
     `, [
         camera_id
     ]);
