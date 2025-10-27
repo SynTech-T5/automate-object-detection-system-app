@@ -1,3 +1,16 @@
+export interface Alerts {
+    alert_id: number;
+    creator_id: number;
+    camera_id: number;
+    footage_id: number;
+    event_id: number;
+    alert_severity: string;
+    alert_status: string;
+    alert_description: string;
+    alert_created_at: string;
+    alert_is_use: boolean;
+}
+
 export interface Alert {
     id: number;
     severity: string;

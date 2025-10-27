@@ -1,3 +1,4 @@
+// app/components/Cameras/CameraTable.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -7,8 +8,7 @@ import {
 } from "@/components/ui/table";
 import {
   Eye, CheckCircle2, XCircle, MapPin,
-  ArrowUpDown, ArrowUp, ArrowDown, Calendar, Trash2, Pencil, CircleAlert,
-  Camera as CameraIcon, Move, Scan, Thermometer, Activity,
+  ArrowUpDown, ArrowUp, ArrowDown, Trash2, Pencil, CircleAlert,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import EditCameraModal from "../Forms/EditCameraForm";
@@ -16,7 +16,13 @@ import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
 import { Camera } from "@/app/models/cameras.model";
 import { MaintenanceTypeBadge } from "../Badges/BadgeMaintenanceType";
 import BadgeCameraType from "../Badges/BadgeCameraType";
-import { useMe } from "@/hooks/useMe"; // ✅ เพิ่ม
+import { useMe } from "@/hooks/useMe";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type SortKey = "id" | "name" | "status" | "location" | "maintenance";
 type SortOrder = "asc" | "desc" | null;
@@ -31,8 +37,67 @@ type Props = {
   onDelete?: (id: number, user_id?: number) => void | Promise<void>;
 };
 
-// ------------------------------------------
+/* ------------------------ Ghost → Full Icon Button ------------------------ */
+function IconAction({
+  label,
+  children,
+  variant = "primary", // primary | danger
+  onClick,
+  disabled,
+  className = "",
+}: {
+  label: string;
+  children: React.ReactNode;
+  variant?: "primary" | "danger";
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  const palette =
+    variant === "danger"
+      ? {
+          border: "border-[var(--color-danger)]",
+          text: "text-[var(--color-danger)]",
+          hoverBg: "hover:bg-[var(--color-danger)]",
+          focusRing: "focus:ring-[var(--color-danger)]",
+        }
+      : {
+          border: "border-[var(--color-primary)]",
+          text: "text-[var(--color-primary)]",
+          hoverBg: "hover:bg-[var(--color-primary)]",
+          focusRing: "focus:ring-[var(--color-primary)]",
+        };
 
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            aria-label={label}
+            className={[
+              "inline-flex items-center justify-center h-8 w-8 rounded-full",
+              "bg-transparent border", palette.border, palette.text,
+              "hover:text-white", palette.hoverBg, "hover:border-transparent",
+              "transition focus:outline-none focus:ring-2 focus:ring-offset-2", palette.focusRing,
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              className,
+            ].join(" ")}
+          >
+            {children}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+/* -------------------------------- Utilities ------------------------------- */
 function parseStatusParam(v: string | null): boolean | null {
   if (!v) return null;
   const s = v.trim().toLowerCase();
@@ -53,7 +118,7 @@ export default function CameraTable({
   const searchParams = useSearchParams();
   const statusParam = searchParams.get("status");
 
-  const { me, loading: loadingMe, error: meError } = useMe(); // ✅ ดึง me
+  const { me, loading: loadingMe, error: meError } = useMe();
 
   const [sortKey, setSortKey] = useState<SortKey | null>(null);
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
@@ -70,7 +135,6 @@ export default function CameraTable({
   async function onConfirmDelete(_: { input?: string; note?: string }) {
     if (!deleteTarget) return;
 
-    // ✅ สร้าง user_id จาก me
     const user_id = Number((me as any)?.usr_id);
     if (!Number.isFinite(user_id) || user_id <= 0) {
       alert(meError || "Cannot resolve user_id from current user.");
@@ -81,12 +145,10 @@ export default function CameraTable({
       setBusyId(deleteTarget.id);
 
       if (onDelete) {
-        // ✅ ส่ง user_id ให้ callback ภายนอกด้วย
         await Promise.resolve(onDelete(deleteTarget.id, user_id));
       } else {
-        // ✅ ส่ง usr_id ไปกับ API ตามที่ร้องขอ
         const res = await fetch(`/api/cameras/${deleteTarget.id}`, {
-          method: "PATCH", // ใช้เมธอดเดิมของคุณ
+          method: "PATCH",
           headers: {
             Authorization: `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`,
             "Content-Type": "application/json",
@@ -95,12 +157,10 @@ export default function CameraTable({
           cache: "no-store",
           body: JSON.stringify({ user_id }),
         });
-
         const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json?.message || "Delete failed");
       }
 
-      // ปิด modal แล้ว reload หน้า
       setDeleteOpen(false);
       setDeleteTarget(null);
       setTimeout(() => window.location.reload(), 0);
@@ -112,9 +172,7 @@ export default function CameraTable({
   }
 
   const goEdit = () => {
-    if (onEdit) {
-      onEdit(getVal(cameras[0], "id") as number);
-    }
+    if (onEdit) onEdit(getVal(cameras[0], "id") as number);
     setOpen(true);
   };
 
@@ -137,18 +195,12 @@ export default function CameraTable({
 
   const getVal = (cam: Camera, key: SortKey) => {
     switch (key) {
-      case "id":
-        return cam.camera_id ?? 0;
-      case "name":
-        return cam.camera_name ?? "";
-      case "status":
-        return cam.camera_status ? 1 : 0;
-      case "location":
-        return cam.location_name ?? "";
-      case "maintenance":
-        return cam.maintenance_type ?? "";
-      default:
-        return "";
+      case "id": return cam.camera_id ?? 0;
+      case "name": return cam.camera_name ?? "";
+      case "status": return cam.camera_status ? 1 : 0;
+      case "location": return cam.location_name ?? "";
+      case "maintenance": return cam.maintenance_type ?? "";
+      default: return "";
     }
   };
 
@@ -223,11 +275,13 @@ export default function CameraTable({
               {renderSortIcon("maintenance")}
             </div>
           </TableHead>
+
           <TableHead className="text-[var(--color-primary)]">Actions</TableHead>
         </TableRow>
       </TableHeader>
 
       <EditCameraModal camId={getVal(cameras[0], "id") as number} open={open} setOpen={setOpen} />
+
       <TableBody>
         {sorted.map((cam) => {
           const camCode = `CAM${String(cam.camera_id).padStart(3, "0")}`;
@@ -276,46 +330,42 @@ export default function CameraTable({
 
               <TableCell className="min-w-[220px]">
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => (onView ? onView(cam.camera_id) : router.push(`/cameras/${cam.camera_id}`))}
-                    title="View"
-                    aria-label="View"
-                    className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  {/* View */}
+                  <IconAction
+                    label="View"
+                    variant="primary"
+                    onClick={() =>
+                      onView ? onView(cam.camera_id) : router.push(`/cameras/${cam.camera_id}`)
+                    }
                   >
                     <Eye className="h-4 w-4" />
-                  </button>
+                  </IconAction>
 
-                  <button
-                    type="button"
-                    onClick={goEdit}
-                    title="Edit"
-                    aria-label="Edit"
-                    className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  >
+                  {/* Edit (เปิด modal เดิม) */}
+                  <IconAction label="Edit" variant="primary" onClick={goEdit}>
                     <Pencil className="h-4 w-4" />
-                  </button>
+                  </IconAction>
 
-                  <button
-                    type="button"
-                    onClick={() => (onDetails ? onDetails(cam) : router.push(`/cameras/${cam.camera_id}/details`))}
-                    title="Details"
-                    aria-label="Details"
-                    className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:border-[var(--color-primary)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  {/* Details */}
+                  <IconAction
+                    label="Details"
+                    variant="primary"
+                    onClick={() =>
+                      onDetails ? onDetails(cam) : router.push(`/cameras/${cam.camera_id}/details`)
+                    }
                   >
                     <CircleAlert className="h-4 w-4" />
-                  </button>
+                  </IconAction>
 
-                  <button
-                    type="button"
-                    onClick={() => openDelete(cam)}
-                    title="Delete"
-                    aria-label="Delete"
+                  {/* Delete */}
+                  <IconAction
+                    label="Delete"
+                    variant="danger"
                     disabled={busyId === cam.camera_id}
-                    className="inline-flex items-center justify-center gap-2 px-3 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:border-[var(--color-danger)] hover:text-white transition focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    onClick={() => openDelete(cam)}
                   >
                     <Trash2 className="h-4 w-4" />
-                  </button>
+                  </IconAction>
                 </div>
               </TableCell>
             </TableRow>

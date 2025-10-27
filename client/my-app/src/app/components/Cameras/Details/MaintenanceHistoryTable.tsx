@@ -5,7 +5,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  ArrowDown, ArrowUp, ArrowUpDown, ClipboardCheck, Hammer, MoreVertical,
+  ArrowDown, ArrowUp, ArrowUpDown, ClipboardCheck, Hammer,
   RefreshCw, Search, Settings, Wrench, ArrowUpCircle, User, Pencil, Trash2, Plus
 } from "lucide-react";
 import {
@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Camera } from "@/app/models/cameras.model";
 import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
+import {
+  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 /* =========================================================
    Types
@@ -22,20 +25,20 @@ import { DeleteConfirmModal } from "@/app/components/Utilities/AlertsPopup";
 type ApiMaintenance = {
   maintenance_id: number;
   camera_id: number;
-  maintenance_date: string;             // "YYYY-MM-DD"
-  maintenance_type: string;             // e.g. "routine check"
+  maintenance_date: string;
+  maintenance_type: string;
   maintenance_technician: string;
   maintenance_note: string;
-  maintenance_created_date?: string;    // "YYYY-MM-DD"
-  maintenance_created_time?: string;    // "HH:mm:ss"
+  maintenance_created_date?: string;
+  maintenance_created_time?: string;
 };
 
 type Row = {
   id: number;
   cameraId: number;
-  date: string;       // "YYYY-MM-DD"
-  type: string;       // Title Case for UI
-  typeRaw: string;    // raw lowercase for API conversions
+  date: string;
+  type: string;     // UI Title Case
+  typeRaw: string;  // api lowercase
   technician: string;
   notes: string;
 };
@@ -47,14 +50,9 @@ type SortOrder = "asc" | "desc" | null;
    Helpers
 ========================================================= */
 function toTitleCase(s: string) {
-  return s
-    .trim()
-    .split(/\s+/)
-    .map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-    .join(" ");
+  return s.trim().split(/\s+/).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(" ");
 }
 function toApiType(s: string) {
-  // UI -> API: Title Case → lowercase with space
   return s.trim().toLowerCase();
 }
 
@@ -62,46 +60,84 @@ function toApiType(s: string) {
    Badge
 ========================================================= */
 const TYPE_META: Record<string, { icon: React.ReactNode; classes: string }> = {
-  "Routine Check": {
-    icon: <ClipboardCheck className="w-3 h-3 mr-1" />,
-    classes: "border border-blue-300 text-blue-700 bg-blue-50",
-  },
-  Repair: {
-    icon: <Wrench className="w-3 h-3 mr-1" />,
-    classes: "border border-red-300 text-red-700 bg-red-50",
-  },
-  Installation: {
-    icon: <Hammer className="w-3 h-3 mr-1" />,
-    classes: "border border-emerald-300 text-emerald-700 bg-emerald-50",
-  },
-  Upgrade: {
-    icon: <ArrowUpCircle className="w-3 h-3 mr-1" />,
-    classes: "border border-purple-300 text-purple-700 bg-purple-50",
-  },
-  Replacement: {
-    icon: <RefreshCw className="w-3 h-3 mr-1" />,
-    classes: "border border-orange-300 text-orange-700 bg-orange-50",
-  },
-  Inspection: {
-    icon: <Search className="w-3 h-3 mr-1" />,
-    classes: "border border-amber-300 text-amber-700 bg-amber-50",
-  },
-  Configuration: {
-    icon: <Settings className="w-3 h-3 mr-1" />,
-    classes: "border border-teal-300 text-teal-700 bg-teal-50",
-  },
+  "Routine Check": { icon: <ClipboardCheck className="w-3 h-3 mr-1" />, classes: "border border-blue-300 text-blue-700 bg-blue-50" },
+  Repair: { icon: <Wrench className="w-3 h-3 mr-1" />, classes: "border border-red-300 text-red-700 bg-red-50" },
+  Installation: { icon: <Hammer className="w-3 h-3 mr-1" />, classes: "border border-emerald-300 text-emerald-700 bg-emerald-50" },
+  Upgrade: { icon: <ArrowUpCircle className="w-3 h-3 mr-1" />, classes: "border border-purple-300 text-purple-700 bg-purple-50" },
+  Replacement: { icon: <RefreshCw className="w-3 h-3 mr-1" />, classes: "border border-orange-300 text-orange-700 bg-orange-50" },
+  Inspection: { icon: <Search className="w-3 h-3 mr-1" />, classes: "border border-amber-300 text-amber-700 bg-amber-50" },
+  Configuration: { icon: <Settings className="w-3 h-3 mr-1" />, classes: "border border-teal-300 text-teal-700 bg-teal-50" },
 };
 
 function MaintenanceTypeBadge({ type }: { type: string }) {
-  const meta = TYPE_META[type] ?? {
-    icon: <ClipboardCheck className="w-3 h-3 mr-1" />,
-    classes: "border border-gray-300 text-gray-700 bg-gray-50",
-  };
+  const meta = TYPE_META[type] ?? { icon: <ClipboardCheck className="w-3 h-3 mr-1" />, classes: "border border-gray-300 text-gray-700 bg-gray-50" };
   return (
     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${meta.classes}`}>
       {meta.icon}
       {type}
     </span>
+  );
+}
+
+/* =========================================================
+   Minimal Icon Button (Ghost → Full)
+========================================================= */
+function IconGhostFullBtn({
+  label,
+  variant = "primary", // primary | danger
+  disabled,
+  onClick,
+  className = "",
+  children,
+}: {
+  label: string;
+  variant?: "primary" | "danger";
+  disabled?: boolean;
+  onClick?: () => void;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const palette =
+    variant === "danger"
+      ? {
+        border: "border-[var(--color-danger)]",
+        text: "text-[var(--color-danger)]",
+        hoverBg: "hover:bg-[var(--color-danger)]",
+        focusRing: "focus:ring-[var(--color-danger)]",
+      }
+      : {
+        border: "border-[var(--color-primary)]",
+        text: "text-[var(--color-primary)]",
+        hoverBg: "hover:bg-[var(--color-primary)]",
+        focusRing: "focus:ring-[var(--color-primary)]",
+      };
+
+  return (
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={label}
+            disabled={disabled}
+            onClick={onClick}
+            className={[
+              "inline-flex items-center justify-center h-8 w-8 rounded-full",
+              "bg-transparent border", palette.border, palette.text,
+              "hover:text-white", palette.hoverBg, "hover:border-transparent",
+              "transition focus:outline-none focus:ring-2 focus:ring-offset-2", palette.focusRing,
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              className,
+            ].join(" ")}
+          >
+            {children}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -119,9 +155,8 @@ function AddMaintenanceModal({
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
 
-  // form fields
   const [date, setDate] = useState<string>("");
-  const [type, setType] = useState<string>("Routine Check"); // UI label
+  const [type, setType] = useState<string>("Routine Check");
   const [technician, setTechnician] = useState<string>("");
   const [note, setNote] = useState<string>("");
 
@@ -129,18 +164,9 @@ function AddMaintenanceModal({
     try {
       setSubmitting(true);
       setErr("");
+      if (!camId || !date || !type || !technician) throw new Error("Please fill date, type, and technician.");
 
-      if (!camId || !date || !type || !technician) {
-        throw new Error("Please fill date, type, and technician.");
-      }
-
-      const body = {
-        technician,
-        type: toApiType(type), // api expects lowercase words
-        date,
-        note,
-      };
-
+      const body = { technician, type: toApiType(type), date, note };
       const res = await fetch(`/api/cameras/${camId}/maintenance`, {
         method: "POST",
         headers: {
@@ -154,7 +180,6 @@ function AddMaintenanceModal({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
 
-      // Some backends return created object; if not, construct from form:
       const created: ApiMaintenance = json?.data?.[0] || {
         maintenance_id: json?.data?.maintenance_id ?? Math.floor(Math.random() * 1e9),
         camera_id: camId,
@@ -176,8 +201,6 @@ function AddMaintenanceModal({
 
       onAdded(row);
       setOpen(false);
-
-      // reset
       setDate("");
       setType("Routine Check");
       setTechnician("");
@@ -276,7 +299,7 @@ function AddMaintenanceModal({
 }
 
 /* =========================================================
-   Edit Modal
+   Edit Modal (Trigger = Ghost→Full icon)
 ========================================================= */
 function EditMaintenanceModal({
   row,
@@ -290,7 +313,7 @@ function EditMaintenanceModal({
   const [err, setErr] = useState("");
 
   const [date, setDate] = useState<string>(row.date);
-  const [type, setType] = useState<string>(row.type); // Title Case
+  const [type, setType] = useState<string>(row.type);
   const [technician, setTechnician] = useState<string>(row.technician);
   const [note, setNote] = useState<string>(row.notes);
 
@@ -299,13 +322,7 @@ function EditMaintenanceModal({
       setSubmitting(true);
       setErr("");
 
-      const body = {
-        technician,
-        type: toApiType(type),
-        date,
-        note,
-      };
-
+      const body = { technician, type: toApiType(type), date, note };
       const res = await fetch(`/api/cameras/maintenance/${row.id}`, {
         method: "PUT",
         headers: {
@@ -319,15 +336,7 @@ function EditMaintenanceModal({
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
 
-      const updated: Row = {
-        ...row,
-        date,
-        type,
-        typeRaw: body.type,
-        technician,
-        notes: note,
-      };
-
+      const updated: Row = { ...row, date, type, typeRaw: body.type, technician, notes: note };
       onUpdated(updated);
       setOpen(false);
     } catch (e: any) {
@@ -339,16 +348,28 @@ function EditMaintenanceModal({
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <button
-          type="button"
-          title="Edit"
-          aria-label="Edit"
-          className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-primary)] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white transition"
-        >
-          <Pencil className="h-4 w-4" />
-        </button>
-      </AlertDialogTrigger>
+      {/* Tooltip → Trigger → Button (ghost→full) */}
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AlertDialogTrigger asChild>
+              <button
+                type="button"
+                aria-label="Edit"
+                className={[
+                  "inline-flex items-center justify-center h-8 w-8 rounded-full",
+                  "bg-transparent border border-[var(--color-primary)] text-[var(--color-primary)]",
+                  "hover:bg-[var(--color-primary)] hover:text-white hover:border-transparent",
+                  "transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-primary)]",
+                ].join(" ")}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+            </AlertDialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="text-xs">Edit</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
 
       <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
         <AlertDialogHeader>
@@ -374,13 +395,8 @@ function EditMaintenanceModal({
               className="w-full rounded-md border px-3 py-2 outline-none focus:ring focus:ring-blue-100"
             >
               {[
-                "Routine Check",
-                "Repair",
-                "Installation",
-                "Upgrade",
-                "Replacement",
-                "Inspection",
-                "Configuration",
+                "Routine Check", "Repair", "Installation", "Upgrade",
+                "Replacement", "Inspection", "Configuration",
               ].map(t => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
@@ -435,7 +451,6 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
   const [sortOrder, setSortOrder] = useState<SortOrder>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  // ⬇️ state สำหรับ modal ลบ
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Row | null>(null);
   const [busyDelete, setBusyDelete] = useState(false);
@@ -528,18 +543,15 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
   function onAdded(row: Row) {
     setRecords(prev => [row, ...prev]);
   }
-
   function onUpdated(row: Row) {
     setRecords(prev => prev.map(r => (r.id === row.id ? row : r)));
   }
 
-  // ⬇️ เปิด modal ลบ
   function askDelete(row: Row) {
     setDeleteTarget(row);
     setDeleteOpen(true);
   }
 
-  // ⬇️ ยืนยันลบ (PATCH แล้วค่อยลบออกจาก state)
   async function confirmDelete() {
     if (!deleteTarget) return;
     try {
@@ -642,19 +654,25 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
                   <TableCell className="px-2 py-3 whitespace-pre-wrap break-words align-top text-left">
                     {rec.notes}
                   </TableCell>
+
                   <TableCell className="px-2 py-3 align-top text-left">
                     <div className="flex items-center gap-2">
+                      {/* Edit (ghost→full primary) */}
                       <EditMaintenanceModal row={rec} onUpdated={onUpdated} />
-                      <button
-                        type="button"
-                        title="Delete"
-                        aria-label="Delete"
-                        onClick={() => askDelete(rec)}
-                        disabled={busyId === rec.id || busyDelete}
-                        className="inline-flex items-center justify-center gap-2 px-2 py-1 rounded-sm bg-white border border-[var(--color-danger)] text-[var(--color-danger)] hover:bg-[var(--color-danger)] hover:text-white transition"
+
+                      {/* Delete (ghost→full danger) */}
+                      <IconGhostFullBtn
+                        label="Delete"
+                        variant="danger"
+                        disabled={busyDelete}
+                        onClick={() => {
+                          if (busyDelete) return;
+                          setDeleteTarget(rec);   // ต้องตั้ง target ก่อน
+                          setDeleteOpen(true);    // แล้วค่อยเปิด modal
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
-                      </button>
+                      </IconGhostFullBtn>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -664,7 +682,7 @@ export default function CameraMaintenance({ camera }: { camera: Camera }) {
         </Table>
       </div>
 
-      {/* 🔴 Modal ลบ (สไตล์เดียวกับ Event) */}
+      {/* Modal ลบ */}
       <DeleteConfirmModal
         open={deleteOpen}
         onOpenChange={(v) => {

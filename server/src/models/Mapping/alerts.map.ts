@@ -1,7 +1,25 @@
-import { Alert, AlertSafe, AlertSafeDelete, LogItem, NoteItem, TrendAlertItem } from "../alerts.model";
+import * as Model from "../alerts.model";
 import { splitDateTime } from "./timeDate.map"
 
-export function mapToAlert(row: any): Alert {
+export function mapAlertToSaveResponse(row: any): Model.Alerts {
+
+    const createdAt = splitDateTime(row.alr_created_at);
+
+    return {
+        alert_id: row.alr_id,
+        creator_id: row.alr_created_by,
+        camera_id: row.alr_cam_id,
+        footage_id: row.alr_fgt_id,
+        event_id: row.alr_evt_id,
+        alert_severity: row.alr_severity,
+        alert_status: row.alr_status,
+        alert_description: row.alr_description,
+        alert_created_at: createdAt.date + ' ' + createdAt.time,
+        alert_is_use: row.alr_is_use
+    };
+}
+
+export function mapToAlert(row: any): Model.Alert {
 
     const alert = splitDateTime(row.alr_create_date);
     const camera = splitDateTime(row.cam_installation_date);
@@ -54,7 +72,7 @@ export function mapToAlert(row: any): Alert {
     };
 }
 
-export const mapRowToAlertItem = (row: any): AlertSafe => {
+export const mapRowToAlertItem = (row: any): Model.AlertSafe => {
   
     const { date, time } = splitDateTime(row.alr_create_date);
   
@@ -72,12 +90,12 @@ export const mapRowToAlertItem = (row: any): AlertSafe => {
     };
   };
 
-export const mapRowToAlertItemDelete = (row: any): AlertSafeDelete => ({
+export const mapRowToAlertItemDelete = (row: any): Model.AlertSafeDelete => ({
     id: row.alr_id,
     is_use: row.alr_is_use,
 });
 
-export const mapRowToLogItem = (row: any): LogItem => {
+export const mapRowToLogItem = (row: any): Model.LogItem => {
 
     const { date, time } = splitDateTime(row.loa_create_date);
 
@@ -90,7 +108,7 @@ export const mapRowToLogItem = (row: any): LogItem => {
     }
 };
 
-export const mapRowToNoteItem = (row: any): NoteItem => {
+export const mapRowToNoteItem = (row: any): Model.NoteItem => {
 
     const { date, time } = splitDateTime(row.anh_update_date);
 
@@ -103,7 +121,7 @@ export const mapRowToNoteItem = (row: any): NoteItem => {
     }
 };
 
-export const mapRowToTrendItem = (row: any): TrendAlertItem => ({
+export const mapRowToTrendItem = (row: any): Model.TrendAlertItem => ({
     severity: row.alr_severity,
     count: Number(row.count),
 });

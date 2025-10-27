@@ -70,7 +70,7 @@ router.get("/:alr_id/logs", ctrl.indexLogs);
 
 /* ---------- Collection ---------- */
 router.get("/", ctrl.getAlerts); // ✅
-router.post("/", ctrl.store);
+router.post("/", ctrl.createAlert); // ✅
 
 /* ---------- Item ---------- */
 // router.get("/:alr_id", ctrl.show);

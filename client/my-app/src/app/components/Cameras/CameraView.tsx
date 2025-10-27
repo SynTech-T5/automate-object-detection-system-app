@@ -8,7 +8,7 @@ import {
 import ToggleViewButton from "@/app/components/Cameras/ToggleViewButton";
 import CreateCameraForm from "@/app/components/Forms/CreateCameraForm";
 import { Separator } from "@/components/ui/separator";
-import RefreshButton from "@/app/components/Utilities/RefreshButton";
+import RefreshButton from "@/app/components/Utilities/RefreshCamerasButton";
 
 type ViewMode = "grid" | "list";
 const base = process.env.NEXT_PUBLIC_APP_URL!;

@@ -12,6 +12,36 @@ export async function getAlerts() {
     return rows
 }
 
+// ✅
+export async function insertAlert(
+    user_id: number, 
+    camera_id: number, 
+    footage_id: number, 
+    event_id: number, 
+    severity: string, 
+    description: string
+) {
+    const { rows } = await pool.query(`
+        INSERT INTO alerts(
+            alr_created_by, 
+            alr_cam_id, 
+            alr_fgt_id, 
+            alr_evt_id, 
+            alr_severity, 
+            alr_description
+        ) VALUES($1, $2, $3, $4, $5, $6)
+        RETURNING *;
+    `,[
+        user_id, 
+        camera_id, 
+        footage_id, 
+        event_id, 
+        severity, 
+        description
+    ]);
+
+    return Mapping.mapAlertToSaveResponse(rows[0]);
+}
 
 /**
  * ดึงรายการ Alert ทั้งหมดที่ใช้งานอยู่

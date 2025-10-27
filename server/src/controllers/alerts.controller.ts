@@ -13,7 +13,32 @@ export async function getAlerts(req: Request, res: Response, next: NextFunction)
     }
 }
 
+// ✅
+export async function createAlert(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { 
+            user_id, 
+            camera_id, 
+            footage_id, 
+            event_id, 
+            severity, 
+            description 
+        } = req.body;
 
+        const alert = await AlertService.insertAlert(
+            user_id, 
+            camera_id, 
+            footage_id, 
+            event_id, 
+            severity, 
+            description
+        );
+        
+        return res.status(201).json({ message: 'Created successfully', data: alert });
+    } catch (err) {
+        next(err);
+    }
+}
 
 /**
  * Controller: ดึงรายการ Alerts ทั้งหมดที่ถูกใช้งาน
