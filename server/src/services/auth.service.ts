@@ -138,9 +138,9 @@ export async function registerUser(username: string, email: string, password: st
     const hashPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
     const { rows } = await pool.query(`
-        INSERT INTO users(usr_username, usr_email, usr_password ,usr_role_id)
+        INSERT INTO users(usr_username, usr_email, usr_password ,usr_rol_id)
         VALUES($1, $2, $3, $4)
-        RETURNING usr_id, usr_username, usr_email, usr_role_id,
+        RETURNING usr_id, usr_username, usr_email, usr_rol_id,
               (SELECT rol_name FROM roles WHERE rol_id = $4) AS usr_role
     `, [username, email, hashPassword, role_id]);
 

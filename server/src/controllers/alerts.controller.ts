@@ -1,6 +1,20 @@
 import { Request, Response, NextFunction } from "express";
 import * as AlertService from "../services/alerts.service";
 
+
+// ✅
+export async function getAlerts(req: Request, res: Response, next: NextFunction) {
+    try {
+        const list = await AlertService.getAlerts();
+        
+        return res.status(200).json({ message: 'Fetched successfully', data: list });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+
 /**
  * Controller: ดึงรายการ Alerts ทั้งหมดที่ถูกใช้งาน
  *

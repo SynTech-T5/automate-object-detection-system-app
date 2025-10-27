@@ -1067,3 +1067,59 @@ INSERT INTO cameras (
 (1, 4, 'Server Room Cam 02', 'url', 'rtsp://192.168.1.17:554/live', 'fixed', TRUE, 'Backup view for thermal camera'),
 (1, 5, 'Warehouse Exit Cam 01', 'url', 'rtsp://192.168.1.18:554/live', 'fixed', TRUE, 'Rear exit of the warehouse'),
 (1, 5, 'Warehouse Exit Cam 02', 'url', 'rtsp://192.168.1.19:554/live', 'ptz', TRUE, 'Covers full rear area');
+
+-- ============================================================
+-- Seed Footages (10 rows) -> อ้างอิง cameras.cam_id = 1..10
+-- ============================================================
+INSERT INTO footages (fgt_cam_id, fgt_path) VALUES
+  (1,  '/videos/2025-10-27/cam01_motion_12-00-01.mp4'),
+  (2,  '/videos/2025-10-27/cam02_intrusion_12-01-10.mp4'),
+  (3,  '/videos/2025-10-27/cam03_tamper_12-02-20.mp4'),
+  (4,  '/videos/2025-10-27/cam04_offline_12-03-30.mp4'),
+  (5,  '/videos/2025-10-27/cam05_motion_12-04-40.mp4'),
+  (6,  '/videos/2025-10-27/cam06_intrusion_12-05-50.mp4'),
+  (7,  '/videos/2025-10-27/cam07_tamper_12-07-00.mp4'),
+  (8,  '/videos/2025-10-27/cam08_offline_12-08-10.mp4'),
+  (9,  '/videos/2025-10-27/cam09_motion_12-09-20.mp4'),
+  (10, '/videos/2025-10-27/cam10_intrusion_12-10-30.mp4');
+
+-- หมายเหตุ: ตารางเพิ่งถูก DROP/CREATE ใหม่
+-- fgt_id จะเริ่มจาก 1..10 ตามลำดับแทรกข้างบน
+
+-- ============================================================
+-- Seed Alerts (10 rows) -> map cam_id 1..10, fgt_id 1..10, evt_id 1..4
+-- events: 1=Motion Detected, 2=Intrusion, 3=Tamper, 4=Offline
+-- alr_created_by ใช้ usr_id = 1 (user 'test')
+-- ============================================================
+INSERT INTO alerts (
+  alr_created_by, alr_cam_id, alr_fgt_id, alr_evt_id,
+  alr_severity, alr_status, alr_description, alr_reason, alr_created_at
+) VALUES
+  (1, 1,  1,  1, 'medium',  'active',   'Movement detected near main gate',               'Sensitivity threshold exceeded',        CURRENT_TIMESTAMP - INTERVAL '12 minutes'),
+  (1, 2,  2,  2, 'high',    'active',   'Unauthorized entry detected at gate overview',   'ROI intrusion line crossed',            CURRENT_TIMESTAMP - INTERVAL '11 minutes'),
+  (1, 3,  3,  3, 'high',    'active',   'Possible camera tampering in lobby',             'Camera angle changed abruptly',         CURRENT_TIMESTAMP - INTERVAL '10 minutes'),
+  (1, 4,  4,  4, 'critical','active',   'Server Room Cam 02 went offline',                'Lost heartbeat > 60s',                  CURRENT_TIMESTAMP - INTERVAL '9 minutes'),
+  (1, 5,  5,  1, 'low',     'resolved', 'Motion in Parking Lot A panoramic view',         'Short burst motion; auto-resolved',     CURRENT_TIMESTAMP - INTERVAL '8 minutes'),
+  (1, 6,  6,  2, 'critical','active',   'Intrusion at Parking Lot A entrance',            'Multiple objects crossed boundary',     CURRENT_TIMESTAMP - INTERVAL '7 minutes'),
+  (1, 7,  7,  3, 'medium',  'resolved', 'Thermal cam tamper suspicion in server room',    'Thermal image offset detected',         CURRENT_TIMESTAMP - INTERVAL '6 minutes'),
+  (1, 8,  8,  4, 'high',    'dismissed','Intermittent offline event on backup camera',    'Network jitter; acknowledged by staff', CURRENT_TIMESTAMP - INTERVAL '5 minutes'),
+  (1, 9,  9,  1, 'low',     'active',   'Motion near warehouse rear exit',                'Single person detected',                 CURRENT_TIMESTAMP - INTERVAL '4 minutes'),
+  (1, 10, 10, 2, 'critical','active',   'Rear area perimeter breach detected',            'Continuous boundary violation',         CURRENT_TIMESTAMP - INTERVAL '3 minutes');
+
+  -- ============================================================
+-- Insert Maintenance History (1 record per camera)
+-- ============================================================
+
+INSERT INTO maintenance_history (
+  mnt_cam_id, mnt_date, mnt_type, mnt_technician, mnt_note
+) VALUES
+  (1, '2025-10-10', 'routine check', 'Technician A', 'ตรวจเช็คกล้องประตูหลักและทำความสะอาดเลนส์'),
+  (2, '2025-10-11', 'inspection', 'Technician B', 'ตรวจสอบการหมุนของกล้อง PTZ ปกติ'),
+  (3, '2025-10-12', 'repair', 'Technician C', 'เปลี่ยนสาย LAN ที่ชำรุดในโซน Lobby'),
+  (4, '2025-10-13', 'routine check', 'Technician D', 'เช็กภาพและระบบบันทึก Lobby Cam 02 ปกติ'),
+  (5, '2025-10-14', 'upgrade', 'Technician E', 'อัปเกรด firmware กล้อง panoramic ล่าสุด'),
+  (6, '2025-10-15', 'routine check', 'Technician F', 'ตรวจสอบสัญญาณ Parking A Cam 02'),
+  (7, '2025-10-16', 'inspection', 'Technician G', 'ตรวจสอบอุณหภูมิกล้อง Thermal อยู่ในเกณฑ์ปกติ'),
+  (8, '2025-10-17', 'repair', 'Technician H', 'เปลี่ยน adapter กล้อง Server Room Cam 02'),
+  (9, '2025-10-18', 'routine check', 'Technician I', 'ตรวจเช็คเลนส์และโฟกัสกล้อง Warehouse Exit Cam 01'),
+  (10,'2025-10-19', 'installation', 'Technician J', 'ติดตั้งกล้อง Warehouse Exit Cam 02 ใหม่หลังซ่อมบำรุง');

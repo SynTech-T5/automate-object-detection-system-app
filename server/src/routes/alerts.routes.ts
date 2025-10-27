@@ -69,7 +69,7 @@ router.get("/:alr_id/notes", ctrl.indexNotes);
 router.get("/:alr_id/logs", ctrl.indexLogs);
 
 /* ---------- Collection ---------- */
-router.get("/", ctrl.index);
+router.get("/", ctrl.getAlerts); // ✅
 router.post("/", ctrl.store);
 
 /* ---------- Item ---------- */

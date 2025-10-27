@@ -2,6 +2,17 @@ import { pool } from '../config/db';
 import * as Model from '../models/alerts.model'
 import * as Mapping from '../models/Mapping/alerts.map'
 
+// ✅
+export async function getAlerts() {
+    const { rows } = await pool.query(`
+        SELECT * FROM v_alerts_overview
+        ORDER BY created_at DESC;
+    `);
+
+    return rows
+}
+
+
 /**
  * ดึงรายการ Alert ทั้งหมดที่ใช้งานอยู่
  *
