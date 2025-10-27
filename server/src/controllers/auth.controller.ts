@@ -25,7 +25,7 @@ const cookieBase = {
   secure: isProd,
   sameSite: COOKIE_SAMESITE,
   path: '/',
-  // domain: COOKIE_DOMAIN,
+  domain: COOKIE_DOMAIN,
 } as const;
 
 /**
