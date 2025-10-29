@@ -7,6 +7,8 @@ import {
   AlertSummaryProvider,
   DashboardSummaryAlertSection,
 } from "@/app/components/Utilities/AlertSummaryProvider";
+import DistributionChart from "@/app/components/Alerts/Chart/Distribution";
+import Severity from "@/app/components/Alerts/Chart/Severity";
 import RefreshAlertsButton from "@/app/components/Utilities/RefreshAlertsButton";
 import { Separator } from "@/components/ui/separator";
 
@@ -191,6 +193,34 @@ export default function AlertView() {
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
           <AlertTable alerts={filtered} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
+          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
+            <label
+              htmlFor="AlertTrends"
+              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+            >
+              Alert Severity
+            </label>
+          </div>
+          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+          <Severity items={filtered} />
+        </div>
+
+        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
+          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
+            <label
+              htmlFor="AlertDistribution"
+              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+            >
+              Alert Distribution by Event Type
+            </label>
+          </div>
+          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
+          <DistributionChart items={filtered} />
         </div>
       </div>
     </div>

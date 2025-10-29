@@ -3,8 +3,6 @@ import { Separator } from "@/components/ui/separator";
 import AlertView from "@/app/components/Alerts/AlertsView";
 import SearchAlertsInput from "@/app/components/Alerts/SearchAlertsInput";
 import AlertFilters from "@/app/components/Alerts/AlertFilters";
-import DistributionChart from "@/app/components/Alerts/Chart/Distribution";
-import Trend from "@/app/components/Alerts/Chart/Trends";
 import RecentAlerts from "@/app/components/Alerts/RecentAlerts";
 
 export default function AlertsPage() {
@@ -31,35 +29,6 @@ export default function AlertsPage() {
 
       {/* === Summary + Table + Refresh === */}
       <AlertView />
-
-      {/* === ส่วนล่างเดิม: Trends / Distribution / Recent === */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
-          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
-            <label
-              htmlFor="AlertTrends"
-              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
-            >
-              Alert Trends
-            </label>
-          </div>
-          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
-          <Trend />
-        </div>
-
-        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
-          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
-            <label
-              htmlFor="AlertDistribution"
-              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
-            >
-              Alert Distribution by Event Type
-            </label>
-          </div>
-          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
-          <DistributionChart />
-        </div>
-      </div>
 
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
         <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
