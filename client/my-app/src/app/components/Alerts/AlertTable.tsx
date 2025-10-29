@@ -219,6 +219,15 @@ export default function AlertTable({ alerts }: { alerts: Alert[] }) {
   const [rows, setRows] = useState<Alert[]>(alerts);
   useEffect(() => setRows(alerts), [alerts]);
 
+  // ⬇️ NEW: Pagination state
+  const PAGE_SIZE = 25;
+  const [page, setPage] = useState(1);
+
+  // ให้กลับไปหน้า 1 เมื่อมีการเปลี่ยนแปลงข้อมูล/เรียงลำดับ
+  useEffect(() => {
+    setPage(1);
+  }, [rows, sortKey, sortOrder]);
+
   // me -> ใช้ usr_id ตอนยิง PATCH
   const [me, setMe] = useState<Me | null>(null);
   useEffect(() => {
@@ -337,205 +346,249 @@ export default function AlertTable({ alerts }: { alerts: Alert[] }) {
     if (sortOrder === "desc") return <ArrowDown className="w-4 h-4 ml-1 inline-block" />;
   };
 
+  // ⬇️ NEW: slice ตามหน้า
+  const total = sortedAlerts.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, total);
+  const pagedAlerts = sortedAlerts.slice(start, end);
+
   if (!rows?.length) {
     return <div className="text-sm text-gray-500">No alerts to display.</div>;
   }
 
   return (
     <>
-      <Table className="table-auto w-full">
-        <TableHeader>
-          <TableRow className="border-b border-[var(--color-primary)]">
-            {[
-              { key: "severity", label: "Severity" },
-              { key: "id", label: "Alert ID" },
-              { key: "timestamp", label: "Timestamp" },
-              { key: "camera", label: "Camera" },
-              { key: "event", label: "Event Type" },
-              { key: "location", label: "Location" },
-              { key: "status", label: "Status" },
-            ].map(({ key, label }) => (
-              <TableHead
-                key={key}
-                onClick={() => handleSort(key as SortKey)}
-                className="cursor-pointer select-none text-[var(--color-primary)]"
-              >
-                <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
-                  <span>{label}</span>
-                  {renderSortIcon(key as SortKey)}
-                </div>
-              </TableHead>
-            ))}
-            <TableHead className="text-[var(--color-primary)]">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-
-        <TableBody>
-          {sortedAlerts.map((alr) => {
-            const EventIcon = iconFromName(alr.event?.icon);
-            const alrCode = `ALR${String(alr.id).padStart(3, "0")}`;
-            return (
-              <TableRow key={alr.id}>
-                <TableCell><SeverityBadge value={alr.severity} /></TableCell>
-                <TableCell>{alrCode}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Icons.Clock3 className="h-4 w-4 text-[var(--color-primary)]" />
-                    <span>{alr.create_date} {alr.create_time}</span>
+      <div className="col-span-full w-full">
+        <Table className="table-auto w-full">
+          <TableHeader>
+            <TableRow className="border-b border-[var(--color-primary)]">
+              {[
+                { key: "severity", label: "Severity" },
+                { key: "id", label: "Alert ID" },
+                { key: "timestamp", label: "Timestamp" },
+                { key: "camera", label: "Camera" },
+                { key: "event", label: "Event Type" },
+                { key: "location", label: "Location" },
+                { key: "status", label: "Status" },
+              ].map(({ key, label }) => (
+                <TableHead
+                  key={key}
+                  onClick={() => handleSort(key as SortKey)}
+                  className="cursor-pointer select-none text-[var(--color-primary)]"
+                >
+                  <div className="flex items-center justify-between pr-3 border-r border-[var(--color-primary)] w-full">
+                    <span>{label}</span>
+                    {renderSortIcon(key as SortKey)}
                   </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Icons.Camera className="h-4 w-4 text-[var(--color-primary)]" />
-                    <span>{alr.camera.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <EventIcon className="h-4 w-4 text-[var(--color-primary)]" />
-                    <span>{alr.event.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-[var(--color-primary)]" />
-                    <span>{alr.camera.location.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell><StatusBadge value={alr.status} /></TableCell>
+                </TableHead>
+              ))}
+              <TableHead className="text-[var(--color-primary)]">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
 
-                <TableCell className="whitespace-nowrap">
-                  <ActionBar
-                    status={alr.status}
-                    onView={() => viewAlert(alr.id)}
-                    onResolve={() => resolveAlert(alr.id)}
-                    onDismiss={() => dismissAlert(alr.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-
-      {/* Modal: ใส่ reason + แสดง Meta (ไม่มีปุ่ม X) */}
-      <AlertDialog open={openModal} onOpenChange={setOpenModal}>
-        <AlertDialogContent className="sm:max-w-lg [&>button:last-child]:hidden">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-[var(--color-primary)]">
-              {pending?.status === "resolved" ? "Resolve Alert" : "Dismiss Alert"}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-sm text-muted-foreground">
-              Review alert details and provide a reason before continuing.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          {/* Meta block (minimal แบบการ์ด) */}
-          {pendingAlert && (
-            <div className="rounded-lg border border-[var(--color-primary-bg)] bg-white p-4">
-              <div className="flex items-center justify-between gap-2">
-                {/* Event Icon + Name */}
-                <div className="flex items-center gap-2 min-w-0">
-                  {(() => {
-                    const EventIcon = iconFromName(pendingAlert.event?.icon);
-                    return (
-                      <EventIcon className="h-5 w-5 text-[var(--color-primary)] shrink-0" />
-                    );
-                  })()}
-                  <div className="min-w-0">
-                    <div className="font-semibold text-[var(--color-primary)] truncate">
-                      {pendingAlert.event?.name ?? "-"}
+          <TableBody>
+            {pagedAlerts.map((alr) => {
+              const EventIcon = iconFromName(alr.event?.icon);
+              const alrCode = `ALR${String(alr.id).padStart(3, "0")}`;
+              return (
+                <TableRow key={alr.id}>
+                  <TableCell><SeverityBadge value={alr.severity} /></TableCell>
+                  <TableCell>{alrCode}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Icons.Clock3 className="h-4 w-4 text-[var(--color-primary)]" />
+                      <span>{alr.create_date} {alr.create_time}</span>
                     </div>
-                    <div className="text-xs text-gray-500">Event</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="px-2 py-0.5 rounded-md text-xs font-mono bg-white border border-gray-200 text-gray-700">
-                    ALR{String(pendingAlert.id).padStart(3, "0")}
-                  </span>
-                  <SeverityBadge value={pendingAlert.severity} />
-                  <StatusBadge value={pendingAlert.status} />
-                </div>
-              </div>
-
-              {/* กล้อง / เวลา / Location */}
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <Icons.Clock3 className="w-4 h-4 text-[var(--color-primary)]" />
-                  <span>{pendingAlert.create_date} {pendingAlert.create_time}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Icons.Camera className="w-4 h-4 text-[var(--color-primary)]" />
-                  <span className="truncate">{pendingAlert.camera?.name ?? "-"}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-[var(--color-primary)]" />
-                  <span className="truncate">{pendingAlert.camera?.location?.name ?? "-"}</span>
-                </div>
-              </div>
-
-              {/* Description (labeled) */}
-              {(() => {
-                const desc = pendingAlert?.alert_description ?? (pendingAlert as any)?.description ?? "";
-                return (
-                  <div className="mt-3 border-t pt-3">
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-                      <Icons.FileText className="w-4 h-4 text-[var(--color-primary)]" />
-                      <span className="uppercase tracking-wide">Description</span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Icons.Camera className="h-4 w-4 text-[var(--color-primary)]" />
+                      <span>{alr.camera.name}</span>
                     </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {desc?.trim() ? desc : <span className="text-gray-400">-</span>}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <EventIcon className="h-4 w-4 text-[var(--color-primary)]" />
+                      <span>{alr.event.name}</span>
                     </div>
-                  </div>
-                );
-              })()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-[var(--color-primary)]" />
+                      <span>{alr.camera.location.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell><StatusBadge value={alr.status} /></TableCell>
 
-            </div>
-          )}
+                  <TableCell className="whitespace-nowrap">
+                    <ActionBar
+                      status={alr.status}
+                      onView={() => viewAlert(alr.id)}
+                      onResolve={() => resolveAlert(alr.id)}
+                      onDismiss={() => dismissAlert(alr.id)}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
 
-          {/* Reason field */}
-          <div className="mt-4 space-y-2">
-            <label className="text-sm font-medium">Reason</label>
-            <textarea
-              value={reason}
-              onChange={(e) => {
-                setReason(e.target.value);
-                if (e.target.value.trim()) setReasonError(null);
-              }}
-              rows={4}
-              placeholder="Enter reason…"
-              className={`w-full rounded-md border p-2 text-sm outline-none focus:ring-2 ${reasonError
-                ? "border-rose-500 focus:ring-rose-500"
-                : "border-gray-300 focus:ring-[var(--color-primary)]"
-                }`}
-            />
-            {reasonError && (
-              <p className="text-xs text-rose-600">{reasonError}</p>
-            )}
+        {/* Pagination bar */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-xs text-gray-500">
+            Showing <span className="font-medium">{start + 1}</span>–
+            <span className="font-medium">{end}</span> of{" "}
+            <span className="font-medium">{total}</span>
           </div>
 
-          {/* Footer */}
-          <AlertDialogFooter className="mt-4">
-            <AlertDialogCancel className="border-gray-300 hover:bg-gray-50">
-              Cancel
-            </AlertDialogCancel>
-
-            {/* ใช้ Button ปกติแทน AlertDialogAction */}
+          <div className="flex items-center gap-2">
             <button
-              type="button"
-              onClick={submitStatus}
-              disabled={!reason.trim()} // กันพลาด UX ดีขึ้น
-              className={`px-5 h-10 rounded-md text-white disabled:opacity-50 ${pending?.status === "dismissed"
-                  ? "bg-rose-600 hover:bg-rose-700"
-                  : "bg-[var(--color-info,#0ea5e9)] hover:bg-sky-600"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page <= 1}
+              className={`px-3 py-1 rounded-md border text-sm ${page <= 1
+                ? "text-gray-400 border-gray-200"
+                : "text-gray-700 border-gray-300 hover:bg-gray-50"
                 }`}
             >
-              {pending?.status === "dismissed" ? "Dismiss" : "Resolve"}
+              Previous
             </button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div className="text-sm tabular-nums">
+              {page} / {totalPages}
+            </div>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className={`px-3 py-1 rounded-md border text-sm ${page >= totalPages
+                ? "text-gray-400 border-gray-200"
+                : "text-gray-700 border-gray-300 hover:bg-gray-50"
+                }`}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Modal: ใส่ reason + แสดง Meta (ไม่มีปุ่ม X) */}
+        <AlertDialog open={openModal} onOpenChange={setOpenModal}>
+          <AlertDialogContent className="sm:max-w-lg [&>button:last-child]:hidden">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-[var(--color-primary)]">
+                {pending?.status === "resolved" ? "Resolve Alert" : "Dismiss Alert"}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-sm text-muted-foreground">
+                Review alert details and provide a reason before continuing.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            {/* Meta block (minimal แบบการ์ด) */}
+            {pendingAlert && (
+              <div className="rounded-lg border border-[var(--color-primary-bg)] bg-white p-4">
+                <div className="flex items-center justify-between gap-2">
+                  {/* Event Icon + Name */}
+                  <div className="flex items-center gap-2 min-w-0">
+                    {(() => {
+                      const EventIcon = iconFromName(pendingAlert.event?.icon);
+                      return (
+                        <EventIcon className="h-5 w-5 text-[var(--color-primary)] shrink-0" />
+                      );
+                    })()}
+                    <div className="min-w-0">
+                      <div className="font-semibold text-[var(--color-primary)] truncate">
+                        {pendingAlert.event?.name ?? "-"}
+                      </div>
+                      <div className="text-xs text-gray-500">Event</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="px-2 py-0.5 rounded-md text-xs font-mono bg-white border border-gray-200 text-gray-700">
+                      ALR{String(pendingAlert.id).padStart(3, "0")}
+                    </span>
+                    <SeverityBadge value={pendingAlert.severity} />
+                    <StatusBadge value={pendingAlert.status} />
+                  </div>
+                </div>
+
+                {/* กล้อง / เวลา / Location */}
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Icons.Clock3 className="w-4 h-4 text-[var(--color-primary)]" />
+                    <span>{pendingAlert.create_date} {pendingAlert.create_time}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Icons.Camera className="w-4 h-4 text-[var(--color-primary)]" />
+                    <span className="truncate">{pendingAlert.camera?.name ?? "-"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[var(--color-primary)]" />
+                    <span className="truncate">{pendingAlert.camera?.location?.name ?? "-"}</span>
+                  </div>
+                </div>
+
+                {/* Description (labeled) */}
+                {(() => {
+                  const desc = pendingAlert?.alert_description ?? (pendingAlert as any)?.description ?? "";
+                  return (
+                    <div className="mt-3 border-t pt-3">
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                        <Icons.FileText className="w-4 h-4 text-[var(--color-primary)]" />
+                        <span className="uppercase tracking-wide">Description</span>
+                      </div>
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {desc?.trim() ? desc : <span className="text-gray-400">-</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+              </div>
+            )}
+
+            {/* Reason field */}
+            <div className="mt-4 space-y-2">
+              <label className="text-sm font-medium">Reason</label>
+              <textarea
+                value={reason}
+                onChange={(e) => {
+                  setReason(e.target.value);
+                  if (e.target.value.trim()) setReasonError(null);
+                }}
+                rows={4}
+                placeholder="Enter reason…"
+                className={`w-full rounded-md border p-2 text-sm outline-none focus:ring-2 ${reasonError
+                  ? "border-rose-500 focus:ring-rose-500"
+                  : "border-gray-300 focus:ring-[var(--color-primary)]"
+                  }`}
+              />
+              {reasonError && (
+                <p className="text-xs text-rose-600">{reasonError}</p>
+              )}
+            </div>
+
+            {/* Footer */}
+            <AlertDialogFooter className="mt-4">
+              <AlertDialogCancel className="border-gray-300 hover:bg-gray-50">
+                Cancel
+              </AlertDialogCancel>
+
+              {/* ใช้ Button ปกติแทน AlertDialogAction */}
+              <button
+                type="button"
+                onClick={submitStatus}
+                disabled={!reason.trim()} // กันพลาด UX ดีขึ้น
+                className={`px-5 h-10 rounded-md text-white disabled:opacity-50 ${pending?.status === "dismissed"
+                  ? "bg-rose-600 hover:bg-rose-700"
+                  : "bg-[var(--color-info,#0ea5e9)] hover:bg-sky-600"
+                  }`}
+              >
+                {pending?.status === "dismissed" ? "Dismiss" : "Resolve"}
+              </button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </>
   );
 }
