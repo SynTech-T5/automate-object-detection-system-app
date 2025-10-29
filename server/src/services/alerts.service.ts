@@ -2,7 +2,7 @@ import { pool } from '../config/db';
 import * as Model from '../models/alerts.model'
 import * as Mapping from '../models/Mapping/alerts.map'
 
-// ✅
+// ✅ 2025-10-27
 export async function getAlerts() {
     const { rows } = await pool.query(`
         SELECT * FROM v_alerts_overview
@@ -12,7 +12,7 @@ export async function getAlerts() {
     return rows;
 }
 
-// ✅
+// ✅ 2025-10-27
 export async function getAlertById(alert_id: number) {
     const { rows } = await pool.query(`
         SELECT * FROM v_alerts_overview
@@ -22,7 +22,7 @@ export async function getAlertById(alert_id: number) {
     return rows[0];
 }
 
-// ✅
+// ✅ 2025-10-28
 export async function getAlertLogs(alert_id: number) {
     const { rows } = await pool.query(`
         SELECT
@@ -43,7 +43,7 @@ export async function getAlertLogs(alert_id: number) {
     return rows.map(Mapping.mapLogsToSaveResponse);
 }
 
-// ✅
+// ✅ 2025-10-28
 export async function getAlertRelated(alert_id: number) {
     const event_name_result = await pool.query(`
         SELECT event_name 
@@ -60,7 +60,7 @@ export async function getAlertRelated(alert_id: number) {
     return rows;
 }
 
-// ✅
+// ✅ 2025-10-28
 export async function getAlertNotes(alert_id: number) {
     const { rows } = await pool.query(`
         SELECT
@@ -84,7 +84,17 @@ export async function getAlertNotes(alert_id: number) {
     return rows.map(Mapping.mapNotesToSaveResponse);
 }
 
-// ✅
+// ✅ 2025-10-29
+export async function getRecentCameraAlert() {
+    const { rows } = await pool.query(`
+        SELECT * FROM v_cameras_latest_alert
+        WHERE last_alert_at >= NOW() - INTERVAL '24 hours';
+    `);
+
+    return rows;
+}
+
+// ✅ 2025-10-28
 export async function insertAlertNote(
     user_id: number, 
     alert_id: number, 
@@ -104,7 +114,7 @@ export async function insertAlertNote(
     return Mapping.mapNotesToSaveResponse(rows[0]);
 }
 
-// ✅
+// ✅ 2025-10-28
 export async function updateAlertNote(
     user_id: number,
     note_id: number, 
@@ -122,7 +132,7 @@ export async function updateAlertNote(
     return Mapping.mapNotesToSaveResponse(rows[0]);
 }
 
-// ✅
+// ✅ 2025-10-28
 export async function removeAlertNote(
     note_id: number
 ){
@@ -139,7 +149,7 @@ export async function removeAlertNote(
 }
 
 
-// ✅
+// ✅ 2025-10-27
 export async function insertAlert(
     user_id: number, 
     camera_id: number, 
@@ -178,7 +188,35 @@ export async function insertAlert(
     `,[
         user_id,
         rows[0].alr_id,
-        'CREATE',
+        'CREATE_ALERT',
+      ]);
+
+    return Mapping.mapAlertToSaveResponse(rows[0]);
+}
+
+// ✅ 2025-10-29
+export async function updateAlertStatus(alert_id: number, status: string, reason: string, user_id: number) {
+    const { rows } = await pool.query(`
+        UPDATE alerts
+        SET 
+            alr_status = $1,
+            alr_reason = $2
+        WHERE alr_id = $3
+        RETURNING *;
+    `, [status, reason, alert_id]);
+
+    const log = await pool.query(`
+      INSERT INTO alert_logs(
+        alg_usr_id, 
+        alg_alr_id, 
+        alg_action, 
+        alg_created_at
+      )
+      VALUES($1, $2, $3, CURRENT_TIMESTAMP);
+    `,[
+        user_id,
+        rows[0].alr_id,
+        `UPDATE_STATUS`,
       ]);
 
     return Mapping.mapAlertToSaveResponse(rows[0]);

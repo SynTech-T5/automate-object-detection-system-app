@@ -8,6 +8,7 @@ export interface Alerts {
     alert_status: string;
     alert_description: string;
     alert_created_at: string;
+    alert_updated_at: string;
     alert_is_use: boolean;
 }
 

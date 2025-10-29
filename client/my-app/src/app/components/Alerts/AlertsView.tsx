@@ -15,6 +15,7 @@ type ApiAlert = {
   severity: string;        // "critical" | "high" | "medium" | "low"
   alert_id: number;
   created_at: string;      // ISO string
+  description: string;
   camera_id: number;
   camera_name: string;
   event_icon?: string;     // e.g. "shield-alert"
@@ -51,11 +52,20 @@ function splitIsoToDateTime(iso?: string): { date: string; time: string } {
 
 function normalizeToTableAlert(a: ApiAlert): TableAlert {
   const { date, time } = splitIsoToDateTime(a.created_at);
+  // รองรับทั้ง a.alert_description และ a.description
+  const desc =
+    // @ts-ignore (บาง API อาจส่งเป็น alert_description)
+    (a as any).alert_description ??
+    a.description ??
+    "";
+
   return {
     id: a.alert_id,
     severity: (a.severity ?? "").toLowerCase(),
     create_date: date,
     create_time: time,
+    // ส่งต่อไปให้ AlertTable ใช้ใน meta card
+    alert_description: desc,
     camera: {
       name: a.camera_name ?? "",
       location: { name: a.location_name ?? "" },
@@ -70,8 +80,8 @@ export default function AlertView() {
   const sp = useSearchParams();
 
   const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
-  const [alerts,  setAlerts]  = useState<TableAlert[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [alerts, setAlerts] = useState<TableAlert[]>([]);
   const [reloadTick, setReloadTick] = useState(0); // ใช้กระตุ้นให้ re-fetch
 
   const refetch = useCallback(async () => {
@@ -106,24 +116,24 @@ export default function AlertView() {
   }, [reloadTick]);
 
   // URL params (ได้จากบล็อก Search & Filter ที่อยู่บน page)
-  const q            = sp.get("q") ?? "";
-  const severityParam= (sp.get("severity") ?? "").toLowerCase();
-  const statusParam  = (sp.get("status") ?? "").toLowerCase();
-  const eventParam   = sp.get("event") ?? "";
-  const locationParam= (sp.get("location") ?? "").toLowerCase();
-  const cameraParam  = (sp.get("camera") ?? "").toLowerCase();
-  const fromParam    = sp.get("from") ?? "";
-  const toParam      = sp.get("to") ?? "";
+  const q = sp.get("q") ?? "";
+  const severityParam = (sp.get("severity") ?? "").toLowerCase();
+  const statusParam = (sp.get("status") ?? "").toLowerCase();
+  const eventParam = sp.get("event") ?? "";
+  const locationParam = (sp.get("location") ?? "").toLowerCase();
+  const cameraParam = (sp.get("camera") ?? "").toLowerCase();
+  const fromParam = sp.get("from") ?? "";
+  const toParam = sp.get("to") ?? "";
 
   // filtering
   const filtered = useMemo(() => {
     const fromDate = fromParam ? new Date(fromParam + "T00:00:00") : null;
-    const toDate   = toParam   ? new Date(toParam   + "T23:59:59.999") : null;
-    const qTokens  = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const toDate = toParam ? new Date(toParam + "T23:59:59.999") : null;
+    const qTokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
 
     return alerts.filter((a) => {
       if (severityParam && a.severity !== severityParam) return false;
-      if (statusParam   && a.status   !== statusParam)   return false;
+      if (statusParam && a.status !== statusParam) return false;
       if (eventParam && !a.event.name.toLowerCase().includes(eventParam.toLowerCase())) return false;
       if (locationParam && !a.camera.location.name.toLowerCase().includes(locationParam)) return false;
 
@@ -134,10 +144,11 @@ export default function AlertView() {
 
       const d = new Date(`${a.create_date}T${a.create_time}`);
       if (fromDate && !isNaN(+d) && d < fromDate) return false;
-      if (toDate   && !isNaN(+d) && d > toDate)   return false;
+      if (toDate && !isNaN(+d) && d > toDate) return false;
 
       if (qTokens.length) {
-        const blob = `${a.id} ${a.event.name} ${a.camera.name} ${a.camera.location.name} ${a.severity} ${a.status}`.toLowerCase();
+        const blob = `${a.id} ${a.event.name} ${a.camera.name} ${a.camera.location.name} ${a.severity} ${a.status} ${(a as any).alert_description ?? ""}`
+          .toLowerCase();
         for (const t of qTokens) if (!blob.includes(t)) return false;
       }
       return true;

@@ -4,6 +4,7 @@ import { splitDateTime } from "./timeDate.map"
 export function mapAlertToSaveResponse(row: any): Model.Alerts {
 
     const createdAt = splitDateTime(row.alr_created_at);
+    const updatedAt = splitDateTime(row.alr_updated_at);
 
     return {
         alert_id: row.alr_id,
@@ -15,6 +16,7 @@ export function mapAlertToSaveResponse(row: any): Model.Alerts {
         alert_status: row.alr_status,
         alert_description: row.alr_description,
         alert_created_at: createdAt.date + ' ' + createdAt.time,
+        alert_updated_at: updatedAt.date + ' ' + updatedAt.time,
         alert_is_use: row.alr_is_use
     };
 }

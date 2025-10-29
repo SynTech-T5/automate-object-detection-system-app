@@ -114,11 +114,10 @@ export default function EventTimeline({ alrId }: { alrId: number }) {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1}
-            className={`px-3 py-1 rounded-md border text-sm ${
-              page <= 1
+            className={`px-3 py-1 rounded-md border text-sm ${page <= 1
                 ? "text-gray-400 border-gray-200"
                 : "text-gray-700 border-gray-300 hover:bg-gray-50"
-            }`}
+              }`}
           >
             Previous
           </button>
@@ -128,11 +127,10 @@ export default function EventTimeline({ alrId }: { alrId: number }) {
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
-            className={`px-3 py-1 rounded-md border text-sm ${
-              page >= totalPages
+            className={`px-3 py-1 rounded-md border text-sm ${page >= totalPages
                 ? "text-gray-400 border-gray-200"
                 : "text-gray-700 border-gray-300 hover:bg-gray-50"
-            }`}
+              }`}
           >
             Next
           </button>
@@ -198,7 +196,7 @@ function mapActionMeta(log: LogItem) {
 
   const by = log.creator_id ? ` by @${log.creator_username}` : "";
 
-  if (action === "CREATE") {
+  if (action === "CREATE" || action === "CREATE_ALERT") {
     title = "Alert Generated";
     Icon = Icons.BellRing;
     iconColor = "text-sky-600";
@@ -210,6 +208,12 @@ function mapActionMeta(log: LogItem) {
     iconColor = "text-amber-600";
     bgRing = "bg-amber-50 ring-1 ring-inset ring-amber-200";
     description = `Alert details were updated${by}.`;
+  } else if (action === "UPDATE_STATUS") {
+    title = "Status Updated";
+    Icon = Icons.CheckCircle2;
+    iconColor = "text-sky-700";
+    bgRing = "bg-sky-50 ring-1 ring-inset ring-sky-200";
+    description = `Alert status was updated${by}.`;
   } else if (action === "DELETE") {
     title = "Alert Deleted";
     Icon = Icons.Trash2;

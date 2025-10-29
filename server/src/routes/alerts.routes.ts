@@ -49,14 +49,14 @@ import * as ctrl from "../controllers/alerts.controller";
 const router = Router();
 
 /* ---------- Utilities ---------- */
-router.get('/status', ctrl.status);
+// router.get('/status', ctrl.status);
 
-/* ---------- Analytics (static ก่อน :alr_id) ---------- */
-router.get("/analytics/trend", ctrl.trendAnalytics);              // แทน /:days_back/trend → ใช้ query ?days_back=
-router.get("/analytics/distribution", ctrl.distributionAnalytics);
+// /* ---------- Analytics (static ก่อน :alr_id) ---------- */
+// router.get("/analytics/trend", ctrl.trendAnalytics);              // แทน /:days_back/trend → ใช้ query ?days_back=
+// router.get("/analytics/distribution", ctrl.distributionAnalytics);
 
-/* ---------- Relations / Filters ---------- */
-router.get("/by-event/:evt_id", ctrl.indexByEvent);               // ชั่วคราว; แนะนำย้ายไป /api/events/:evt_id/alerts
+// /* ---------- Relations / Filters ---------- */
+// router.get("/by-event/:evt_id", ctrl.indexByEvent);               // ชั่วคราว; แนะนำย้ายไป /api/events/:evt_id/alerts
 
 /* ---------- Notes (subresource) ---------- */
 router.get("/:alr_id/notes", ctrl.getAlertNotes); // ✅
@@ -72,9 +72,12 @@ router.get("/:alr_id/notes", ctrl.getAlertNotes); // ✅
 router.get("/", ctrl.getAlerts); // ✅
 router.post("/", ctrl.createAlert); // ✅
 
+router.get("/recent", ctrl.getRecentCameraAlert); // ✅
+
 router.get("/:alr_id", ctrl.getAlertById); // ✅
 router.get("/:alr_id/logs", ctrl.getAlertLogs); // ✅
 router.get("/:alr_id/related", ctrl.getAlertRelated); // ✅
+router.patch("/:alr_id/status", ctrl.updateAlertStatus); // ✅
 
 router.post("/:alr_id/notes", ctrl.createAlertNote); // ✅
 router.put("/notes/:anh_id", ctrl.updateAlertNote); // ✅

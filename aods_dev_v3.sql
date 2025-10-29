@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS alert_logs (
   alg_usr_id      INTEGER NOT NULL REFERENCES users(usr_id) ON DELETE CASCADE,
   alg_alr_id      INTEGER NOT NULL REFERENCES alerts(alr_id) ON DELETE CASCADE,
 
-  alg_action  VARCHAR(64) NOT NULL DEFAULT 'Generated',
+  alg_action       VARCHAR(64) NOT NULL DEFAULT 'Generated',
 
   alg_created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -791,6 +791,56 @@ WHERE cpd.cpd_is_use = TRUE
   AND c.cam_is_use = TRUE
   AND cpd.cpd_date = CURRENT_DATE
 ORDER BY cpd.cpd_cam_id ASC;                        -- ล่าสุดก่อน
+
+
+---------------------------------[ Recent Camera Activity ]--------------------------------
+-- กล้องที่มีเหตุ Alert ล่าสุดมาก่อน (ล่าสุดต่อกล้อง แล้วเรียงใหม่→เก่า)
+CREATE OR REPLACE VIEW v_cameras_latest_alert AS
+WITH latest AS (
+  SELECT DISTINCT ON (a.alr_cam_id)
+         a.alr_cam_id,
+         a.alr_id,
+         a.alr_created_at,
+         a.alr_status,
+         a.alr_severity,
+         a.alr_evt_id,
+         a.alr_fgt_id
+  FROM alerts a
+  WHERE a.alr_is_use = TRUE
+  ORDER BY a.alr_cam_id, a.alr_created_at DESC, a.alr_id DESC
+)
+SELECT
+  c.cam_id                       AS camera_id,
+  c.cam_name                     AS camera_name,
+  l.loc_name                     AS location_name,
+
+  la.alr_id                      AS last_alert_id,
+  la.alr_created_at              AS last_alert_at,
+  la.alr_status                  AS last_alert_status,
+  la.alr_severity                AS last_alert_severity,
+
+  e.evt_name                     AS event_name,
+  e.evt_icon                     AS event_icon,
+
+  f.fgt_id                       AS footage_id,
+  f.fgt_path                     AS footage_path,
+
+  -- เผื่อใช้โชว์ badge จำนวน alert ค้างอยู่
+  (
+    SELECT COUNT(*)
+    FROM alerts ax
+    WHERE ax.alr_cam_id = c.cam_id
+      AND ax.alr_is_use = TRUE
+      AND ax.alr_status = 'active'
+  )::int                         AS active_alerts
+FROM latest la
+JOIN cameras   c ON c.cam_id = la.alr_cam_id
+LEFT JOIN locations l ON l.loc_id = c.cam_loc_id
+LEFT JOIN events    e ON e.evt_id = la.alr_evt_id
+LEFT JOIN footages  f ON f.fgt_id = la.alr_fgt_id
+WHERE c.cam_is_use = TRUE
+ORDER BY la.alr_created_at DESC, la.alr_id DESC;
+
 
 -----------------------------------------------------------------------------
 ---------------------------------[ Triggers ]--------------------------------

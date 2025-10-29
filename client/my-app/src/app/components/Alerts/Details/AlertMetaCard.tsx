@@ -55,7 +55,7 @@ function StatusBadge({ value }: { value?: string }) {
 /* ---------- component ---------- */
 export default function AlertMetaCard({ alert, title = "Alert Details" }: Props) {
   const alertId      = Number(alert?.alert_id ?? alert?.id ?? 0);
-  const altCode      = `ALT${String(alertId).padStart(3, "0")}`;
+  const alrCode      = `ALR${String(alertId).padStart(3, "0")}`;
   const fgtCode      = alert?.footage_id != null ? `FGT${String(alert?.footage_id).padStart(3, "0")}` : "-";
 
   const createdAt    = alert?.created_at;
@@ -91,7 +91,7 @@ export default function AlertMetaCard({ alert, title = "Alert Details" }: Props)
           {/* ขวา: รหัส + Badge */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="px-2 py-0.5 rounded-md text-xs font-mono bg-white border border-gray-200 text-gray-700">
-              {altCode}
+              {alrCode}
             </span>
             <SeverityBadge value={severity} />
             <StatusBadge value={status} />

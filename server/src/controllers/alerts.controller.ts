@@ -63,6 +63,17 @@ export async function getAlertNotes(req: Request, res: Response, next: NextFunct
 }
 
 // ✅
+export async function getRecentCameraAlert(req: Request, res: Response, next: NextFunction) {
+    try {
+        const list = await AlertService.getRecentCameraAlert();
+        
+        return res.status(200).json({ message: 'Fetched successfully', data: list });
+    } catch (err) {
+        next(err);
+    }
+}
+
+// ✅
 export async function createAlertNote(req: Request, res: Response, next: NextFunction) {
     try {
         const alert_id = Number(req.params.alr_id);
@@ -140,6 +151,23 @@ export async function createAlert(req: Request, res: Response, next: NextFunctio
         next(err);
     }
 }
+
+// ✅
+export async function updateAlertStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+        const alert_id = Number(req.params.alr_id);
+        const { status, reason, user_id } = req.body;
+
+        const updatedAlert = await AlertService.updateAlertStatus(alert_id, status, reason, user_id);
+
+        return res.status(200).json({ message: 'Updated successfully', data: updatedAlert });
+    } catch (err) {
+        next(err);
+    }
+}
+
+
+
 
 /**
  * Controller: ดึงรายการ Alerts ทั้งหมดที่ถูกใช้งาน

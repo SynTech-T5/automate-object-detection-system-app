@@ -5,6 +5,7 @@ import SearchAlertsInput from "@/app/components/Alerts/SearchAlertsInput";
 import AlertFilters from "@/app/components/Alerts/AlertFilters";
 import DistributionChart from "@/app/components/Alerts/Chart/Distribution";
 import Trend from "@/app/components/Alerts/Chart/Trends";
+import RecentAlerts from "@/app/components/Alerts/RecentAlerts";
 
 export default function AlertsPage() {
   return (
@@ -66,11 +67,14 @@ export default function AlertsPage() {
             htmlFor="recentCameraActivity"
             className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
           >
-            Recent Camera Activity
+            Recent Camera Alert
           </label>
         </div>
         <Separator className="bg-[var(--color-primary-bg)]" />
         {/* TODO: ใส่คอมโพเนนต์ Recent ของคุณต่อท้ายได้เลย */}
+        <div className="mt-3">
+          <RecentAlerts />
+        </div>
       </div>
     </div>
   );
