@@ -9,7 +9,7 @@ import { ffmpegService } from '../services/cameras/ffmpeg.service';
 
 /* ------------------------------ Cameras ------------------------------ */
 
-/**✅
+/**
  * ดึงข้อมูลกล้องทั้งหมดในระบบ
  * ใช้สำหรับแสดงรายการกล้องทุกตัวในระบบ รวมถึงรายละเอียดพื้นฐาน เช่น ชื่อ ประเภท สถานะ แหล่งข้อมูล และตำแหน่งที่ตั้ง
  * 
@@ -31,7 +31,7 @@ export async function getCameras(req: Request, res: Response, next: NextFunction
     }
 };
 
-/**✅
+/**
  * ดึงข้อมูลรายละเอียดของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแสดงข้อมูลกล้องเฉพาะตัว เช่น ชื่อ ประเภท สถานะ ตำแหน่ง และแหล่งที่มา
  * 
@@ -55,7 +55,7 @@ export async function getCameraById(req: Request, res: Response, next: NextFunct
     }
 };
 
-/**✅
+/**
  * ดึงข้อมูลสรุปภาพรวมของกล้องทั้งหมดในระบบ
  * ใช้สำหรับแสดงข้อมูลเชิงสถิติ เช่น จำนวนกล้องที่เปิดใช้งาน ปิดใช้งาน หรือจำนวนทั้งหมด
  * 
@@ -77,7 +77,7 @@ export async function getSummaryCameras(req: Request, res: Response, next: NextF
     }
 };
 
-/**✅
+/**
  * เพิ่มข้อมูลกล้องใหม่เข้าสู่ระบบ
  * ใช้สำหรับสร้างรายการกล้องใหม่พร้อมรายละเอียด เช่น ประเภท สถานะ แหล่งข้อมูล และตำแหน่งที่ตั้ง
  * 
@@ -119,7 +119,7 @@ export async function createCamera(req: Request, res: Response, next: NextFuncti
     }
 }
 
-/**✅
+/**
  * อัปเดตข้อมูลกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแก้ไขรายละเอียดของกล้อง เช่น ชื่อ ประเภท สถานะ แหล่งข้อมูล ตำแหน่งที่ตั้ง และคำอธิบาย
  * 
@@ -164,7 +164,7 @@ export async function updateCamera(req: Request, res: Response, next: NextFuncti
 
 }
 
-/**✅
+/**
  * ลบข้อมูลกล้องแบบ Soft Delete ตามรหัสที่ระบุ
  * โดยจะเปลี่ยนสถานะ cam_is_use เป็น false และอัปเดตเวลาแก้ไขล่าสุด โดยไม่ลบข้อมูลจริงออกจากฐานข้อมูล
  * 
@@ -192,7 +192,7 @@ export async function softDeleteCamera(req: Request, res: Response, next: NextFu
 
 /* ------------------------------ Maintenances History ------------------------------ */
 
-/**✅
+/**
  * ดึงข้อมูลประวัติการบำรุงรักษาของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแสดงรายการบำรุงรักษาทั้งหมดของกล้องแต่ละตัว
  * 
@@ -216,7 +216,7 @@ export async function getMaintenanceByCameraId(req: Request, res: Response, next
     }
 }
 
-/**✅
+/**
  * เพิ่มข้อมูลประวัติการบำรุงรักษาใหม่ให้กับกล้องที่ระบุ
  * ใช้สำหรับบันทึกการซ่อม การตรวจเช็ก หรือการบำรุงรักษาในแต่ละครั้ง
  * 
@@ -246,7 +246,7 @@ export async function createMaintenance(req: Request, res: Response, next: NextF
     }
 }
 
-/**✅
+/**
  * อัปเดตรายการบำรุงรักษาตามรหัสที่ระบุ
  * ใช้สำหรับแก้ไขข้อมูล เช่น วันที่ ประเภท ช่างเทคนิค หรือหมายเหตุของการบำรุงรักษา
  * 
@@ -276,7 +276,7 @@ export async function updateMaintenance(req: Request, res: Response, next: NextF
     }
 }
 
-/**✅
+/**
  * ลบข้อมูลการบำรุงรักษาแบบ Soft Delete ตามรหัสที่ระบุ
  * โดยจะตั้งค่า mnt_is_use เป็น false และอัปเดตเวลาแก้ไขล่าสุด โดยไม่ลบข้อมูลจริงออกจากฐานข้อมูล
  * 
@@ -302,7 +302,7 @@ export async function softDeleteMaintenance(req: Request, res: Response, next: N
 
 /* ------------------------------ Event Detection ------------------------------ */
 
-/**✅
+/**
  * ดึงข้อมูลการตั้งค่าการตรวจจับเหตุการณ์ (Event Detection) ของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแสดงรายละเอียดเหตุการณ์ที่กล้องสามารถตรวจจับได้ รวมถึงระดับความไว (sensitivity) ลำดับความสำคัญ (priority) และสถานะการทำงาน
  * 
@@ -326,7 +326,7 @@ export async function getEventDetectionById(req: Request, res: Response, next: N
     }
 }
 
-/**✅
+/**
  * อัปเดตการตั้งค่าการตรวจจับเหตุการณ์ (Event Detection) ตามรหัสที่ระบุ
  * ใช้สำหรับปรับค่าการตรวจจับ เช่น ความไว (sensitivity), ลำดับความสำคัญ (priority) และสถานะการทำงานของเหตุการณ์
  * 
@@ -362,7 +362,7 @@ export async function updateEventDetection(req: Request, res: Response, next: Ne
 
 /* ------------------------------ Access Control ------------------------------ */
 
-/**✅
+/**
  * ดึงข้อมูลสิทธิ์การเข้าถึงของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับตรวจสอบการตั้งค่าการเข้าถึงของกล้อง เช่น การยืนยันตัวตน การจำกัดสิทธิ์ และการบันทึกการเข้าถึง
  * 
@@ -386,7 +386,7 @@ export async function getPermissionByCameraId(req: Request, res: Response, next:
     }
 }
 
-/**✅
+/**
  * อัปเดตการตั้งค่าสิทธิ์การเข้าถึงของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแก้ไขการตั้งค่าการเข้าถึง เช่น การยืนยันตัวตน การจำกัดสิทธิ์การเข้าถึง และการบันทึกการเข้าถึงของผู้ใช้
  * 
@@ -417,7 +417,7 @@ export async function updatePermission(req: Request, res: Response, next: NextFu
 
 /* ------------------------------ Performance ------------------------------ */
 
-/**✅
+/**
  * ดึงข้อมูลประสิทธิภาพการทำงานของกล้องทั้งหมดประจำวัน
  * ใช้สำหรับแสดงสถิติการทำงานของกล้องทุกตัว เช่น เวลาทำงาน การเชื่อมต่อ และสถานะการทำงานปัจจุบัน
  * 
@@ -439,7 +439,7 @@ export async function getPerformance(req: Request, res: Response, next: NextFunc
     }
 }
 
-/**✅
+/**
  * ดึงข้อมูลประสิทธิภาพการทำงานของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับตรวจสอบข้อมูลการทำงานเฉพาะของกล้อง เช่น เวลาการทำงาน การตอบสนอง และสถานะล่าสุดของกล้อง
  * 
@@ -465,6 +465,19 @@ export async function getPerformanceById(req: Request, res: Response, next: Next
 
 /* ------------------------------ Location  ------------------------------ */
 
+/**
+ * ดึงข้อมูลสถานที่ทั้งหมดที่เปิดใช้งานอยู่จากฐานข้อมูล
+ * ใช้สำหรับแสดงรายชื่อสถานที่ในระบบ เช่น dropdown หรือหน้าจัดการกล้อง
+ * 
+ * @param {Request} req - อ็อบเจ็กต์คำขอจาก Express
+ * @param {Response} res - อ็อบเจ็กต์ตอบกลับจาก Express
+ * @param {NextFunction} next - ฟังก์ชันส่งต่อ error ให้ middleware ถัดไป
+ * @returns {Promise<Response>} รายการข้อมูลสถานที่ที่เปิดใช้งานในระบบ
+ * @throws {Error} หากเกิดข้อผิดพลาดระหว่างการดึงข้อมูลจากฐานข้อมูล
+ * 
+ * @author Wanasart
+ * @lastModified 2025-10-12
+ */
 export async function getLocation(req: Request, res: Response, next: NextFunction) {
     try {
         const list = await LocationService.getLocation();
@@ -474,6 +487,19 @@ export async function getLocation(req: Request, res: Response, next: NextFunctio
     }
 }
 
+/**
+ * เพิ่มข้อมูลสถานที่ใหม่เข้าสู่ระบบ
+ * ใช้สำหรับสร้างสถานที่ใหม่ เช่น “อาคาร A”, “โซนจอดรถ 1”
+ * 
+ * @param {Request} req - อ็อบเจ็กต์คำขอจาก Express ที่มีข้อมูล location_name ใน body
+ * @param {Response} res - อ็อบเจ็กต์ตอบกลับจาก Express
+ * @param {NextFunction} next - ฟังก์ชันส่งต่อ error ให้ middleware ถัดไป
+ * @returns {Promise<Response>} ข้อมูลสถานที่ที่ถูกสร้างใหม่พร้อมข้อความยืนยัน
+ * @throws {Error} หากไม่สามารถสร้างข้อมูลได้หรือเกิดข้อผิดพลาดในฐานข้อมูล
+ * 
+ * @author Wanasart
+ * @lastModified 2025-10-12
+ */
 export async function createLocation(req: Request, res: Response, next: NextFunction) {
     try {
         const {
@@ -487,6 +513,19 @@ export async function createLocation(req: Request, res: Response, next: NextFunc
     }
 }
 
+/**
+ * อัปเดตข้อมูลสถานที่ตามรหัสที่ระบุ
+ * ใช้สำหรับแก้ไขชื่อสถานที่ที่มีอยู่ เช่น เปลี่ยนจาก “Building A” เป็น “Main Building”
+ * 
+ * @param {Request} req - อ็อบเจ็กต์คำขอจาก Express ที่มี loc_id ใน params และ location_name ใน body
+ * @param {Response} res - อ็อบเจ็กต์ตอบกลับจาก Express
+ * @param {NextFunction} next - ฟังก์ชันส่งต่อ error ให้ middleware ถัดไป
+ * @returns {Promise<Response>} ข้อมูลสถานที่ที่ถูกอัปเดตพร้อมข้อความยืนยัน
+ * @throws {Error} หากไม่พบสถานที่ที่ต้องการอัปเดตหรือเกิดข้อผิดพลาดในฐานข้อมูล
+ * 
+ * @author Wanasart
+ * @lastModified 2025-10-12
+ */
 export async function updateLocation(req: Request, res: Response, next: NextFunction) {
     try {
         const location_id = Number(req.params.loc_id);
@@ -501,6 +540,19 @@ export async function updateLocation(req: Request, res: Response, next: NextFunc
     }
 }
 
+/**
+ * ลบข้อมูลสถานที่ออกจากระบบแบบ Soft Delete
+ * ใช้สำหรับซ่อนสถานที่ออกจากรายการ โดยไม่ลบข้อมูลจริงในฐานข้อมูล
+ * 
+ * @param {Request} req - อ็อบเจ็กต์คำขอจาก Express ที่มี loc_id ใน params
+ * @param {Response} res - อ็อบเจ็กต์ตอบกลับจาก Express
+ * @param {NextFunction} next - ฟังก์ชันส่งต่อ error ให้ middleware ถัดไป
+ * @returns {Promise<Response>} ผลลัพธ์ของการลบข้อมูลแบบ Soft Delete พร้อมข้อความยืนยัน
+ * @throws {Error} หากไม่พบข้อมูลที่ต้องการลบหรือเกิดข้อผิดพลาดในฐานข้อมูล
+ * 
+ * @author Wanasart
+ * @lastModified 2025-10-12
+ */
 export async function softDeleteLocation(req: Request, res: Response, next: NextFunction) {
     try {
         const location_id = Number(req.params.loc_id);

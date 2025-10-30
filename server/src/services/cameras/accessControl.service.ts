@@ -1,7 +1,7 @@
 import { pool } from '../../config/db';
 import * as Mapping from '../../models/Mapping/cameras.map';
 
-/**✅
+/**
  * ดึงข้อมูลสิทธิ์การเข้าถึงของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับตรวจสอบการตั้งค่าการเข้าถึง เช่น การยืนยันตัวตน การจำกัดสิทธิ์ และการบันทึกการเข้าถึง
  * 
@@ -35,7 +35,7 @@ export async function getPermissionByCameraId(camera_id: number){
   return rows.map(Mapping.mapPermissionToSaveResponse);
 }
 
-/**✅
+/**
  * อัปเดตสิทธิ์การเข้าถึงของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับปรับค่าการตั้งค่า เช่น การบังคับยืนยันตัวตน การจำกัดบทบาทผู้ใช้ และการบันทึกการเข้าถึงกล้อง
  * 

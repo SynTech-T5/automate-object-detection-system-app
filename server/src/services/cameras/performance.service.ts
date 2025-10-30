@@ -1,7 +1,7 @@
 import { pool } from '../../config/db';
 import * as Mapping from '../../models/Mapping/cameras.map';
 
-/**✅
+/**
  * ดึงข้อมูลประสิทธิภาพการทำงานของกล้องทั้งหมดประจำวัน
  * ใช้สำหรับแสดงสถิติหรือค่าการทำงานของกล้องในวันปัจจุบันจากมุมมอง (view) v_camera_performance_today
  * 
@@ -20,7 +20,7 @@ export async function getPerformance() {
     return rows;
 }
 
-/**✅
+/**
  * ดึงข้อมูลประสิทธิภาพการทำงานของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับตรวจสอบค่าการทำงานเฉพาะของกล้องแต่ละตัวในวันปัจจุบัน
  * 

@@ -2,7 +2,7 @@ import { pool } from '../../config/db';
 import * as Model from '../../models/cameras.model';
 import * as Mapping from '../../models/Mapping/cameras.map';
 
-/**✅
+/**
  * ดึงรายการกล้องทั้งหมดจากมุมมอง (view) v_cameras_overview
  * ใช้สำหรับแสดงภาพรวมของกล้องทุกตัวในระบบ รวมถึงข้อมูลสถานะ ตำแหน่ง และแหล่งที่มา
  * 
@@ -32,7 +32,7 @@ export async function getCameraById(camera_id: number) {
   return rows;
 }
 
-/**✅
+/**
  * ดึงข้อมูลสรุปภาพรวมของกล้องทั้งหมดจากมุมมอง (view) v_camera_summary
  * ใช้สำหรับแสดงข้อมูลเชิงสถิติหรือสรุปสถานะกล้อง เช่น จำนวนกล้องที่เปิดใช้งาน ปิดใช้งาน และกล้องทั้งหมดในระบบ
  * 
@@ -50,7 +50,7 @@ export async function summaryCameras() {
   return rows;
 }
 
-/**✅
+/**
  * เพิ่มข้อมูลกล้องใหม่เข้าสู่ฐานข้อมูล
  * @param {string} camera_name - ชื่อของกล้อง
  * @param {string} camera_type - ประเภทของกล้อง (เช่น fixed, dome, ptz)
@@ -117,7 +117,7 @@ export async function insertCamera (
   return Mapping.mapCameraToSaveResponse(rows[0]);
 }
 
-/**✅
+/**
  * อัปเดตข้อมูลกล้องในระบบตามรหัสที่ระบุ
  * โดยจะปรับปรุงข้อมูลรายละเอียดกล้อง เช่น ชื่อ ประเภท สถานะ แหล่งข้อมูล และคำอธิบาย
  * พร้อมอัปเดตเวลาการแก้ไขล่าสุด (cam_updated_at)
@@ -192,7 +192,7 @@ export async function updateCamera (
   return Mapping.mapCameraToSaveResponse(rows[0]);
 }
 
-/**✅
+/**
  * ลบข้อมูลกล้องแบบ Soft Delete (ไม่ลบออกจากฐานข้อมูลจริง)
  * โดยจะเปลี่ยนค่า cam_is_use เป็น false และอัปเดตเวลาแก้ไขล่าสุด
  * 

@@ -1,7 +1,7 @@
 import { pool } from '../../config/db';
 import * as Mapping from '../../models/Mapping/cameras.map';
 
-/**✅
+/**
  * ดึงข้อมูลการตั้งค่าการตรวจจับเหตุการณ์ (Event Detection) ของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับดูการตั้งค่าแต่ละเหตุการณ์ เช่น ความไว (sensitivity), ลำดับความสำคัญ (priority) และสถานะการทำงานของเหตุการณ์
  * 
@@ -37,7 +37,7 @@ export async function getEventDetectionById(camera_id: number){
     return rows.map(Mapping.mapEventDetectionToSaveResponse);
 }
 
-/**✅
+/**
  * อัปเดตการตั้งค่าการตรวจจับเหตุการณ์ (Event Detection) ตามรหัสที่ระบุ
  * ใช้สำหรับปรับความไวในการตรวจจับ (sensitivity), ระดับความสำคัญ (priority) และสถานะการทำงานของเหตุการณ์
  * 

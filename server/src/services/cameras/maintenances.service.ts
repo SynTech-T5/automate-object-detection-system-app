@@ -1,7 +1,7 @@
 import { pool } from '../../config/db';
 import * as Mapping from '../../models/Mapping/cameras.map';
 
-/**✅
+/**
  * ดึงข้อมูลประวัติการบำรุงรักษาของกล้องตามรหัสที่ระบุ
  * ใช้สำหรับแสดงรายการบันทึกการซ่อมหรือบำรุงรักษาของกล้องแต่ละตัว
  * 
@@ -35,7 +35,7 @@ export async function getMaintenanceByCameraId(camera_id: number){
     return rows.map(Mapping.mapMaintenanceToSaveResponse);
 }
 
-/**✅
+/**
  * เพิ่มข้อมูลการบำรุงรักษาใหม่สำหรับกล้องที่ระบุ
  * ใช้สำหรับบันทึกการซ่อม การตรวจเช็ก หรือการบำรุงรักษาในแต่ละครั้ง
  * 
@@ -79,7 +79,7 @@ export async function insertMaintenance(
     return Mapping.mapMaintenanceToSaveResponse(rows[0]);
 }
 
-/**✅
+/**
  * อัปเดตข้อมูลการบำรุงรักษาตามรหัสที่ระบุ
  * ใช้สำหรับแก้ไขรายละเอียดการบำรุงรักษา เช่น วันที่ ประเภท ช่างเทคนิค หรือหมายเหตุ
  * 
@@ -125,7 +125,7 @@ export async function updateMaintenance(
     return Mapping.mapMaintenanceToSaveResponse(rows[0]);
 }
 
-/**✅
+/**
  * ลบข้อมูลประวัติการบำรุงรักษาแบบ Soft Delete
  * โดยจะตั้งค่า mnt_is_use เป็น false และอัปเดตเวลาการแก้ไขล่าสุด
  * 

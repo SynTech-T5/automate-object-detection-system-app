@@ -46,6 +46,12 @@ const ITEMS: Item[] = [
     title: "Settings",
     description: "Configure system preferences and access control",
   },
+  {
+    label: "History",
+    href: "/history",
+    title: "History",
+    description: "Review past alerts, camera events, and system activities",
+  },
 ];
 
 function findItemByPath(pathname: string): Item | null {
