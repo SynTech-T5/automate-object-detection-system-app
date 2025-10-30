@@ -269,7 +269,7 @@ export async function getGlobalEventById(event_id: number) {
   const { rows } = await pool.query(
     `
     SELECT * FROM v_events_overview
-    WHERE event_id = $1;
+    WHERE event_id = $1
     AND is_use = true;
   `,
     [event_id]

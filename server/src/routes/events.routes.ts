@@ -29,16 +29,16 @@ import * as ctrl from "../controllers/events.controller";
 
 const router = Router();
 
+/* ===================== Global Detection Settings ===================== */
+router.get("/global", ctrl.getGlobalEvents);
+router.get("/:evt_id/global", ctrl.getGlobalEventById);
+router.put("/:evt_id/global", ctrl.updateGlobalEvent);
+
 /* ========================== Events ========================== */
 router.get("/", ctrl.getEvents);
 router.post("/", ctrl.createEvent);
 router.get("/:evt_id", ctrl.getEventById);
 router.put("/:evt_id", ctrl.updateEvent);
 router.patch("/:evt_id", ctrl.softDeleteEvent);
-
-/* ===================== Global Detection Settings ===================== */
-router.get("/global", ctrl.getGlobalEvents);
-router.get("/:evt_id/global", ctrl.getGlobalEventById);
-router.put("/:evt_id/global", ctrl.updateGlobalEvent);
 
 export default router;

@@ -39,8 +39,6 @@ export default function Header({ userName = "Admin" }: { userName?: string }) {
         hour12: true,
     }).format(now);
 
-    console.log(me);
-
     return (
         <header
             className="sticky top-0 z-40 w-full bg-[color:var(--color-white)]"
