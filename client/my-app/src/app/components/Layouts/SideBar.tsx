@@ -43,10 +43,10 @@ const ITEMS: Item[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { collapsed, setCollapsed } = useUI();          // ⬅️ ใช้ปิดเมื่อคลิก
+  const { collapsed, setCollapsed } = useUI();
   const isMobile = useMediaQuery("(max-width: 767px)");
 
-  const mobileOpen = isMobile && !collapsed;            // มือถือ + เปิดอยู่
+  const mobileOpen = isMobile && !collapsed;
   const desktopW = collapsed ? "w-[64px]" : "w-[260px]";
 
   // ป้องกัน body scroll เวลา overlay เปิด
