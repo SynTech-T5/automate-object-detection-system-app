@@ -11,9 +11,6 @@ export interface User {
     is_use: boolean;
 }
 
-
-
-
 export interface UserRow {
   usr_id: number;
   usr_username: string;

@@ -7,5 +7,5 @@ export const pool = new Pool({
     database: env.PGDATABASE,
     user: env.PGUSER,
     password: env.PGPASSWORD,
-    options: `-c search_path=aods_dev_v3,public`
+    options: `-c search_path=aods_dev_v3`
 });
