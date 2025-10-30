@@ -1,52 +1,44 @@
 /**
  * Events Router (RESTful)
- * 
+ *
  * Base: /api/events
  *
- * กำหนดเส้นทาง (routes) สำหรับจัดการ Events:
- *  - GET    /                    → ดึงรายการ events ทั้งหมด (รองรับ filter/pagination ผ่าน query)
- *  - POST   /                    → เพิ่ม Event ใหม่
- *  - GET    /:evt_id             → ดึง Event ตามรหัส
- *  - PATCH  /:evt_id             → แก้ไขบางฟิลด์ของ Event ตามรหัส
- *  - PUT    /:evt_id             → แทนที่ข้อมูล Event ทั้งตัว (ถ้ารองรับ)
- *  - PATCH  /:evt_id/soft-delete → ลบแบบนุ่ม (เปลี่ยนสถานะแทนการลบจริง)
- *  - PATCH  /:evt_id/restore     → ย้อนสถานะกลับให้ใช้งาน
- *  - DELETE /:evt_id             → ลบจริง (ถ้าจำเป็น)
- *  - GET    /stats               → สถิติ (เช่น จำนวนทั้งหมด/ใช้งาน/ไม่ใช้งาน)
+ * ## Events
+ *  - GET    /                      → ดึงรายการ Events ทั้งหมด (รองรับ filter/pagination)
+ *  - POST   /                      → เพิ่ม Event ใหม่
+ *  - GET    /:evt_id               → ดึงข้อมูล Event เดี่ยว
+ *  - PUT    /:evt_id               → อัปเดตข้อมูล Event
+ *  - PATCH  /:evt_id               → ลบแบบนุ่ม (soft delete)
+ *
+ * ## Global Detection Settings
+ *  - GET    /global                → ดึงรายการ Global Detection Settings ของทุก Event
+ *  - GET    /:evt_id/global        → ดึง Global Detection Setting ของ Event เดี่ยว
+ *  - PUT    /:evt_id/global        → อัปเดต Global Detection Setting ของ Event
  *
  * @module routes/events
  * @requires express
  * @requires controllers/events.controller
- * 
+ *
  * @author Wanasart
  * @created 2025-08-16
- * @lastModified 2025-08-20
+ * @lastModified 2025-10-30
  */
+
 import { Router } from "express";
 import * as ctrl from "../controllers/events.controller";
 
 const router = Router();
 
-/* ---------- Utilities ---------- */
-// router.get("/stats", ctrl.stats);
+/* ========================== Events ========================== */
+router.get("/", ctrl.getEvents);
+router.post("/", ctrl.createEvent);
+router.get("/:evt_id", ctrl.getEventById);
+router.put("/:evt_id", ctrl.updateEvent);
+router.patch("/:evt_id", ctrl.softDeleteEvent);
 
-/* ---------- Collection ---------- */
-router.get("/", ctrl.getEvents); // ✅
-router.post("/", ctrl.createEvent); // ✅
-router.get("/global", ctrl.getGlobalEvents); // ✅
-// router.post("/", ctrl.store);
-
-/* ---------- Item ---------- */
-router.get("/:evt_id", ctrl.getEventById); // ✅
-router.put("/:evt_id", ctrl.updateEvent); // ✅
-router.patch("/:evt_id", ctrl.softDeleteEvent); // ✅
-router.get("/:evt_id/global", ctrl.getGlobalEventById); // ✅
-router.put("/:evt_id/global", ctrl.updateGlobalEvent); // ✅
-
-// router.patch("/:evt_id", ctrl.update);
-// router.put("/:evt_id", ctrl.update);
-// router.patch("/:evt_id/soft-delete", ctrl.softDelete);
-// router.patch("/:evt_id/restore", ctrl.restore);
-// router.delete("/:evt_id", ctrl.destroy);
+/* ===================== Global Detection Settings ===================== */
+router.get("/global", ctrl.getGlobalEvents);
+router.get("/:evt_id/global", ctrl.getGlobalEventById);
+router.put("/:evt_id/global", ctrl.updateGlobalEvent);
 
 export default router;

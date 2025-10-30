@@ -2,7 +2,16 @@ import { pool } from "../config/db";
 import * as Model from "../models/events.model";
 import * as Mapping from "../models/Mapping/events.map";
 
-// ✅
+/**
+ * ดึงรายการเหตุการณ์ (events) ที่เปิดใช้งานทั้งหมดจากตาราง events
+ * เหมาะสำหรับโหลดไปแสดงในหน้า Event Management / ตัวเลือกในฟอร์ม
+ *
+ * @returns {Promise<Array<Model.Event>>} รายการเหตุการณ์ที่ evt_is_use = true เรียงตาม evt_id ASC
+ * @throws {Error} หากเกิดข้อผิดพลาดระหว่างการดึงข้อมูลจากฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function getEvents() {
   const { rows } = await pool.query(`
         SELECT
@@ -21,7 +30,17 @@ export async function getEvents() {
   return rows.map(Mapping.mapEventsToSaveResponse);
 }
 
-// ✅
+/**
+ * ดึงรายละเอียดเหตุการณ์ (event) ตามรหัสที่ระบุ
+ * คัดเฉพาะเหตุการณ์ที่ยังเปิดใช้งาน (evt_is_use = true)
+ *
+ * @param {number} event_id - รหัสเหตุการณ์ที่ต้องการค้นหา
+ * @returns {Promise<Model.Event>} ข้อมูลเหตุการณ์ที่พบ (หรือ undefined หากไม่พบ)
+ * @throws {Error} หากเกิดข้อผิดพลาดระหว่างการค้นหาในฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function getEventById(event_id: number) {
   const { rows } = await pool.query(
     `
@@ -41,7 +60,22 @@ export async function getEventById(event_id: number) {
   return Mapping.mapEventsToSaveResponse(rows[0]);
 }
 
-// ✅ INSERT EVENT
+/**
+ * สร้างเหตุการณ์ใหม่ (event) และอัปเดตการตั้งค่าการตรวจจับระดับ Global (GDS) ของเหตุการณ์นั้น
+ * จากนั้นดึงข้อมูลภาพรวม (overview) ของเหตุการณ์ที่สร้างคืนให้
+ *
+ * @param {string} icon_name - ชื่อไอคอนของเหตุการณ์ (เช่น 'Camera', 'AlertTriangle')
+ * @param {string} event_name - ชื่อเหตุการณ์ (ต้องไม่ซ้ำ)
+ * @param {string} description - คำอธิบายของเหตุการณ์
+ * @param {string} sensitivity - ค่าความไวของ GDS (เช่น critical, high, medium, low)
+ * @param {string} priority - ระดับความสำคัญของ GDS
+ * @param {boolean} status - สถานะเปิด/ปิดของ GDS
+ * @returns {Promise<Model.EventOverview>} แถวข้อมูลจากมุมมอง v_events_overview ของเหตุการณ์ที่สร้าง
+ * @throws {Error} หากชื่อเหตุการณ์ซ้ำ (รหัส 23505) หรือเกิดข้อผิดพลาดอื่นระหว่างการทำธุรกรรม
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function insertEvent(
   icon_name: string,
   event_name: string,
@@ -102,7 +136,23 @@ export async function insertEvent(
   }
 }
 
-// ✅ UPDATE EVENT
+/**
+ * แก้ไขเหตุการณ์ (event) ที่มีอยู่ และอัปเดตการตั้งค่าการตรวจจับระดับ Global (GDS)
+ * จากนั้นดึงข้อมูลภาพรวม (overview) ของเหตุการณ์ที่แก้ไขคืนให้
+ *
+ * @param {string} icon_name - ชื่อไอคอนของเหตุการณ์
+ * @param {string} event_name - ชื่อเหตุการณ์ (ต้องไม่ซ้ำกับรายการอื่น)
+ * @param {string} description - คำอธิบายเหตุการณ์
+ * @param {string} sensitivity - ค่าความไวของ GDS
+ * @param {string} priority - ระดับความสำคัญของ GDS
+ * @param {boolean} status - สถานะเปิด/ปิดของ GDS
+ * @param {number} event_id - รหัสเหตุการณ์ที่ต้องการแก้ไข
+ * @returns {Promise<Model.EventOverview>} แถวข้อมูลจากมุมมอง v_events_overview ของเหตุการณ์ที่แก้ไข
+ * @throws {Error} หากชื่อเหตุการณ์ซ้ำ (รหัส 23505) หรือเกิดข้อผิดพลาดอื่นในฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function updateEvent(
   icon_name: string,
   event_name: string,
@@ -160,7 +210,17 @@ export async function updateEvent(
   }
 }
 
-// ✅
+/**
+ * ลบเหตุการณ์แบบ Soft Delete โดยตั้งค่า evt_is_use = false
+ * เหมาะสำหรับซ่อนเหตุการณ์ออกจากการใช้งานโดยไม่ลบข้อมูลจริง
+ *
+ * @param {number} event_id - รหัสเหตุการณ์ที่ต้องการปิดการใช้งาน
+ * @returns {Promise<Model.Event>} ข้อมูลเหตุการณ์หลังจากถูกปิดการใช้งาน
+ * @throws {Error} หากไม่พบเหตุการณ์ที่ต้องการลบหรือเกิดข้อผิดพลาดในฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function removeEvent(event_id: number) {
   const { rows } = await pool.query(
     `
@@ -175,7 +235,16 @@ export async function removeEvent(event_id: number) {
   return Mapping.mapEventsToSaveResponse(rows[0]);
 }
 
-// ✅
+/**
+ * ดึงรายการเหตุการณ์แบบภาพรวม (Global / Overview) จากมุมมอง v_events_overview
+ * คัดเฉพาะเหตุการณ์ที่ยังใช้งานอยู่
+ *
+ * @returns {Promise<Array<Model.EventOverview>>} รายการเหตุการณ์จาก v_events_overview ที่ is_use = true
+ * @throws {Error} หากเกิดข้อผิดพลาดระหว่างการดึงข้อมูลจากฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function getGlobalEvents() {
   const { rows } = await pool.query(`
         SELECT * FROM v_events_overview
@@ -185,7 +254,17 @@ export async function getGlobalEvents() {
   return rows;
 }
 
-// ✅
+/**
+ * ดึงเหตุการณ์แบบภาพรวม (Global / Overview) รายการเดียวจาก v_events_overview ตามรหัสที่ระบุ
+ * คัดเฉพาะเหตุการณ์ที่ยังใช้งานอยู่
+ *
+ * @param {number} event_id - รหัสเหตุการณ์ที่ต้องการดึง
+ * @returns {Promise<Model.EventOverview>} ข้อมูลภาพรวมของเหตุการณ์ (หรือรายการว่างหากไม่พบ)
+ * @throws {Error} หากเกิดข้อผิดพลาดระหว่างการดึงข้อมูลจากฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function getGlobalEventById(event_id: number) {
   const { rows } = await pool.query(
     `
@@ -199,7 +278,20 @@ export async function getGlobalEventById(event_id: number) {
   return rows;
 }
 
-// ✅
+/**
+ * อัปเดตการตั้งค่าการตรวจจับระดับ Global (GDS) ของเหตุการณ์ที่ระบุ
+ * ใช้สำหรับปรับ sensitivity, priority และ status
+ *
+ * @param {string} sensitivity - ค่าความไวในการตรวจจับ (critical, high, medium, low)
+ * @param {string} priority - ระดับความสำคัญของเหตุการณ์
+ * @param {boolean} status - สถานะเปิด/ปิดของการตรวจจับ
+ * @param {number} event_id - รหัสเหตุการณ์ที่ต้องการอัปเดต
+ * @returns {Promise<Model.GlobalDetectionSetting>} แถวข้อมูล GDS หลังอัปเดต
+ * @throws {Error} หากไม่พบเหตุการณ์ที่ผูกกับ GDS หรือเกิดข้อผิดพลาดในฐานข้อมูล
+ *
+ * @author Wanasart
+ * @lastModified 2025-10-26
+ */
 export async function updateGlobalEvent(
   sensitivity: string,
   priority: string,
@@ -222,202 +314,3 @@ export async function updateGlobalEvent(
 
   return Mapping.mapGlobalEventsToSaveResponse(rows[0]);
 }
-
-/**
- * ดึงรายการ Events ทั้งหมดที่ยังใช้งานอยู่
- *
- * @returns {Promise<Event[]>} รายการ Events ที่ถูกใช้งานอยู่ทั้งหมด
- * @description ดึงข้อมูล Events จากฐานข้อมูลโดยเรียงตาม evt_id จากมากไปน้อย และแสดงเฉพาะ Events ที่ยังใช้งานอยู่
-
- * 
- * @author Jirayu
- */
-// export async function getAllEvents(): Promise<Model.Events[]> {
-//   const query = `
-//         SELECT evt_id, evt_icon, evt_name, evt_description, evt_status, evt_is_use
-//         FROM events
-//         WHERE evt_is_use = true
-//         ORDER BY evt_id DESC
-//     `;
-
-//   const result = await pool.query<Event>(query);
-//   return result.rows.map(Mapping.mapToEvent);
-// }
-
-// export async function getEventById(evt_id: number): Promise<Model.Events> {
-//     const { rows } = await pool.query(`
-//         SELECT * FROM events
-//         WHERE evt_id = $1
-//         AND evt_is_use = true
-//     `, [evt_id])
-
-//     return Mapping.mapToEvent(rows[0]);
-// }
-
-/**
- * เพิ่มข้อมูลของ Event
- *
- * ฟังก์ชันนี้จะเพิ่มไอคอน, ชื่อ, และคำอธิบายของ Event ในฐานข้อมูล
- * หากเพิ่มไม่สำเร็จ จะโยน Error
- *
- * @param {string} evt_icon - ไอคอนใหม่ของ Event
- * @param {string} evt_name - ชื่อใหม่ของ Event
- * @param {string} evt_des - คำอธิบายใหม่ของ Event
- * @returns {Promise<object>} Event object หลังเพิ่มสำเร็จ
- * @throws {Error} เมื่อเพิ่ม Event ไม่สำเร็จ
- *
- *
- * @author Fasai
- */
-// export async function createEvent(
-//   evt_icon: string,
-//   evt_name: string,
-//   evt_des: string,
-//   evt_status: boolean
-// ): Promise<Model.Events> {
-//   if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
-//     throw new Error("Event fields cannot be empty");
-//   }
-
-//   // const eventExists = await pool.query(`
-//   //     SELECT evt_id FROM events
-//   //     WHERE evt_name = $1
-//   //     AND evt_is_use = true`,
-//   //     [evt_name]
-//   // )
-
-//   // if (eventExists.rows.length > 0) {
-//   //     throw new Error('Event already exists');
-//   // }
-
-//   const { rows } = await pool.query(
-//     `
-//         INSERT INTO events(evt_icon, evt_name, evt_description, evt_status)
-//         VALUES($1, $2, $3, $4)
-//         RETURNING *
-//     `,
-//     [evt_icon, evt_name, evt_des, evt_status]
-//   );
-
-//   const events = rows[0];
-
-//   if (!events) {
-//     throw new Error("Failed to insert events");
-//   }
-
-//   return Mapping.mapToEvent(rows[0]);
-// }
-
-/**
- * อัปเดตข้อมูลของ Event ที่ระบุด้วย evt_id
- *
- * ฟังก์ชันนี้จะอัปเดตไอคอน, ชื่อ, และคำอธิบายของ Event ในฐานข้อมูล
- * หากพบ Event ตาม evt_id จะคืนค่าเป็น object ของ Event หลังการอัปเดต
- * หากไม่พบ Event หรืออัปเดตไม่สำเร็จ จะโยน Error
- *
- * @param {number} evt_id - รหัสของ Event ที่ต้องการอัปเดต
- * @param {string} evt_icon - ไอคอนใหม่ของ Event
- * @param {string} evt_name - ชื่อใหม่ของ Event
- * @param {string} evt_des - คำอธิบายใหม่ของ Event
- * @returns {Promise<object>} Event object หลังอัปเดต
- * @throws {Error} เมื่อไม่พบ Event หรืออัปเดตไม่สำเร็จ
- *
- * @author Fasai
- */
-// export async function updateEvent(evt_id: number, evt_icon: string, evt_name: string, evt_des: string): Promise<Model.Events> {
-
-//     if (!evt_icon.trim() || !evt_name.trim() || !evt_des.trim()) {
-//         throw new Error("Event fields cannot be empty");
-//     }
-
-//     // ดึงข้อมูลปัจจุบันทั้งหมด
-//     const eventExists = await pool.query(`
-//         SELECT evt_id, evt_icon, evt_name, evt_description
-//         FROM events
-//         WHERE evt_id = $1
-//         AND evt_is_use = true
-//     `, [evt_id]);
-
-//     if (eventExists.rows.length === 0) {
-//         throw new Error("Event not found or inactive");
-//     }
-
-//     // เอาข้อมูลที่ดึงมาเก็บใส่ตัวแปรแล้วเทียบกับที่รับเข้ามาว่าเหมือนเดิมมั้ย
-//     const currentEvent = eventExists.rows[0];
-
-//     if (
-//         currentEvent.evt_icon === evt_icon &&
-//         currentEvent.evt_name === evt_name &&
-//         currentEvent.evt_description === evt_des
-//     ) {
-//         throw new Error("No changes detected");
-//     }
-
-//     const { rows } = await pool.query(`
-//         UPDATE events
-//         SET evt_icon = $1,
-//             evt_name = $2,
-//             evt_description = $3
-//         WHERE evt_id = $4
-//         RETURNING *;
-//         `, [evt_icon, evt_name, evt_des, evt_id]);
-
-//     const events = rows[0];
-
-//     if (!events) {
-//         throw new Error('Failed to update event or event not found');
-//     }
-
-//     return Mapping.mapToEvent(events);
-
-// }
-
-/**
- * ลบข้อมูลของ Event ที่ระบุด้วย evt_id
- *
- * ฟังก์ชันนี้จะลบโดยอัปเดตสถานะของ Event ในฐานข้อมูลแทนการลบจริง ๆ
- * หากพบ Event ตาม evt_id จะคืนค่าเป็น object ของ Event หลังการลบ
- * หากไม่พบ Event หรือลบไม่สำเร็จ จะโยน Error
- *
- * @param {number} evt_id - รหัสของ Event ที่ต้องการลบ
- * @param {boolean} evt_is_use - สถานะใหม่ของ Event
- * @returns {Promise<object>} Event object หลังลบ
- * @throws {Error} เมื่อไม่พบ Event หรือลบไม่สำเร็จ
- *
- * @author Fasai
- */
-// export async function deleteEvent(
-//   evt_id: number,
-//   evt_is_use: boolean
-// ): Promise<Model.EventSafeDelete> {
-//   const eventExists = await pool.query(
-//     `
-//       SELECT evt_id FROM events
-//       WHERE evt_id = $1
-//       AND evt_is_use = true
-//     `,
-//     [evt_id]
-//   );
-
-//   if (eventExists.rows.length === 0) {
-//     throw new Error("Event not found");
-//   }
-
-//   const { rows } = await pool.query(
-//     `
-//         UPDATE events
-//         set evt_is_use = $1
-//         WHERE evt_id = $2
-//         RETURNING *;
-//         `,
-//     [evt_is_use, evt_id]
-//   );
-
-//   const events = rows[0];
-
-//   if (!events) {
-//     throw new Error("Failed to delete event or event not found");
-//   }
-
-//   return events;
-// }
