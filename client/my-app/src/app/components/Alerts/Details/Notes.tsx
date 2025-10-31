@@ -371,7 +371,7 @@ export default function Notes({ alrId }: { alrId: number }) {
         </AlertDialog>
       </div>
 
-      {/* Table (เอากรอบตารางออก) */}
+      {/* Table */}
       <Table className="w-full table-auto">
         <TableHeader>
           <TableRow className="border-b border-[var(--color-primary)]">
@@ -422,7 +422,7 @@ export default function Notes({ alrId }: { alrId: number }) {
                   <TableCell className="py-3 font-medium text-black">{n.note_id}</TableCell>
 
                   <TableCell className="px-2 py-3 align-top text-left text-black">
-                    <BadgeUser username={userLabel || undefined} />
+                    <BadgeUser username={userLabel || undefined} role={n.creator_role} />
                   </TableCell>
 
                   <TableCell className="px-2 py-3 align-top text-left whitespace-pre-wrap break-words max-w-[48rem] text-black">
@@ -459,7 +459,7 @@ export default function Notes({ alrId }: { alrId: number }) {
         </TableBody>
       </Table>
 
-      {/* Edit Note (AlertDialog, ไม่มีปุ่ม X) */}
+      {/* Edit Note */}
       <AlertDialog open={openEdit} onOpenChange={setOpenEdit}>
         <AlertDialogContent className="sm:max-w-md [&>button:last-child]:hidden">
           <AlertDialogHeader>

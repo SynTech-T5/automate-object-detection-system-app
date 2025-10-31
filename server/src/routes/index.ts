@@ -11,6 +11,7 @@
  *  - /api/cameras        → การจัดการกล้อง (Cameras)
  *  - /api/alerts         → การจัดการการแจ้งเตือน (Alerts)
  *  - /api/events         → การจัดการเหตุการณ์ (Events)
+ *  - /api/logs           → ดูประวัติต่างๆในระบบ (History)
  *
  * ## Others
  *  - /api/locations      → การจัดการสถานที่ (Locations)
@@ -25,6 +26,7 @@
  * @requires ./register.routes
  * @requires ./location.route
  * @requires ./users.route
+ * @requires ./logs.route
  *
  * @author Wanasart
  * @created 2025-08-16
@@ -37,6 +39,7 @@ import { Router } from "express";
 import cameras from "./cameras.routes";
 import alerts from "./alerts.routes";
 import events from "./events.routes";
+import logs from "./logs.route";
 
 // Authentication modules
 import login from "./login.routes";
@@ -59,6 +62,7 @@ router.use("/register", register);
 router.use("/cameras", cameras);
 router.use("/alerts", alerts);
 router.use("/events", events);
+router.use("/logs", logs);
 
 /* ============================= Others ============================= */
 router.use("/locations", locations);
