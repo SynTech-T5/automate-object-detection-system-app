@@ -146,7 +146,7 @@ export default function EditEventForm({
         <form id="editEventForm" onSubmit={onSubmit} className="space-y-4">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[var(--color-primary)]">
-              Edit Event
+              Edit Event – {item.event_name} (#{`EVT${String(item.event_id).padStart(3, "0")}`})
             </AlertDialogTitle>
             <AlertDialogDescription>
               Update fields and click Save Changes.

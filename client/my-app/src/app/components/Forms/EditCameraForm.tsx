@@ -68,6 +68,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
   const [locations, setLocations] = useState<ApiLocation[]>([]);
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [locationsError, setLocationsError] = useState<string>("");
+  const [currentCamera, setCurrentCamera] = useState<EditForm>();
 
   const [loadingCamera, setLoadingCamera] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -103,6 +104,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
         const arr: any[] = Array.isArray(payload?.data) ? payload.data : [];
         if (!arr.length) throw new Error("Camera not found.");
         const c = arr[0];
+        setCurrentCamera(c);
 
         const next: EditForm = {
           camera_name: c.camera_name ?? "",
@@ -267,7 +269,7 @@ export default function EditCameraModal({ camId, open, setOpen }: Props) {
       <AlertDialogContent className="!top-[40%] !-translate-y-[40%] max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-[var(--color-primary)]">
-            Settings – {form.camera_name} (#{camCode})
+            Settings – {currentCamera?.camera_name} (#{camCode})
           </AlertDialogTitle>
           <AlertDialogDescription>
             Adjust camera configurations and click Save.

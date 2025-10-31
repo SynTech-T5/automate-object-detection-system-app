@@ -371,8 +371,8 @@ export default function CameraTable({
                       <Eye className="h-4 w-4" />
                     </IconAction>
 
-                    {/* Edit (เปิด modal เดิม) */}
-                    <IconAction label="Edit" variant="primary" onClick={goEdit}>
+                    {/* Setting (เปิด modal เดิม) */}
+                    <IconAction label="Settings" variant="primary" onClick={goEdit}>
                       <Pencil className="h-4 w-4" />
                     </IconAction>
 

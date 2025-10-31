@@ -326,7 +326,7 @@ export default function
                   Location
                 </Label>
 
-                <Select name="location_id" defaultValue="">
+                <Select name="location_id" defaultValue="1">
                   <SelectTrigger
                     id="location_id"
                     className="w-full rounded-md border border-gray-300 bg-white text-sm text-black focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] px-3 py-2"
