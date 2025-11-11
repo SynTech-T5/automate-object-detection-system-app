@@ -38,7 +38,7 @@ export default function FullScreenView({ camera }: { camera: Camera | Camera[] }
     const [imageFailed, setImageFailed] = useState(false);
 
     const isOnline = !!currentCamera.camera_status;
-    const isRtsp = (currentCamera.source_type || "").toLowerCase() === "rtsp";
+    const isRtsp = typeof currentCamera.source_value === "string" && currentCamera.source_value.startsWith("rtsp://");
 
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -219,7 +219,6 @@ export default function FullScreenView({ camera }: { camera: Camera | Camera[] }
                     {isOnline && isRtsp && !webrtcFailed ? (
                         <WhepPlayer
                             key={currentCamera.camera_id}
-                            ref={videoRef} // forwardRef ของ <video>
                             camAddressRtsp={currentCamera.source_value}
                             webrtcBase={process.env.NEXT_PUBLIC_WHEP_BASE ?? "http://localhost:8889"}
                             onFailure={() => setWebrtcFailed(true)}
