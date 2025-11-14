@@ -1,44 +1,50 @@
-export interface Camera {
-    id: number;
-    name: string;
-    address: string;
-    type: string;
-    resolution: string;
-    description: string;
-    status: boolean;
-    installation_date: string;
-    installation_time: string;
-    health: number;
-    video_quality: number;
-    network_latency: number;
-    is_use: boolean;
-    location: {
-        id: number;
-        name: string;
-    }
-    last_maintenance_date: string;
-    last_maintenance_time: string;
+export interface ResponsePostCamera {
+  camera_id: number;
+  creator_id: number;
+  location_id: number;
+  camera_name: string;
+  source_type: string;
+  source_value: string;
+  camera_type: string;
+  camera_status: boolean;
+  camera_description: string;
+  camera_created_date: string;
+  camera_created_time: string;
+  camera_updated_date: string;
+  camera_updated_time: string;
+  camera_is_use: boolean;
 }
 
-export type CreateCameraInput = {
-  cam_name: string | null;
-  cam_address: string | null;
-  cam_type: string | null;
-  cam_resolution: string | null;
-  cam_description: string | null;
-  cam_installation_date: string | Date | null; 
-  cam_health: number | null;
-  cam_video_quality: number | null;
-  cam_network_latency: number | null;
-  cam_status: boolean;
-  cam_is_use: boolean | null;      
-  cam_location_id: number | null;
-  password: string;
-};
+export interface ResponseEventDetection {
+  detection_id: number;
+  detection_event_id: number;
+  event_name: string;
+  event_icon: string; 
+  camera_id: number;
+  detection_sensitivity: string;
+  detection_priority: string;
+  detection_updated_date: string;
+  detection_updated_time: string;
+  detection_status: boolean;
+}
 
-export interface CameraStatus {
-  total: number;
-  active: number;
-  inactive: number;
-  avg_health: number;
+export interface ResponseMaintenance {
+  maintenance_id: number;
+  camera_id: number;
+  maintenance_date: string;
+  maintenance_type: string;
+  maintenance_technician: string;
+  maintenance_note: string;
+  maintenance_created_date: string;
+  maintenance_created_time: string;
+}
+
+export interface ResponsePermission {
+  permission_id: number;
+  camera_id: number;
+  permission_require_auth: boolean;
+  permission_restrict: boolean;
+  permission_log: boolean;
+  permission_updated_date: string;
+  permission_updated_time: string;
 }

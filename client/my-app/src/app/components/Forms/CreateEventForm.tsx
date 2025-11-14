@@ -3,71 +3,88 @@
 import { useState } from "react";
 import IconPickerInput from "../Utilities/IconPickerInput";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlusCircle } from "lucide-react";
 
-type Sensitivity = "Critical" | "High" | "Medium" | "Low";
-
-interface EventPayload {
-  name: string;
-  icon: string;
-  description: string;
-  sensitivity: Sensitivity;
-  status?: boolean;
-}
+type Lmhc = "low" | "medium" | "high" | "critical";
 
 export default function CreateEventForm() {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [err, setErr] = useState<string>("");
-  const [icon, setIcon] = useState<string | undefined>("TriangleAlert");
-  const [name, setName] = useState("");
+  const [errors, setErrors] = useState<{ name?: string; general?: string }>({});
 
-  async function postEvent(payload: EventPayload): Promise<EventPayload> {
+  // ฟิลด์ฟอร์ม
+  const [icon, setIcon] = useState<string | undefined>("AlertTriangle");
+  const [name, setName] = useState("");
+  const [sensitivity, setSensitivity] = useState<Lmhc>("high");
+  const [priority, setPriority] = useState<Lmhc>("critical");
+  const [enabled, setEnabled] = useState<boolean>(true);
+  const [description, setDescription] = useState("");
+
+  function authHeaders(): HeadersInit {
+    const h: HeadersInit = { "Content-Type": "application/json" };
+    if (process.env.NEXT_PUBLIC_TOKEN) {
+      h.Authorization = `Bearer ${process.env.NEXT_PUBLIC_TOKEN}`;
+    }
+    return h;
+  }
+
+  async function createEvent(payload: {
+    icon_name: string;
+    event_name: string;
+    description: string;
+    sensitivity: Lmhc;
+    priority: Lmhc;
+    status: boolean;
+  }) {
     const res = await fetch("/api/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(),
+      credentials: "include",
       body: JSON.stringify(payload),
       cache: "no-store",
-      credentials: "include",
     });
 
+    const data = await res.json().catch(() => null);
+
     if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Failed to add new Event.");
+      const err: any = new Error(data?.message || "Failed to add new Event.");
+      err.status = res.status;
+      throw err;
     }
-    return res.json();
+    return data;
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setErr("");
+    setErrors({});
     setSubmitting(true);
 
     try {
-      const fd = new FormData(e.currentTarget);
+      await createEvent({
+        icon_name: icon || "AlertTriangle",
+        event_name: name || "Untitled Event",
+        description: description || "—",
+        sensitivity,
+        priority,
+        status: enabled,
+      });
 
-      const payload: EventPayload = {
-        name: (fd.get("name") as string) || "",
-        icon: (fd.get("icon") as string) || "",
-        description: (fd.get("description") as string) || "",
-        sensitivity: (fd.get("sensitivity") as Sensitivity) || "High",
-        status: fd.get("enable") === "on" ? true : false,
-      };
-
-      await postEvent(payload);
       setOpen(false);
-      // window.location.href = "/cameras";
+
+      window.location.href = "/cameras";
+
     } catch (e: any) {
-      setErr(e?.message ?? "Submit failed");
+      if (e?.status === 400 && /exists/i.test(e?.message || "")) {
+        setErrors({ name: "Event name already exists" });
+      } else {
+        setErrors({ general: e?.message ?? "Submit failed" });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -78,97 +95,144 @@ export default function CreateEventForm() {
       <AlertDialogTrigger asChild>
         <Button
           onClick={() => setOpen(true)}
-          className="bg-[#0077FF] text-white hover:bg-[#0063d6]"
+          className="bg-[#0077FF] text-white hover:bg-[#0063d6] flex items-center gap-2"
         >
-          New Event
+          <PlusCircle className="w-5 h-5" />
+          Add New Event
         </Button>
       </AlertDialogTrigger>
 
       <AlertDialogContent className="!top-[40%] !-translate-y-[40%]">
         <form id="userForm" onSubmit={onSubmit} className="space-y-4">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[var(--color-primary)]">Add New Event</AlertDialogTitle>
+            <AlertDialogTitle className="text-[var(--color-primary)]">
+              Add New Event
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Fill in the details and click Add New.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="grid gap-3">
-            {/* Name + Icon */}
+            {/* Event Name + Icon Picker */}
             <div className="grid gap-1">
-              <label className="text-sm font-medium" htmlFor="name">
+              <Label className="text-sm font-medium text-black" htmlFor="name">
                 Event Name
-              </label>
-
-              {/* ถ้า IconPickerInput ไม่ได้เรนเดอร์ input จริงที่มี name, เราเพิ่ม hidden เอง */}
+              </Label>
               <input type="hidden" name="icon" value={icon} />
-
-              {/* ให้มี input ที่มี name="name" ชัดเจน */}
-              {/* ถ้า IconPickerInput มี text input อยู่แล้ว ให้ส่ง name="name" ไปให้มันด้วย */}
               <IconPickerInput
                 icon={icon}
                 onIconChange={setIcon}
                 value={name}
-                onChange={setName}
+                onChange={(v: string) => {
+                  setName(v);
+                  if (errors.name) setErrors((p) => ({ ...p, name: undefined }));
+                }}
                 inputId="name"
                 inputName="name"
                 placeholder="Enter event name"
+                inputClassName={
+                  errors.name
+                    ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                    : ""
+                }
               />
+              {errors.name && (
+                <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+              )}
             </div>
 
-            {/* Description */}
-            <div className="grid gap-1">
-              <label className="text-sm font-medium" htmlFor="description">
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                placeholder="Enter your description"
-                className="font-light w-full rounded-md border px-3 py-3 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {/* Sensitivity */}
-              <div className="col-span-2">
-                <label className="text-sm font-medium" htmlFor="sensitivity">
+            {/* Sensitivity & Priority */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium text-black" htmlFor="sensitivity">
                   Sensitivity
-                </label>
-                <select
-                  id="sensitivity"
-                  name="sensitivity"
-                  defaultValue="High"
-                  className="w-full rounded-md border px-3 py-2 outline-none focus-within:ring focus-within:ring-[var(--color-primary)]"
-                >
-                  <option value="Critical">Critical</option>
-                  <option value="High">High</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Low">Low</option>
-                </select>
+                </Label>
+                <Select value={sensitivity} onValueChange={(v: Lmhc) => setSensitivity(v)} name="sensitivity">
+                  <SelectTrigger
+                    id="sensitivity"
+                    className="w-full rounded-md border border-gray-300 bg-white text-sm text-black
+                               focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] px-3 py-2"
+                  >
+                    <SelectValue placeholder="Choose sensitivity" />
+                  </SelectTrigger>
+                  <SelectContent className="border-[var(--color-primary)] text-black">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Enable Detection */}
-              <div className="">
-                <label className="text-sm font-medium" htmlFor="enable">
-                  Enable Detection
-                </label>
-                <label className="inline-flex items-center cursor-pointer">
-                  <input type="checkbox" id="enable" name="enable" className="sr-only peer" />
-                  <div
-                    className="relative w-16 h-9 rounded-full
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium text-black" htmlFor="priority">
+                  Priority
+                </Label>
+                <Select value={priority} onValueChange={(v: Lmhc) => setPriority(v)} name="priority">
+                  <SelectTrigger
+                    id="priority"
+                    className="w-full rounded-md border border-gray-300 bg-white text-sm text-black
+                               focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] px-3 py-2"
+                  >
+                    <SelectValue placeholder="Choose priority" />
+                  </SelectTrigger>
+                  <SelectContent className="border-[var(--color-primary)] text-black">
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Enable Detection */}
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium text-black" htmlFor="enable">
+                Enable Detection
+              </Label>
+              <label className="inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="enable"
+                  name="enable"
+                  checked={enabled}
+                  onChange={(e) => setEnabled(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div
+                  className="relative w-16 h-9 rounded-full
                               bg-gray-300 peer-checked:bg-[color:var(--color-primary)]
                               transition-colors duration-200
                               after:content-[''] after:absolute after:top-1 after:left-1
                               after:w-7 after:h-7 after:bg-white after:rounded-full
                               after:shadow after:transition-all after:duration-200
                               peer-checked:after:translate-x-7">
-                  </div>
-                </label>
-              </div>
+                </div>
+              </label>
             </div>
-            {/* {err && <p className="text-sm text-red-600">{err}</p>} */}
-            {err && <p className="text-sm text-red-600">Something wrong!</p>}
+
+            {/* Description */}
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium text-black" htmlFor="description">
+                Description
+              </Label>
+              <textarea
+                id="description"
+                name="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter description"
+                className="font-light w-full rounded-md border border-gray-300 bg-white text-black px-3 py-3 outline-none
+                           focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)]"
+              />
+            </div>
+
+            {/* General error */}
+            {errors.general && (
+              <p className="text-sm text-red-600">{errors.general}</p>
+            )}
           </div>
 
           <AlertDialogFooter>

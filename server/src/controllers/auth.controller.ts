@@ -3,6 +3,7 @@ import { verifySessionToken, getUserSafeById, verifyPassword } from '../services
 import * as AuthService from '../services/auth.service';
 import path from 'path';
 import dotenv from 'dotenv';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 dotenv.config({ path: path.resolve(__dirname, '../../..', '.env.local') });
 
 const isProd = process.env.NODE_ENV === 'production';
@@ -16,6 +17,8 @@ const COOKIE_MAX_AGE_REMEMBER_MS = Number(
 const COOKIE_MAX_AGE_TEST_MS = Number(
   process.env.COOKIE_MAX_AGE_TEST_MS ?? 5000
 );
+
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret';
 
 const cookieBase = {
   httpOnly: true,
@@ -58,7 +61,7 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     // const maxAge = !!remember ? COOKIE_MAX_AGE_TEST_MS : COOKIE_MAX_AGE_MS; // ⬅️ สำหรับทดสอบ
     res.cookie(COOKIE_NAME, token, { ...cookieBase, maxAge });
 
-    return res.json({ message: 'Login successful', success: true, user });
+    return res.json({ message: 'Login successful', success: true, user, token });
   } catch (err) {
     next(err);
   }
@@ -153,6 +156,8 @@ export async function me(req: Request, res: Response, next: NextFunction) {
     return res.json({
       usr_id: user.usr_id,
       usr_username: user.usr_username,
+      usr_name: user.usr_name,
+      usr_phone: user.usr_phone,
       usr_email: user.usr_email,
       usr_role: user.usr_role,
     });
@@ -196,4 +201,26 @@ export async function recheckPassword(req: Request, res: Response) {
     console.error("recheckPassword error:", err);
     return res.status(500).json({ error: "Server error" });
   }
+}
+
+interface AuthRequest extends Request {
+    user?: string | JwtPayload;
+}
+
+export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(" ")[1];
+    
+    if(!token){
+        return res.status(401).json({ message: "Authorization token is missing" });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, decode) => {
+        if(err) {
+            return res.status(403).json({ message: "Access denied. Invalid token" });
+        }
+
+        req.user = decode as string;;
+        next();
+    });
 }

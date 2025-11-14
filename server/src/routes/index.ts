@@ -2,46 +2,70 @@
  * Main Application Router
  *
  * รวมเส้นทาง (routes) ทั้งหมดของระบบ:
- *  - /api/auth      → Authentication (login/logout)
- *  - /api/register  → Registration (สมัครสมาชิกใหม่)
- *  - /api/cameras   → การจัดการกล้อง (Cameras)
- *  - /api/alerts    → การจัดการการแจ้งเตือน (Alerts)
- *  - /api/events    → การจัดการเหตุการณ์ (Events)
+ *
+ * ## Authentication
+ *  - /api/auth           → การเข้าสู่ระบบ / ออกจากระบบ (Login / Logout)
+ *  - /api/register       → การสมัครสมาชิกใหม่
+ *
+ * ## Core Modules
+ *  - /api/cameras        → การจัดการกล้อง (Cameras)
+ *  - /api/alerts         → การจัดการการแจ้งเตือน (Alerts)
+ *  - /api/events         → การจัดการเหตุการณ์ (Events)
+ *  - /api/logs           → ดูประวัติต่างๆในระบบ (History)
+ *
+ * ## Others
+ *  - /api/locations      → การจัดการสถานที่ (Locations)
+ *  - /api/users          → การจัดการผู้ใช้งาน (Users)
  *
  * @module routes/index
  * @requires express
  * @requires ./cameras.routes
- * @requires ./login.routes
- * @requires ./register.routes
  * @requires ./alerts.routes
  * @requires ./events.routes
+ * @requires ./login.routes
+ * @requires ./register.routes
+ * @requires ./location.route
+ * @requires ./users.route
+ * @requires ./logs.route
  *
  * @author Wanasart
  * @created 2025-08-16
- * @lastModified 2025-08-17
+ * @lastModified 2025-10-31
  */
-import { Router } from 'express';
-import cameras from './cameras.routes'
-import login from './login.routes';
-import register from './register.routes';
-import alerts from './alerts.routes';
-import events from './events.routes';
+
+import { Router } from "express";
+
+// Core modules
+import cameras from "./cameras.routes";
+import alerts from "./alerts.routes";
+import events from "./events.routes";
+import logs from "./logs.route";
+
+// Authentication modules
+import login from "./login.routes";
+import register from "./register.routes";
+
+// Others
+import locations from "./location.route";
+import users from "./users.route";
+
+// Middlewares
+import { authenticateToken } from "../controllers/auth.controller";
 
 const router = Router();
 
-// Authentication routes
-router.use('/auth', login);
+/* ========================== Authentication ========================== */
+router.use("/auth", login);
+router.use("/register", register);
 
-// Registration routes
-router.use('/register', register);
+/* ============================ Core Modules ============================ */
+router.use("/cameras", cameras);
+router.use("/alerts", alerts);
+router.use("/events", events);
+router.use("/logs", logs);
 
-// Camera routes
-router.use('/cameras', cameras);
-
-// Alerts routes
-router.use('/alerts', alerts);
-
-// Events routes
-router.use('/events', events);
+/* ============================= Others ============================= */
+router.use("/locations", locations);
+router.use("/users", users);
 
 export default router;

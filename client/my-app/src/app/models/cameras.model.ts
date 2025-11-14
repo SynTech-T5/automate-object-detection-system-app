@@ -1,21 +1,12 @@
 export interface Camera {
-    id: number;
-    name: string;
-    address: string;
-    type: string;
-    resolution: string;
+    camera_id: number;
+    camera_name: string;
+    camera_type: string;
+    camera_status: boolean;
+    location_name: string;
+    source_type: string;
+    source_value: string;
     description: string;
-    status: boolean;
-    installation_date: string;
-    installation_time: string;
-    health: number;
-    video_quality: number;
-    network_latency: number;
-    is_use: boolean;
-    location: {
-        id: number;
-        name: string;
-    }
-    last_maintenance_date: string;
-    last_maintenance_time: string;
+    date_last_maintenance: string; 
+    maintenance_type: string;
 }

@@ -6,5 +6,6 @@ export const pool = new Pool({
     port: env.PGPORT,
     database: env.PGDATABASE,
     user: env.PGUSER,
-    password: env.PGPASSWORD
+    password: env.PGPASSWORD,
+    options: `-c search_path=aods_dev_v3`
 });

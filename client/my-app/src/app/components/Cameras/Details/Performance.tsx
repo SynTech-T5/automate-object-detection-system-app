@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import type { ApexOptions } from "apexcharts";
 import { Clock, Video, Signal } from "lucide-react";
+import { Camera } from "@/app/models/cameras.model";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -57,9 +58,11 @@ function MetricCard({ icon, label, value }: { icon: React.ReactNode; label: stri
   );
 }
 
-export default function HealthStatus() {
+export default function Performance({ camera }: { camera: Camera }) {
   const [range, setRange] = useState<QuickRange>("7");
   const points = useMemo(() => Number(range), [range]);
+
+  const [currentCamera, setCurrentCamera] = useState(camera);
 
   // ---------- Base 30-day dataset (cards always read from here) ----------
   const baseCategories = useMemo(() => lastNDaysLabelsUTC(BASE_DAYS), []);
@@ -136,7 +139,7 @@ export default function HealthStatus() {
       {/* ===== Top: Overall + Today cards (fixed to today) ===== */}
       <div className="mb-4 space-y-3">
         {/* Overall Health Progress */}
-        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        {/* <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-semibold text-slate-800">Overall Health</h3>
             <span className="text-slate-700 font-medium">{overall}%</span>
@@ -153,7 +156,7 @@ export default function HealthStatus() {
               style={{ width: `${overall}%` }}
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Today metric cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

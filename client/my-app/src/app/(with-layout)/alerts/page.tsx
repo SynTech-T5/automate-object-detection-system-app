@@ -1,79 +1,49 @@
-import AlertTable, { type Alert } from "../../components/Alerts/AlertTable";
-import * as StatusCard from "../../components/Utilities/StatusCard";
+// app/(dashboard)/alerts/page.tsx
 import { Separator } from "@/components/ui/separator";
-import AlertsClient from "@/app/components/Alerts/AlertsClient";
-import DistributionChart from "@/app/components/Alerts/Chart/Distribution";
-import Trend from "@/app/components/Alerts/Chart/Trends";
+import AlertView from "@/app/components/Alerts/AlertsView";
+import SearchAlertsInput from "@/app/components/Alerts/SearchAlertsInput";
+import AlertFilters from "@/app/components/Alerts/AlertFilters";
+import RecentAlerts from "@/app/components/Alerts/RecentAlerts";
 
-const base = process.env.NEXT_PUBLIC_APP_URL!;
-
-export default async function AlertsPage() {
-  const res = await fetch(`${base}/api/alerts`, {
-    cache: "no-store",
-    credentials: "include",
-    method: "GET",
-  });
-  if (!res.ok) throw new Error(`Failed to load alerts (${res.status})`);
-  const alerts: Alert[] = await res.json();
-
+export default function AlertsPage() {
   return (
     <div className="space-y-6">
-      <StatusCard.DashboardSummaryAlertSection />
+      {/* === Search & Filter (บนสุด) === */}
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6">
-        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start gap-3 justify-center mb-3">
-          <label
-            htmlFor="AlertManagement"
-            className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
-          >
-            Alert Management
-          </label>
+        <label
+          htmlFor="alertSearchFilter"
+          className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
+        >
+          Search & Filter
+        </label>
+        <div className="grid gap-2 items-start sm:gap-3 mt-3">
+          <div className="w-full">
+            <SearchAlertsInput />
+          </div>
+          <div className="w-full">
+            {/* ✅ ไม่ต้อง Loader แล้ว */}
+            <AlertFilters />
+          </div>
         </div>
-        <Separator className="bg-[var(--color-primary-bg)] my-3" />
-
-        <AlertsClient alerts={alerts} />
       </div>
 
-      {/* ส่วนอื่นๆ ในหน้า เดิม */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
-          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
-            <label
-              htmlFor="AlertTrends"
-              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
-            >
-              Alert Trends
-            </label>
-          </div>
-          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
-
-          <Trend />
-        </div>
-        <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
-          <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
-            <label
-              htmlFor="AlertDistribution"
-              className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
-            >
-              Alert Distribution by Event Type
-            </label>
-          </div>
-          <Separator className="bg-[var(--color-primary-bg)] mb-3" />
-
-          <DistributionChart />
-        </div>
-      </div>
+      {/* === Summary + Table + Refresh === */}
+      <AlertView />
 
       <div className="rounded-lg bg-[var(--color-white)] shadow-md p-6 ">
         <div className="flex flex-wrap items-start gap-3 justify-center mb-3">
           <label
-            htmlFor="cameraName"
+            htmlFor="recentCameraActivity"
             className="min-w-0 flex-1 font-bold text-lg text-[var(--color-primary)]"
           >
-            Recent Camera Activity
+            Recent Camera Alert
           </label>
         </div>
         <Separator className="bg-[var(--color-primary-bg)]" />
-
+        {/* TODO: ใส่คอมโพเนนต์ Recent ของคุณต่อท้ายได้เลย */}
+        <div className="mt-3">
+          <RecentAlerts />
+        </div>
       </div>
     </div>
   );

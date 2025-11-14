@@ -2,20 +2,20 @@
 
 import React from "react";
 import {
-  Bell, Video, Info, CheckCircle2, XCircle, AlertTriangle, Heart
+  Bell, Video, Info, CheckCircle2, XCircle, AlertTriangle, Wrench,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
-/** ชุดไอคอน: "fi" (flaticon) | "lucide" */
-const ICON_SET: "fi" | "lucide" = "lucide";
-const base = process.env.NEXT_PUBLIC_APP_URL!;
+/* ----------------------------- ENV / CONSTANTS ---------------------------- */
+const API_BASE  = process.env.NEXT_PUBLIC_APP_URL ?? "";   // e.g. https://api.example.com
+const API_TOKEN = process.env.NEXT_PUBLIC_TOKEN   ?? "";   // Bearer token (public for client-side)
 
 /* ---------------------------------- Types --------------------------------- */
 interface CameraStatus {
   total: number;
   active: number;
   inactive: number;
-  avg_health: number;
+  repair: number; // mapped from total_repair
 }
 
 interface AlertStatus {
@@ -36,18 +36,17 @@ interface StatusCardProps {
   totalValue?: string;
   subtitle?: string;
   textColorClass: string;
-  IconComponent: React.ReactNode; // flaticon หรือ lucide ก็ได้
+  IconComponent: React.ReactNode; // lucide icon element
 }
 
 interface SummaryCardBase {
   id: number;
   title: string;
-  value: string;         // ค่า default (จะถูกแทนด้วยค่าจาก summary)
+  value: string;         // default (จะถูกแทนด้วย summary)
   totalValue?: string;
   subtitle?: string;
   textColorClass: string;
-  fi: string;            // flaticon class
-  lucide: LucideIcon;    // lucide component
+  lucide: LucideIcon;    // ใช้เฉพาะ lucide
 }
 
 /* --------------------------- Shared Style (base) --------------------------- */
@@ -57,7 +56,7 @@ const cardBase =
 
 /* ------------------------------- StatusCard -------------------------------- */
 const StatusCard: React.FC<StatusCardProps> = ({
-  id, title, value, totalValue, subtitle, IconComponent, textColorClass
+  id, title, value, totalValue, subtitle, IconComponent, textColorClass,
 }) => {
   const isAlerts = [1, 3, 5, 7].includes(id);
   const innerPad = isAlerts
@@ -74,7 +73,7 @@ const StatusCard: React.FC<StatusCardProps> = ({
             {IconComponent}
           </div>
 
-          <div className="flex items-baseline gap-x-1">
+        <div className="flex items-baseline gap-x-1">
             <span className={`text-[24px] font-medium pb-1 ${textColorClass}`}>{value}</span>
             {!!totalValue && (
               <>
@@ -111,14 +110,14 @@ const StatusSkeleton = () => (
 
 /* -------------------------- Cards Data (meta) ----------------------------- */
 const summaryCardsBase: SummaryCardBase[] = [
-  { id: 1, title: "Total Alerts", value: "—", subtitle: "Last 7 days", fi: "fi fi-br-bells", lucide: Bell, textColorClass: "text-[var(--color-primary)]" },
-  { id: 2, title: "Total Cameras", value: "—", fi: "fi fi-br-video-camera-alt", lucide: Video, textColorClass: "text-[var(--color-primary)]" },
-  { id: 3, title: "Active Alerts", value: "—", subtitle: "Require attention", fi: "fi fi-br-info", lucide: Info, textColorClass: "text-[var(--color-danger)]" },
-  { id: 4, title: "Active Cameras", value: "—", totalValue: "—", fi: "fi fi-rr-check-circle", lucide: CheckCircle2, textColorClass: "text-[var(--color-success)]" },
-  { id: 5, title: "Resolved Alerts", value: "—", subtitle: "Successfully handled", fi: "fi fi-br-check-circle", lucide: CheckCircle2, textColorClass: "text-[var(--color-success)]" },
-  { id: 6, title: "Inactive Cameras", value: "—", fi: "fi fi-rr-cross-circle", lucide: XCircle, textColorClass: "text-[var(--color-danger)]" },
-  { id: 7, title: "Critical Alerts", value: "—", subtitle: "High priority", fi: "fi fi-br-triangle-warning", lucide: AlertTriangle, textColorClass: "text-[var(--color-danger)]" },
-  { id: 8, title: "Avg. Camera Health", value: "— %", fi: "fi fi-br-circle-heart", lucide: Heart, textColorClass: "text-[var(--color-warning)]" },
+  { id: 1, title: "Total Alerts",    value: "—", subtitle: "Last 7 days",         lucide: Bell,          textColorClass: "text-[var(--color-primary)]" },
+  { id: 2, title: "Total Cameras",   value: "—",                                   lucide: Video,         textColorClass: "text-[var(--color-primary)]" },
+  { id: 3, title: "Active Alerts",   value: "—", subtitle: "Require attention",    lucide: Info,          textColorClass: "text-[var(--color-danger)]" },
+  { id: 4, title: "Active Cameras",  value: "—", totalValue: "—",                  lucide: CheckCircle2,  textColorClass: "text-[var(--color-success)]" },
+  { id: 5, title: "Resolved Alerts", value: "—", subtitle: "Successfully handled", lucide: CheckCircle2,  textColorClass: "text-[var(--color-success)]" },
+  { id: 6, title: "Inactive Cameras",value: "—",                                   lucide: XCircle,       textColorClass: "text-[var(--color-danger)]" },
+  { id: 7, title: "Critical Alerts", value: "—", subtitle: "High priority",        lucide: AlertTriangle, textColorClass: "text-[var(--color-danger)]" },
+  { id: 8, title: "Repair Cameras",  value: "—",                                   lucide: Wrench,        textColorClass: "text-[#C00008]" },
 ];
 
 /* ---------------------- สร้าง props พื้นฐานจาก meta ---------------------- */
@@ -133,14 +132,11 @@ const baseToProps = (b: SummaryCardBase) =>
   id: b.id,
   title: b.title,
   textColorClass: b.textColorClass,
-  IconComponent:
-    ICON_SET === "lucide"
-      ? React.createElement(b.lucide, { className: "h-[30px] w-[30px]" })
-      : <i className={`${b.fi} text-[30px] leading-none`} />,
+  IconComponent: React.createElement(b.lucide, { className: "h-[30px] w-[30px]" }),
 } satisfies Omit<StatusCardProps, "value">);
 
 /* --------------------------- fetch helper hook ---------------------------- */
-function useFetchJson<T>(url: string) {
+function useFetchJson<T>(url: string, init?: RequestInit) {
   const [data, setData] = React.useState<T | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string>("");
@@ -153,7 +149,11 @@ function useFetchJson<T>(url: string) {
       try {
         setLoading(true);
         setError("");
-        const res = await fetch(url, { cache: "no-store", signal: ac.signal });
+        const res = await fetch(url, {
+          cache: "no-store",
+          signal: ac.signal,
+          ...(init ?? {}),
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as T;
         if (!cancelled) setData(json);
@@ -168,12 +168,10 @@ function useFetchJson<T>(url: string) {
       cancelled = true;
       ac.abort();
     };
-  }, [url]);
+  }, [url, JSON.stringify(init)]); // รีเฟชเมื่อ header/method เปลี่ยน
 
   return { data, loading, error };
 }
-
-
 
 /* -------------------------- Summary Context/Provider ---------------------- */
 interface SummaryCtxValue<T> {
@@ -195,9 +193,69 @@ type SummaryProviderProps<T> = {
   path?: string;
 };
 
+/* ----------------- กล้อง: Provider (map payload + token) ------------------ */
+const CameraSummaryCtx = createSummaryCtx<CameraStatus>();
+export const useCameraSummary = () => React.useContext(CameraSummaryCtx);
+
+type ApiCameraSummary = {
+  message: string;
+  data?: Array<{ total: number; active: number; inactive: number; total_repair: number }>;
+};
+
+export function CameraSummaryProvider({
+  children, path,
+}: SummaryProviderProps<CameraStatus>) {
+  // สร้าง URL: รองรับ relative และ absolute
+  const url = React.useMemo(() => {
+    const p = path ?? "";
+    return /^https?:\/\//i.test(p) ? p : `${API_BASE}${p}`;
+  }, [path]);
+
+  // แนบ Bearer token + content-type
+  const { data: raw, loading, error } = useFetchJson<ApiCameraSummary>(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  // map payload -> CameraStatus
+  const mapped: CameraStatus | null = React.useMemo(() => {
+    const row = raw?.data?.[0];
+    if (!row) return null;
+    return {
+      total: row.total ?? 0,
+      active: row.active ?? 0,
+      inactive: row.inactive ?? 0,
+      repair: row.total_repair ?? 0,
+    };
+  }, [raw]);
+
+  return (
+    <CameraSummaryCtx.Provider value={{ data: mapped, loading, error }}>
+      {children}
+    </CameraSummaryCtx.Provider>
+  );
+}
+
+/* ----------------- Alerts: Generic provider (หากต้องการใช้ต่อ) ---------- */
+const AlertSummaryCtx = createSummaryCtx<AlertStatus>();
+export const useAlertSummary = () => React.useContext(AlertSummaryCtx);
+
 function createSummaryProvider<T>(Ctx: React.Context<SummaryCtxValue<T>>) {
   return function SummaryProvider({ children, path }: SummaryProviderProps<T>) {
-    const { data, loading, error } = useFetchJson<T>(path ?? "");
+    // หมายเหตุ: ตรงนี้ยังไม่ใส่ token เพราะไม่ได้ระบุ requirement สำหรับ alerts
+    const url = React.useMemo(() => {
+      const p = path ?? "";
+      return /^https?:\/\//i.test(p) ? p : `${API_BASE}${p}`;
+    }, [path]);
+
+    const { data, loading, error } = useFetchJson<T>(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+
     return (
       <Ctx.Provider value={{ data, loading, error }}>
         {children}
@@ -206,19 +264,7 @@ function createSummaryProvider<T>(Ctx: React.Context<SummaryCtxValue<T>>) {
   };
 }
 
-/* ----------------- กล้อง ----------------- */
-const CameraSummaryCtx = createSummaryCtx<CameraStatus>();
-export const CameraSummaryProvider = createSummaryProvider<CameraStatus>(
-  CameraSummaryCtx
-);
-export const useCameraSummary = () => React.useContext(CameraSummaryCtx);
-
-/* ----------------- Alerts ----------------- */
-const AlertSummaryCtx = createSummaryCtx<AlertStatus>();
-export const AlertSummaryProvider = createSummaryProvider<AlertStatus>(
-  AlertSummaryCtx
-);
-export const useAlertSummary = () => React.useContext(AlertSummaryCtx);
+export const AlertSummaryProvider = createSummaryProvider<AlertStatus>(AlertSummaryCtx);
 
 /* -------------------- Generic MetricCard (no per-card path) --------------- */
 type Selector<T> = (s: T) => { value: string; totalValue?: string; subtitle?: string };
@@ -284,40 +330,30 @@ export const TotalCamerasCard = () => (
 );
 
 export const ActiveCamerasCard = () => (
-  <MetricCardCamera
-    baseId={4}
-    select={(s) => {
-      const active = s.active;
-      return { value: String(active) };
-    }}
-  />
+  <MetricCardCamera baseId={4} select={(s) => ({ value: String(s.active) })} />
 );
 
 export const InactiveCamerasCard = () => (
   <MetricCardCamera baseId={6} select={(s) => ({ value: String(s.inactive) })} />
 );
 
-export const AvgCameraHealthCard = () => (
-  <MetricCardCamera
-    baseId={8}
-    select={(s) => ({ value: `${Math.round(s.avg_health)} %` })}
-  />
+export const Repair = () => (
+  <MetricCardCamera baseId={8} select={(s) => ({ value: String(s.repair) })} />
 );
 
 /* ---------------------- ตัวอย่างการใช้งานในหน้า Dashboard --------------- */
 export function DashboardSummaryCameraSection() {
   return (
-    <CameraSummaryProvider path={`/api/cameras/status`}>
+    <CameraSummaryProvider path={`/api/cameras/summary`}>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
         <TotalCamerasCard />
         <ActiveCamerasCard />
         <InactiveCamerasCard />
-        <AvgCameraHealthCard />
+        <Repair />
       </div>
     </CameraSummaryProvider>
   );
 }
-
 
 export function DashboardSummaryAlertSection() {
   return (

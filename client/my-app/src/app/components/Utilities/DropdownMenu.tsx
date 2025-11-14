@@ -1,70 +1,107 @@
-import { useState } from 'react';
+"use client";
+
+import { useEffect, useState } from "react";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuGroup,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuPortal,
-    DropdownMenuSeparator,
-    DropdownMenuShortcut,
-    DropdownMenuSub,
-    DropdownMenuSubContent,
-    DropdownMenuSubTrigger,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function DropdownMenuDemo({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-    function handleProfile() { }
+  // ---- Detect platform เพื่อโชว์ปุ่มให้ตรง OS ----
+  const isMac = typeof navigator !== "undefined"
+    ? /Mac|iPhone|iPad|iPod/.test(navigator.platform || "") ||
+      /Mac OS/.test(navigator.userAgent || "")
+    : false;
 
-    function handleAccount() { }
+  const shortcutSettings = isMac ? "⌘E" : "Ctrl+E";
+  const shortcutHelp = isMac ? "⌘H" : "Ctrl+H";
+  const shortcutLogout = isMac ? "⇧⌘Q" : "Ctrl+Shift+Q";
 
-    function handleSetting() { }
+  function handleSettings() {
+    window.location.href = "/settings";
+  }
 
-    async function handleLogout() {
-        if (loading) return;
-        setLoading(true);
-        try {
-            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
-            // router.replace('/login'); router.refresh();
-            window.location.href = '/login';
-        } catch (_) {
-            // handle error if needed
-        } finally {
-            setLoading(false);
-        }
+  async function handleLogout() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/login";
+    } catch (_) {
+      // noop
+    } finally {
+      setLoading(false);
     }
+  }
 
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {children}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={handleProfile} disabled>
-                        Profile
-                        {/* <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut> */}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleAccount} disabled>
-                        Account
-                        {/* <DropdownMenuShortcut>⌘B</DropdownMenuShortcut> */}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSetting} disabled>
-                        Settings
-                        {/* <DropdownMenuShortcut>⌘S</DropdownMenuShortcut> */}
-                    </DropdownMenuItem>
+  // ---- คีย์ลัด: ⌘B (Mac) / Ctrl+B → เปิด Settings ----
+  // ---- คีย์ลัด: ⇧⌘Q (Mac) / Ctrl+Shift+Q → Logout ----
+  useEffect(() => {
+    const isEditable = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      const tag = el.tagName.toLowerCase();
+      return (
+        tag === "input" ||
+        tag === "textarea" ||
+        el.isContentEditable ||
+        (tag === "div" && el.getAttribute("role") === "textbox")
+      );
+    };
 
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                    Log out
-                    {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isEditable(e.target)) return;
+
+      const key = e.key.toLowerCase();
+      const metaOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+
+      // เปิดหน้า Settings (Settings)
+      if (metaOrCtrl && !e.shiftKey && key === "e") {
+        e.preventDefault();
+        handleSettings();
+      }
+
+      // Logout
+      if (metaOrCtrl && e.shiftKey && key === "q") {
+        e.preventDefault();
+        handleLogout();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isMac, loading]);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" sideOffset={8}>
+        <DropdownMenuLabel>Menu</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={handleSettings}>
+            Settings
+            <DropdownMenuShortcut>{shortcutSettings}</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuGroup>
+          <DropdownMenuItem disabled>
+            Help
+            <DropdownMenuShortcut>{shortcutHelp}</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          Log out
+          <DropdownMenuShortcut>{shortcutLogout}</DropdownMenuShortcut>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
